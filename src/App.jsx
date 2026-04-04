@@ -74,6 +74,7 @@ import ProfileSettings from '@/pages/settings/ProfileSettings';
 import BrandingSettings from '@/pages/settings/BrandingSettings';
 import SecuritySettings from '@/pages/settings/SecuritySettings';
 import NotificationSettings from '@/pages/settings/NotificationSettings';
+import ConnectedAccounts from '@/pages/settings/ConnectedAccounts';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -161,6 +162,7 @@ const AuthenticatedApp = () => {
         <Route path="/settings/branding" element={<BrandingSettings />} />
         <Route path="/settings/security" element={<SecuritySettings />} />
         <Route path="/settings/notifications" element={<NotificationSettings />} />
+        <Route path="/settings/connected" element={<ConnectedAccounts />} />
         <Route path="/api-docs" element={<ApiDocs />} />
       </Route>
 
