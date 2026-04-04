@@ -1,0 +1,127 @@
+{
+  "name": "ViewerProfile",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "followed_creators": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "watchlist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "content_id": {
+            "type": "string"
+          },
+          "content_type": {
+            "type": "string",
+            "enum": [
+              "video",
+              "podcast",
+              "stream"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "thumbnail_url": {
+            "type": "string"
+          },
+          "added_at": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "purchase_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string"
+          },
+          "item_name": {
+            "type": "string"
+          },
+          "item_type": {
+            "type": "string",
+            "enum": [
+              "store_item",
+              "ppv",
+              "video_unlock",
+              "membership"
+            ]
+          },
+          "amount_usd": {
+            "type": "number"
+          },
+          "amount_streaming": {
+            "type": "number"
+          },
+          "purchased_at": {
+            "type": "string"
+          },
+          "download_url": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "active_subscriptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "creator_name": {
+            "type": "string"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "basic",
+              "plus",
+              "premium"
+            ]
+          },
+          "price_monthly": {
+            "type": "number"
+          },
+          "renews_at": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "cancelled",
+              "expired"
+            ]
+          }
+        }
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

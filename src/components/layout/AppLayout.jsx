@@ -3,7 +3,7 @@ import { useState } from 'react';
 import {
   LayoutDashboard, Radio, Video, Mic2, ShoppingBag, Link2,
   BarChart3, Shield, Settings, Wallet, ChevronLeft, ChevronRight,
-  Zap, Bell, Menu, X, LogOut
+  Zap, Bell, Menu, X, LogOut, User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,6 +54,9 @@ const NAV = [
     { label: 'Claiming', icon: Shield, path: '/war-room/claiming' },
     { label: 'Vector Output', icon: Shield, path: '/war-room/vectors' },
     { label: 'Cycle Visibility', icon: Shield, path: '/war-room/cycles' },
+  ]},
+  { section: 'Viewer', items: [
+    { label: 'My Profile', icon: User, path: '/viewer/profile' },
   ]},
   { section: 'Settings', items: [
     { label: 'Profile', icon: Settings, path: '/settings/profile' },

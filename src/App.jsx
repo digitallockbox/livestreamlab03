@@ -59,6 +59,9 @@ import WarRoom from '@/pages/warroom/WarRoom';
 // API Docs
 import ApiDocs from '@/pages/ApiDocs';
 
+// Viewer
+import ViewerProfilePage from '@/pages/viewer/ViewerProfile';
+
 // Settings
 import ProfileSettings from '@/pages/settings/ProfileSettings';
 import BrandingSettings from '@/pages/settings/BrandingSettings';
@@ -140,6 +143,8 @@ const AuthenticatedApp = () => {
         <Route path="/war-room" element={<WarRoom />} />
 
         {/* Settings */}
+        <Route path="/viewer/profile" element={<ViewerProfilePage />} />
+
         <Route path="/settings/profile" element={<ProfileSettings />} />
         <Route path="/settings/branding" element={<BrandingSettings />} />
         <Route path="/settings/security" element={<SecuritySettings />} />
