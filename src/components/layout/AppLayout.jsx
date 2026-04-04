@@ -28,6 +28,7 @@ const NAV = [
   { section: 'Video', items: [
     { label: 'Upload Video', icon: Video, path: '/upload-video' },
     { label: 'Video Library', icon: Video, path: '/videos' },
+    { label: 'Video Manager', icon: Video, path: '/videos/manager' },
     { label: 'Video Analytics', icon: BarChart3, path: '/video-analytics' },
   ]},
   { section: 'Audio / Podcast', items: [

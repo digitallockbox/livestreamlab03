@@ -31,6 +31,7 @@ import UploadVideo from '@/pages/videos/UploadVideo';
 import VideoLibrary from '@/pages/videos/VideoLibrary';
 import VideoPlayer from '@/pages/videos/VideoPlayer';
 import VideoAnalytics from '@/pages/videos/VideoAnalytics';
+import VideoManager from '@/pages/videos/VideoManager';
 
 // Podcasts
 import UploadAudio from '@/pages/podcasts/UploadAudio';
@@ -123,6 +124,7 @@ const AuthenticatedApp = () => {
         <Route path="/videos" element={<VideoLibrary />} />
         <Route path="/videos/:id" element={<VideoPlayer />} />
         <Route path="/video-analytics" element={<VideoAnalytics />} />
+        <Route path="/videos/manager" element={<VideoManager />} />
 
         {/* Podcasts */}
         <Route path="/upload-audio" element={<UploadAudio />} />
