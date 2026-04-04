@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,8 @@ const RECENT_TIPS = [
 ];
 
 export default function StreamerConsole() {
+  const location = useLocation();
+  const streamTitle = location.state?.title || "Friday Night Beats";
   const [muted, setMuted] = useState(false);
   const [camOff, setCamOff] = useState(false);
   const [screenShare, setScreenShare] = useState(false);
@@ -34,7 +37,7 @@ export default function StreamerConsole() {
           <Badge className="bg-destructive text-white border-0 gap-1.5 animate-pulse px-3">
             <span className="w-1.5 h-1.5 rounded-full bg-white" /> LIVE
           </Badge>
-          <span className="font-display font-semibold text-foreground">Friday Night Beats</span>
+          <span className="font-display font-semibold text-foreground">{streamTitle}</span>
           <span className="text-xs text-muted-foreground">1:24:07</span>
         </div>
         <div className="flex items-center gap-5">
