@@ -56,6 +56,9 @@ import AnalyticsOverview from '@/pages/analytics/AnalyticsOverview';
 // War Room
 import WarRoom from '@/pages/warroom/WarRoom';
 
+// API Docs
+import ApiDocs from '@/pages/ApiDocs';
+
 // Settings
 import ProfileSettings from '@/pages/settings/ProfileSettings';
 import BrandingSettings from '@/pages/settings/BrandingSettings';
@@ -141,6 +144,7 @@ const AuthenticatedApp = () => {
         <Route path="/settings/branding" element={<BrandingSettings />} />
         <Route path="/settings/security" element={<SecuritySettings />} />
         <Route path="/settings/notifications" element={<NotificationSettings />} />
+        <Route path="/api-docs" element={<ApiDocs />} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
