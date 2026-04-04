@@ -15,9 +15,10 @@ export default function LandingNav() {
 
   const links = [
     { label: "Features", href: "#features" },
+    { label: "How It Works", href: "#how-it-works" },
     { label: "$STREAMING", href: "#ecosystem" },
-    { label: "Creators", href: "#creators" },
     { label: "Pricing", href: "#pricing" },
+    { label: "FAQ", href: "#faq" },
   ];
 
   return (
