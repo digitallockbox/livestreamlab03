@@ -28,9 +28,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const tridentToken = Deno.env.get("TRIDENT_API_TOKEN");
     const headers = { "Content-Type": "application/json" };
-    if (tridentToken) headers["Authorization"] = `Bearer ${tridentToken}`;
 
     const res = await fetch(`${TRIDENT_BASE}${path}`, {
       method: method || "GET",
