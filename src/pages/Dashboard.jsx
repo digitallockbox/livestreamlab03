@@ -4,6 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import StatCard from '@/components/ui/StatCard';
 import PageHeader from '@/components/ui/PageHeader';
+import { useMockTridentData } from '@/hooks/useMockTridentData';
+import RevenuePumping from '@/components/dashboard/RevenuePumping';
+import OversightMomentum from '@/components/dashboard/OversightMomentum';
+import AegisSecurityStatus from '@/components/dashboard/AegisSecurityStatus';
+import StreamingTokenFlow from '@/components/dashboard/StreamingTokenFlow';
 
 const QUICK_ACTIONS = [
   { label: 'Go Live', icon: Radio, path: '/go-live', color: 'bg-red-500/20 text-red-400' },
@@ -31,6 +36,8 @@ const STORE_SALES = [
 ];
 
 export default function Dashboard() {
+  const { realtimeTransaction, viewerCount, engagementVelocity, systemHealth, topFans, tokenSettlements } = useMockTridentData();
+
   return (
     <div className="p-6 md:p-8 space-y-8">
       <PageHeader title="Dashboard" subtitle="Welcome back — here's your empire at a glance.">
@@ -47,6 +54,28 @@ export default function Dashboard() {
         <StatCard title="$STREAMING Balance" value="48,200" sub="STREAMING tokens" icon={Zap} trend="+890 today" trendUp />
         <StatCard title="This Month Revenue" value="$6,340" sub="All channels combined" icon={TrendingUp} trend="+22% vs last month" trendUp />
         <StatCard title="Total Affiliate" value="$1,280" sub="Earned this cycle" icon={Link2} trend="+5% conversion" trendUp />
+      </div>
+
+      {/* Pulse — Trident OS Mock Layer */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div>
+          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Revenue Pumping (AutoSplit)</h2>
+          <RevenuePumping transaction={realtimeTransaction} />
+        </div>
+        <div>
+          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Aegis Security Status</h2>
+          <AegisSecurityStatus systemHealth={systemHealth} />
+        </div>
+      </div>
+
+      <div>
+        <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Overwatch Momentum</h2>
+        <OversightMomentum viewerCount={viewerCount} engagementVelocity={engagementVelocity} topFans={topFans} />
+      </div>
+
+      <div>
+        <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">$STREAMING Token Flow</h2>
+        <StreamingTokenFlow tokenSettlements={tokenSettlements} />
       </div>
 
       {/* Quick Actions */}
