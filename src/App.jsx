@@ -48,6 +48,7 @@ import Checkout from '@/pages/store/Checkout';
 // Affiliates
 import AffiliateDashboard from '@/pages/affiliates/AffiliateDashboard';
 import AddAffiliateLink from '@/pages/affiliates/AddAffiliateLink';
+import AffiliateLinkList from '@/pages/affiliates/AffiliateLinkList';
 
 // Analytics
 import AnalyticsOverview from '@/pages/analytics/AnalyticsOverview';
@@ -127,6 +128,7 @@ const AuthenticatedApp = () => {
         {/* Affiliates */}
         <Route path="/affiliates" element={<AffiliateDashboard />} />
         <Route path="/affiliates/add" element={<AddAffiliateLink />} />
+        <Route path="/affiliates/links" element={<AffiliateLinkList />} />
 
         {/* Analytics */}
         <Route path="/analytics" element={<AnalyticsOverview />} />
