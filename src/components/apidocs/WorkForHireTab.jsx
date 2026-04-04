@@ -5,12 +5,13 @@ import {
   FileText, CheckCircle2, Clock, AlertCircle, XCircle,
   DollarSign, User, Calendar, Zap, Plus, ChevronDown, ChevronRight
 } from "lucide-react";
+import ContractBuilder from "./ContractBuilder";
 
 const STATUS_CONFIG = {
-  active:    { label: "Active",    icon: CheckCircle2, color: "text-accent",       bg: "bg-accent/10 text-accent border-accent/20" },
-  pending:   { label: "Pending",   icon: Clock,        color: "text-chart-3",      bg: "bg-chart-3/10 text-chart-3 border-chart-3/20" },
-  completed: { label: "Completed", icon: CheckCircle2, color: "text-primary",      bg: "bg-primary/10 text-primary border-primary/20" },
-  disputed:  { label: "Disputed",  icon: AlertCircle,  color: "text-destructive",  bg: "bg-destructive/10 text-destructive border-destructive/20" },
+  active:    { label: "Active",    icon: CheckCircle2, color: "text-accent",           bg: "bg-accent/10 text-accent border-accent/20" },
+  pending:   { label: "Pending",   icon: Clock,        color: "text-chart-3",          bg: "bg-chart-3/10 text-chart-3 border-chart-3/20" },
+  completed: { label: "Completed", icon: CheckCircle2, color: "text-primary",          bg: "bg-primary/10 text-primary border-primary/20" },
+  disputed:  { label: "Disputed",  icon: AlertCircle,  color: "text-destructive",      bg: "bg-destructive/10 text-destructive border-destructive/20" },
   cancelled: { label: "Cancelled", icon: XCircle,      color: "text-muted-foreground", bg: "bg-secondary text-muted-foreground border-border" },
 };
 
@@ -106,12 +107,10 @@ const MILESTONE_STYLES = {
 function ContractCard({ contract }) {
   const [open, setOpen] = useState(false);
   const cfg = STATUS_CONFIG[contract.status];
-  const StatusIcon = cfg.icon;
   const progress = Math.round((contract.paid / contract.total) * 100);
 
   return (
     <div className={`border border-border rounded-2xl overflow-hidden transition-all ${open ? "bg-card" : "bg-secondary/20 hover:bg-secondary/40"}`}>
-      {/* Header row */}
       <button onClick={() => setOpen(!open)} className="w-full flex items-start sm:items-center gap-3 p-4 text-left">
         <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
           <FileText className="w-4 h-4 text-primary" />
@@ -136,10 +135,8 @@ function ContractCard({ contract }) {
         </div>
       </button>
 
-      {/* Expanded detail */}
       {open && (
         <div className="px-4 pb-4 border-t border-border pt-4 space-y-4">
-          {/* Progress bar */}
           <div>
             <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
               <span>Payment progress</span>
@@ -150,7 +147,6 @@ function ContractCard({ contract }) {
             </div>
           </div>
 
-          {/* Milestones */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Payment Milestones</p>
             <div className="space-y-2">
@@ -166,7 +162,6 @@ function ContractCard({ contract }) {
             </div>
           </div>
 
-          {/* Smart contract info */}
           <div className="bg-background border border-border rounded-xl p-3 flex flex-wrap gap-4">
             <div>
               <p className="text-xs text-muted-foreground mb-0.5">Contract Hash</p>
@@ -186,7 +181,6 @@ function ContractCard({ contract }) {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex flex-wrap gap-2">
             {contract.status === "active" && <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground text-xs h-8">Release Next Milestone</Button>}
             {contract.status === "pending" && <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs h-8">Countersign Contract</Button>}
@@ -202,11 +196,16 @@ function ContractCard({ contract }) {
 
 export default function WorkForHireTab() {
   const [filter, setFilter] = useState("all");
+  const [showBuilder, setShowBuilder] = useState(false);
 
   const counts = MOCK_CONTRACTS.reduce((acc, c) => { acc[c.status] = (acc[c.status] || 0) + 1; return acc; }, {});
   const totalValue = MOCK_CONTRACTS.reduce((s, c) => s + c.total, 0);
   const totalPaid  = MOCK_CONTRACTS.reduce((s, c) => s + c.paid, 0);
   const filtered = filter === "all" ? MOCK_CONTRACTS : MOCK_CONTRACTS.filter(c => c.status === filter);
+
+  if (showBuilder) {
+    return <ContractBuilder onClose={() => setShowBuilder(false)} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -239,7 +238,8 @@ export default function WorkForHireTab() {
             </button>
           ))}
         </div>
-        <Button size="sm" className="bg-primary hover:bg-primary/90 gap-1.5 text-xs h-8">
+        <Button size="sm" onClick={() => setShowBuilder(true)}
+          className="bg-primary hover:bg-primary/90 gap-1.5 text-xs h-8">
           <Plus className="w-3.5 h-3.5" /> New Contract
         </Button>
       </div>
