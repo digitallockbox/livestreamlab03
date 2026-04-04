@@ -34,6 +34,7 @@ const NAV = [
   { section: 'Audio / Podcast', items: [
     { label: 'Upload Audio', icon: Mic2, path: '/upload-audio' },
     { label: 'Podcast Library', icon: Mic2, path: '/podcasts' },
+    { label: 'Podcast Manager', icon: Mic2, path: '/podcasts/manager' },
     { label: 'Podcast Analytics', icon: BarChart3, path: '/podcast-analytics' },
   ]},
   { section: 'Store', items: [

@@ -38,6 +38,7 @@ import UploadAudio from '@/pages/podcasts/UploadAudio';
 import PodcastLibrary from '@/pages/podcasts/PodcastLibrary';
 import PodcastEpisodePage from '@/pages/podcasts/PodcastEpisodePage';
 import PodcastAnalytics from '@/pages/podcasts/PodcastAnalytics';
+import PodcastManager from '@/pages/podcasts/PodcastManager';
 
 // Store
 import StoreDashboard from '@/pages/store/StoreDashboard';
@@ -131,6 +132,7 @@ const AuthenticatedApp = () => {
         <Route path="/podcasts" element={<PodcastLibrary />} />
         <Route path="/podcasts/:id" element={<PodcastEpisodePage />} />
         <Route path="/podcast-analytics" element={<PodcastAnalytics />} />
+        <Route path="/podcasts/manager" element={<PodcastManager />} />
 
         {/* Store */}
         <Route path="/store" element={<StoreDashboard />} />
