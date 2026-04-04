@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
+import TridentStatus from '@/components/trident/TridentStatus';
 
 const NAV = [
   { section: 'Core', items: [
