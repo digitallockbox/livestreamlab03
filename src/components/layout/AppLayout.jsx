@@ -23,6 +23,7 @@ const NAV = [
   { section: 'Streaming', items: [
     { label: 'Go Live', icon: Radio, path: '/go-live' },
     { label: 'Stream Analytics', icon: BarChart3, path: '/stream-analytics' },
+    { label: '$STREAMING Token', icon: Zap, path: '/streaming/token' },
   ]},
   { section: 'Video', items: [
     { label: 'Upload Video', icon: Video, path: '/upload-video' },

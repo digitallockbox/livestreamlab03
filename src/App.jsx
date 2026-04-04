@@ -57,6 +57,9 @@ import AnalyticsOverview from '@/pages/analytics/AnalyticsOverview';
 import WarRoom from '@/pages/warroom/WarRoom';
 import OverwatchDashboard from '@/pages/warroom/OverwatchDashboard';
 
+// Token
+import StreamingToken from '@/pages/streaming/StreamingToken';
+
 // API Docs
 import ApiDocs from '@/pages/ApiDocs';
 
@@ -143,6 +146,7 @@ const AuthenticatedApp = () => {
         {/* War Room */}
         <Route path="/war-room" element={<WarRoom />} />
         <Route path="/war-room/overwatch" element={<OverwatchDashboard />} />
+        <Route path="/streaming/token" element={<StreamingToken />} />
 
         {/* Settings */}
         <Route path="/viewer/profile" element={<ViewerProfilePage />} />
