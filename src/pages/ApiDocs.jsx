@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Copy, CheckCircle2, ChevronDown, ChevronRight, Shield, Zap, Lock, FolderOpen, Folder, FileCode2, GitBranch } from "lucide-react";
 import WorkForHireTab from "@/components/apidocs/WorkForHireTab";
+import FileStructureTab from "@/components/apidocs/FileStructureTab";
 
 const BASE_URL = "https://api.livestreamlab.live";
 
@@ -395,7 +396,7 @@ export default function ApiDocs() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-secondary rounded-xl p-1 mb-6 w-fit">
-        {[{ id: "endpoints", label: "API Endpoints" }, { id: "architecture", label: "Backend Structure" }, { id: "wfh", label: "Work for Hire" }].map(t => (
+        {[{ id: "endpoints", label: "API Endpoints" }, { id: "architecture", label: "Backend Structure" }, { id: "files", label: "File Structure" }, { id: "wfh", label: "Work for Hire" }].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all
               ${tab === t.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
@@ -405,6 +406,7 @@ export default function ApiDocs() {
       </div>
 
       {tab === "architecture" && <ArchitectureTab />}
+      {tab === "files" && <FileStructureTab />}
       {tab === "wfh" && <WorkForHireTab />}
       {tab === "endpoints" && <>
 
