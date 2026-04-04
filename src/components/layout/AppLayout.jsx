@@ -46,6 +46,7 @@ const NAV = [
     { label: 'Affiliate Dashboard', icon: Link2, path: '/affiliates' },
     { label: 'Add Link', icon: Link2, path: '/affiliates/add' },
     { label: 'Link List', icon: Link2, path: '/affiliates/links' },
+    { label: 'Affiliate Manager', icon: Link2, path: '/affiliates/manager' },
     { label: 'Affiliate Analytics', icon: BarChart3, path: '/affiliates/analytics' },
   ]},
   { section: 'Intelligence', items: [
