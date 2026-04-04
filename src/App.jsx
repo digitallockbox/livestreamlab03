@@ -102,8 +102,10 @@ const AuthenticatedApp = () => {
 
         {/* Streaming */}
         <Route path="/go-live" element={<GoLive />} />
+        <Route path="/streaming/go-live" element={<GoLive />} />
         <Route path="/streaming/console" element={<StreamerConsole />} />
         <Route path="/stream-analytics" element={<StreamAnalytics />} />
+        <Route path="/streaming/analytics" element={<StreamAnalytics />} />
 
         {/* Videos */}
         <Route path="/upload-video" element={<UploadVideo />} />
