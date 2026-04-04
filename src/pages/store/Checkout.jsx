@@ -8,6 +8,8 @@ import {
   Package, ArrowLeft, ChevronDown, Shield
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useMockDataHydration } from "@/hooks/useMockDataHydration";
+import MockDataPanel from "@/components/dashboard/MockDataPanel";
 
 const CART_ITEMS = [
   { id: 1, name: "Preset Pack v2", price: 24.99, streamingPrice: 120 },
@@ -17,9 +19,17 @@ const CART_ITEMS = [
 export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [success, setSuccess] = useState(false);
+  const { processingTransactions, simulateTransaction } = useMockDataHydration();
 
   const subtotal = CART_ITEMS.reduce((s, i) => s + i.price, 0);
   const streamingTotal = CART_ITEMS.reduce((s, i) => s + i.streamingPrice, 0);
+
+  const handleCheckout = () => {
+    const itemName = CART_ITEMS.map(i => i.name).join(" + ");
+    const amount = paymentMethod === "streaming" ? streamingTotal : subtotal;
+    simulateTransaction(itemName, amount, paymentMethod);
+    setTimeout(() => setSuccess(true), 1500);
+  };
 
   if (success) {
     return (
@@ -179,7 +189,7 @@ export default function Checkout() {
             </div>
 
             {/* CTA */}
-            <Button onClick={() => setSuccess(true)} className="w-full h-13 text-base gap-2 bg-primary hover:bg-primary/90 py-4">
+            <Button onClick={handleCheckout} className="w-full h-13 text-base gap-2 bg-primary hover:bg-primary/90 py-4">
               <ShoppingCart className="w-5 h-5" />
               Complete Purchase — {paymentMethod === "streaming" ? `${streamingTotal} $STREAMING` : `$${subtotal.toFixed(2)}`}
             </Button>
@@ -237,6 +247,13 @@ export default function Checkout() {
           </div>
         </div>
       </div>
+
+      {/* Mock Transaction Monitor */}
+      {processingTransactions.length > 0 && (
+        <div className="max-w-5xl mx-auto px-4 py-8 lg:px-8 border-t border-border pt-8">
+          <MockDataPanel transactions={processingTransactions} />
+        </div>
+      )}
     </div>
   );
 }

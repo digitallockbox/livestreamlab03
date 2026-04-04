@@ -10,6 +10,8 @@ import {
   CheckCircle2, FileVideo, X, ChevronDown
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useMockDataHydration } from "@/hooks/useMockDataHydration";
+import MockDataPanel from "@/components/dashboard/MockDataPanel";
 
 const CATEGORIES = ["Gaming", "Music", "Education", "Tech", "Fitness", "Lifestyle", "Art & Creative", "Talk / Commentary", "Other"];
 
@@ -37,8 +39,13 @@ export default function UploadVideo() {
   const [streamingPrice, setStreamingPrice] = useState("");
   const [videoDragging, setVideoDragging] = useState(false);
   const [thumbDragging, setThumbDragging] = useState(false);
+  const { uploadedAssets, processingTransactions, simulateUploadAll } = useMockDataHydration();
 
   const toggleMono = (key) => setMonetization(prev => ({ ...prev, [key]: !prev[key] }));
+  
+  const handleUploadAll = () => {
+    simulateUploadAll();
+  };
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto">
@@ -189,12 +196,37 @@ export default function UploadVideo() {
           {/* Actions */}
           <div className="flex gap-3">
             <Button variant="outline" className="flex-1 border-border">Save as Draft</Button>
-            <Button className="flex-1 bg-primary hover:bg-primary/90 gap-2">
-              <Upload className="w-4 h-4" /> Publish Video
+            <Button onClick={handleUploadAll} className="flex-1 bg-primary hover:bg-primary/90 gap-2">
+              <Upload className="w-4 h-4" /> Upload All
             </Button>
           </div>
+
+          {/* Mock Data Panel */}
+          {uploadedAssets.length > 0 && (
+            <div className="bg-accent/5 border border-accent/20 rounded-xl p-4">
+              <p className="text-xs font-semibold text-accent mb-3">✓ Mock Assets Verified ({uploadedAssets.length})</p>
+              <div className="space-y-2">
+                {uploadedAssets.map(asset => (
+                  <div key={asset.id} className="text-xs bg-background rounded px-2.5 py-1.5 border border-accent/10">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-accent">{asset.assetId}</span>
+                      <span className="text-muted-foreground">{asset.fileSize}</span>
+                    </div>
+                    <p className="text-muted-foreground mt-1">{asset.title}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Sidebar — Mock Transaction Monitor */}
+      {processingTransactions.length > 0 && (
+        <div className="mt-8 max-w-4xl mx-auto">
+          <MockDataPanel transactions={processingTransactions} />
+        </div>
+      )}
     </div>
   );
 }
