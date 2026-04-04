@@ -1,80 +1,97 @@
 import React from "react";
-import { Radio, Video, Mic, ShoppingBag, LinkIcon, Wallet } from "lucide-react";
+import { Radio, Video, Mic, ShoppingBag, Link2, Wallet, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 const features = [
   {
     icon: Radio,
     title: "Live Streaming",
-    description: "Go live instantly. Earn real-time tips in $STREAMING from your audience.",
+    description: "Go live instantly with a professional console. Real-time chat, $STREAMING tips, and viewer analytics — all built in.",
     color: "text-primary",
-    bg: "bg-primary/10",
+    bg: "from-primary/15 to-primary/5",
+    border: "hover:border-primary/40",
   },
   {
     icon: Video,
     title: "Video Uploads",
-    description: "Upload premium content. Gate behind $STREAMING or offer free to grow your base.",
+    description: "Publish free or premium videos. Gate content behind $STREAMING unlocks to monetize your best work.",
     color: "text-accent",
-    bg: "bg-accent/10",
+    bg: "from-accent/15 to-accent/5",
+    border: "hover:border-accent/40",
   },
   {
     icon: Mic,
     title: "Podcasts & Audio",
-    description: "Launch your podcast series. Monetize episodes with listener boosts.",
+    description: "Launch your audio brand. Monetize episodes with listener boosts and track performance with deep analytics.",
     color: "text-chart-3",
-    bg: "bg-chart-3/10",
+    bg: "from-chart-3/15 to-chart-3/5",
+    border: "hover:border-chart-3/40",
   },
   {
     icon: ShoppingBag,
     title: "Creator Store",
-    description: "Sell digital products, merch, and exclusives. Accept $STREAMING payments.",
+    description: "Sell digital products, presets, and exclusives. Accept USD and $STREAMING. Zero platform cut on token sales.",
     color: "text-chart-4",
-    bg: "bg-chart-4/10",
+    bg: "from-chart-4/15 to-chart-4/5",
+    border: "hover:border-chart-4/40",
   },
   {
-    icon: LinkIcon,
+    icon: Link2,
     title: "Affiliate Marketplace",
-    description: "Share links, earn commissions. Get bonus $STREAMING on every conversion.",
+    description: "Share affiliate links and earn layered commissions. Bonus $STREAMING on every conversion you drive.",
     color: "text-chart-5",
-    bg: "bg-chart-5/10",
+    bg: "from-chart-5/15 to-chart-5/5",
+    border: "hover:border-chart-5/40",
   },
   {
     icon: Wallet,
     title: "CreatorVault",
-    description: "Your sovereign wallet. Track every dollar and $STREAMING token in one place.",
+    description: "Your sovereign earnings hub. Every dollar, every token tracked — with team splits and instant payouts.",
     color: "text-primary",
-    bg: "bg-primary/10",
+    bg: "from-primary/15 to-primary/5",
+    border: "hover:border-primary/40",
   },
 ];
 
 export default function FeaturesSection() {
   return (
-    <section className="py-24 px-6">
+    <section id="features" className="py-28 px-6">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
-            Everything You Need to Create & Earn
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          <div className="inline-flex items-center gap-2 bg-secondary border border-border rounded-full px-4 py-1.5 mb-5">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Platform Modules</span>
+          </div>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
+            Everything in One Place
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            One platform, infinite possibilities. Build your creator empire with tools designed for sovereignty.
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
+            Six powerful modules. One creator OS. Built for creators who refuse to be owned by platforms.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {features.map((f, i) => (
             <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
+              key={f.title}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="group p-6 rounded-2xl bg-card border border-border hover:border-primary/30 transition-all duration-300"
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              className={`group relative p-6 rounded-2xl bg-gradient-to-br ${f.bg} border border-border ${f.border} transition-all duration-300 cursor-pointer`}
             >
-              <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-4`}>
-                <feature.icon className={`w-6 h-6 ${feature.color}`} />
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-11 h-11 rounded-xl bg-background/60 flex items-center justify-center border border-border/60">
+                  <f.icon className={`w-5 h-5 ${f.color}`} />
+                </div>
+                <ArrowRight className={`w-4 h-4 ${f.color} opacity-0 group-hover:opacity-100 transition-opacity -translate-x-1 group-hover:translate-x-0 duration-200`} />
               </div>
-              <h3 className="font-display font-semibold text-lg text-foreground mb-2">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+              <h3 className="font-display font-bold text-base text-foreground mb-2">{f.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
             </motion.div>
           ))}
         </div>

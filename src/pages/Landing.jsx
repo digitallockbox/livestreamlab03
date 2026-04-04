@@ -3,6 +3,8 @@ import LandingNav from "@/components/landing/LandingNav";
 import HeroSection from "@/components/landing/HeroSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import StreamingEcosystemSection from "@/components/landing/StreamingEcosystemSection";
+import CreatorsSection from "@/components/landing/CreatorsSection";
+import PricingSection from "@/components/landing/PricingSection";
 import LandingFooter from "@/components/landing/LandingFooter";
 
 export default function Landing() {
@@ -10,12 +12,10 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       <LandingNav />
       <HeroSection />
-      <div id="features">
-        <FeaturesSection />
-      </div>
-      <div id="ecosystem">
-        <StreamingEcosystemSection />
-      </div>
+      <FeaturesSection />
+      <StreamingEcosystemSection />
+      <CreatorsSection />
+      <PricingSection />
       <LandingFooter />
     </div>
   );
