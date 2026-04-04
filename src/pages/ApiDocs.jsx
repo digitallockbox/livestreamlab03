@@ -386,10 +386,15 @@ export default function ApiDocs() {
             <p className="text-xs text-muted-foreground mb-1">Base URL</p>
             <code className="text-sm font-mono text-primary">{BASE_URL}</code>
           </div>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5"><Zap className="w-3 h-3 text-accent" />{totalEndpoints} endpoints</span>
             <span className="flex items-center gap-1.5"><Lock className="w-3 h-3 text-chart-3" />JWT Auth</span>
             <Badge className="bg-accent/10 text-accent border-accent/20">REST / JSON</Badge>
+            <div className="flex items-center gap-1.5 border border-border rounded-lg px-2 py-1 bg-secondary/50">
+              <Zap className="w-3 h-3 text-accent shrink-0" />
+              <span className="text-accent font-medium">$STREAMING</span>
+              <code className="text-muted-foreground font-mono text-[10px] hidden sm:block">8jExKCc1Y4LEjVjBLRGZEeY7vWBVzr9iTPRKh8Jzmoon</code>
+            </div>
           </div>
         </div>
       </div>
