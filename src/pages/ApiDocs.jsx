@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Copy, CheckCircle2, ChevronDown, ChevronRight, Shield, Zap, Lock } from "lucide-react";
+import { Search, Copy, CheckCircle2, ChevronDown, ChevronRight, Shield, Zap, Lock, FolderOpen, Folder, FileCode2, GitBranch } from "lucide-react";
 
 const BASE_URL = "https://api.livestreamlab.live";
 
@@ -195,7 +195,163 @@ function EndpointRow({ route }) {
   );
 }
 
+const FOLDER_TREE = [
+  {
+    name: "apps/api/src/", type: "root", children: [
+      {
+        name: "routes/", type: "folder", desc: "REST endpoints Base44 calls. One file = one endpoint.", children: [
+          { name: "auth/", type: "folder", files: ["login.ts", "signup.ts", "me.ts"] },
+          { name: "creator/", type: "folder", files: ["profile.ts", "onboarding.ts", "segment.ts", "risk.ts"] },
+          { name: "stream/", type: "folder", files: ["start.ts", "end.ts", "details.ts", "chat.ts", "tip.ts"] },
+          { name: "content/", type: "folder", files: ["upload.ts", "list.ts", "details.ts", "delete.ts"] },
+          { name: "store/", type: "folder", files: ["createItem.ts", "listItems.ts", "purchase.ts"] },
+          { name: "marketplace/", type: "folder", files: ["listProducts.ts", "purchase.ts"] },
+          { name: "payouts/", type: "folder", files: ["summary.ts", "request.ts", "methods.ts"] },
+          { name: "analytics/", type: "folder", files: ["overview.ts", "streamAnalytics.ts", "contentAnalytics.ts"] },
+          { name: "tenant/", type: "folder", files: ["register.ts", "creators.ts", "invite.ts"] },
+          { name: "system/", type: "folder", files: ["health.ts", "enginesHealth.ts"] },
+        ],
+      },
+      {
+        name: "controllers/", type: "folder", desc: "Receive requests and call services.", files: [
+          "authController.ts", "creatorController.ts", "streamController.ts", "contentController.ts",
+          "storeController.ts", "marketplaceController.ts", "payoutsController.ts",
+          "analyticsController.ts", "tenantController.ts", "systemController.ts",
+        ],
+      },
+      {
+        name: "services/", type: "folder", desc: "Workflow logic. Calls engine façades. Logic stays safe.", files: [
+          "onboardingService.ts", "streamService.ts", "contentService.ts",
+          "payoutsService.ts", "analyticsService.ts", "tenantService.ts",
+        ],
+      },
+      {
+        name: "engines/", type: "folder", color: "text-destructive", desc: "Façade layer only. Private engines are never in this repo.", files: [
+          "omega.ts — façade", "aegis.ts — façade", "overwatch.ts — façade", "bridge.ts — secure connector",
+        ],
+      },
+      {
+        name: "middleware/", type: "folder", desc: "Auth, CORS, rate limiting, error handling.", files: [
+          "auth.ts", "cors.ts", "errorHandler.ts", "rateLimit.ts",
+        ],
+      },
+      {
+        name: "utils/", type: "folder", desc: "Helpers: JWT, file uploads, validation, logging.", files: [
+          "jwt.ts", "uploader.ts", "validator.ts", "logger.ts",
+        ],
+      },
+      { name: "index.ts", type: "file", desc: "Bootstraps the API server." },
+    ],
+  },
+];
+
+function FolderNode({ node, depth = 0 }) {
+  const [open, setOpen] = useState(depth < 2);
+  const pl = depth * 16;
+  const isEngine = node.name === "engines/";
+
+  if (node.type === "file") {
+    return (
+      <div style={{ paddingLeft: pl }} className="flex items-center gap-2 py-1">
+        <FileCode2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+        <span className="text-xs font-mono text-muted-foreground">{node.name}</span>
+        {node.desc && <span className="text-xs text-muted-foreground/60 ml-2">— {node.desc}</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <button onClick={() => setOpen(!open)} style={{ paddingLeft: pl }}
+        className="flex items-center gap-2 py-1.5 w-full text-left group hover:bg-secondary/40 rounded-lg px-2 -ml-2 transition-colors">
+        {open
+          ? <FolderOpen className={`w-3.5 h-3.5 shrink-0 ${isEngine ? "text-destructive" : "text-chart-3"}`} />
+          : <Folder className={`w-3.5 h-3.5 shrink-0 ${isEngine ? "text-destructive" : "text-chart-3"}`} />}
+        <span className={`text-xs font-mono font-semibold ${isEngine ? "text-destructive" : "text-foreground"}`}>{node.name}</span>
+        {isEngine && <Badge className="text-[10px] bg-destructive/10 text-destructive border-destructive/20 py-0 px-1.5">private façade</Badge>}
+        {node.desc && !isEngine && <span className="text-xs text-muted-foreground/60 hidden sm:block ml-1">— {node.desc}</span>}
+        {open ? <ChevronDown className="w-3 h-3 text-muted-foreground ml-auto" /> : <ChevronRight className="w-3 h-3 text-muted-foreground ml-auto" />}
+      </button>
+      {open && (
+        <div>
+          {node.children?.map((child, i) => <FolderNode key={i} node={child} depth={depth + 1} />)}
+          {node.files?.map((file, i) => (
+            <div key={i} style={{ paddingLeft: (depth + 1) * 16 }} className="flex items-center gap-2 py-0.5">
+              <FileCode2 className="w-3 h-3 text-muted-foreground/50 shrink-0" />
+              <span className={`text-xs font-mono ${isEngine ? "text-destructive/70" : "text-muted-foreground"}`}>{file}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ArchitectureTab() {
+  return (
+    <div className="space-y-6">
+      {/* Flow diagram */}
+      <div className="bg-card border border-border rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <GitBranch className="w-4 h-4 text-primary" />
+          <h3 className="font-display font-semibold text-foreground">Request Flow</h3>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          {[
+            { label: "Base44 UI", color: "bg-primary/10 text-primary border-primary/20" },
+            { label: "→" },
+            { label: "routes/", color: "bg-chart-3/10 text-chart-3 border-chart-3/20" },
+            { label: "→" },
+            { label: "controllers/", color: "bg-chart-4/10 text-chart-4 border-chart-4/20" },
+            { label: "→" },
+            { label: "services/", color: "bg-accent/10 text-accent border-accent/20" },
+            { label: "→" },
+            { label: "engines/ façade", color: "bg-destructive/10 text-destructive border-destructive/20" },
+            { label: "→" },
+            { label: "🔒 Private Engines", color: "bg-secondary text-muted-foreground border-border" },
+          ].map((item, i) =>
+            item.color
+              ? <Badge key={i} className={`border text-xs ${item.color}`}>{item.label}</Badge>
+              : <span key={i} className="text-muted-foreground font-bold">{item.label}</span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">Private engines (Omega, Aegis, Overwatch) live outside the repo. The façade layer in <code className="bg-secondary px-1 rounded">engines/</code> is the only bridge.</p>
+      </div>
+
+      {/* Folder tree */}
+      <div className="bg-card border border-border rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <FolderOpen className="w-4 h-4 text-chart-3" />
+          <h3 className="font-display font-semibold text-foreground">Folder Structure</h3>
+          <Badge className="bg-secondary text-muted-foreground border-border text-xs">apps/api/src/</Badge>
+        </div>
+        <div className="font-mono">
+          {FOLDER_TREE[0].children.map((node, i) => <FolderNode key={i} node={node} depth={0} />)}
+        </div>
+      </div>
+
+      {/* Layer descriptions */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {[
+          { icon: "📁", label: "routes/", desc: "One file per endpoint. Base44 calls these directly via REST.", color: "border-chart-3/20 bg-chart-3/5" },
+          { icon: "🎮", label: "controllers/", desc: "Receive the HTTP request and delegate to the right service.", color: "border-chart-4/20 bg-chart-4/5" },
+          { icon: "⚙️", label: "services/", desc: "Business workflow logic. Calls engine façades. Logic stays server-side.", color: "border-accent/20 bg-accent/5" },
+          { icon: "🛡️", label: "engines/ (façade)", desc: "Thin wrappers around Omega, Aegis, Overwatch. Engines never exposed.", color: "border-destructive/20 bg-destructive/5" },
+          { icon: "🔒", label: "middleware/", desc: "Auth guards, CORS policy, rate limiting, global error handling.", color: "border-primary/20 bg-primary/5" },
+          { icon: "🔧", label: "utils/", desc: "JWT helpers, file uploader, input validator, structured logger.", color: "border-border bg-secondary/30" },
+        ].map(item => (
+          <div key={item.label} className={`border rounded-xl p-3 ${item.color}`}>
+            <p className="text-sm font-semibold text-foreground">{item.icon} <code className="font-mono">{item.label}</code></p>
+            <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ApiDocs() {
+  const [tab, setTab] = useState("endpoints");
   const [search, setSearch] = useState("");
   const [activeGroup, setActiveGroup] = useState(null);
 
@@ -235,6 +391,20 @@ export default function ApiDocs() {
           </div>
         </div>
       </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-secondary rounded-xl p-1 mb-6 w-fit">
+        {[{ id: "endpoints", label: "API Endpoints" }, { id: "architecture", label: "Backend Structure" }].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all
+              ${tab === t.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "architecture" && <ArchitectureTab />}
+      {tab === "endpoints" && <>
 
       {/* Auth note */}
       <div className="bg-chart-3/5 border border-chart-3/20 rounded-xl p-4 mb-6 flex items-start gap-3">
@@ -289,6 +459,7 @@ export default function ApiDocs() {
           <br />The Trident engines (Omega, Aegis, Overwatch) are never exposed to the frontend. All logic runs server-side.
         </p>
       </div>
+      </>}
     </div>
   );
 }
