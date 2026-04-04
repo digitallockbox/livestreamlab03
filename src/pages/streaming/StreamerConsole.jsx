@@ -3,7 +3,8 @@ import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Radio, Users, Zap, Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff, Send, Gift, Heart, Wifi, AlertCircle } from "lucide-react";
+import { Radio, Users, Zap, Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff, Send, Gift, Wifi } from "lucide-react";
+import StreamManager from "@/components/streaming/StreamManager";
 
 const MOCK_CHAT = [
   { user: "neon_wolf", msg: "🔥 Let's goooo!", type: "chat" },
@@ -28,6 +29,38 @@ export default function StreamerConsole() {
   const [camOff, setCamOff] = useState(false);
   const [screenShare, setScreenShare] = useState(false);
   const [chatMsg, setChatMsg] = useState("");
+  const [showManager, setShowManager] = useState(false);
+
+  // Mock stream data (would come from backend in production)
+  const streamData = {
+    title: streamTitle,
+    status: "live",
+    uptime: "1:24:07",
+    bitrate: "6.5 Mbps",
+    framerate: "60 fps",
+    droppedFrames: 0,
+    latency: "2100ms",
+    tipsEarned: "$127.50",
+    storeSales: "$43.20",
+    streamingTokens: "850",
+    streakBonus: "1.2x",
+    projectedPayout: "$234.80"
+  };
+
+  if (showManager) {
+    return (
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+        <Button variant="outline" size="sm" onClick={() => setShowManager(false)} className="mb-4">
+          ← Back to Console
+        </Button>
+        <StreamManager 
+          streamData={streamData} 
+          onEndStream={() => window.location.href = "/dashboard"}
+          onSettings={() => {}}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -38,7 +71,7 @@ export default function StreamerConsole() {
             <span className="w-1.5 h-1.5 rounded-full bg-white" /> LIVE
           </Badge>
           <span className="font-display font-semibold text-foreground">{streamTitle}</span>
-          <span className="text-xs text-muted-foreground">1:24:07</span>
+          <span className="text-xs text-muted-foreground">{streamData.uptime}</span>
         </div>
         <div className="flex items-center gap-5">
           {/* Health */}
@@ -52,8 +85,9 @@ export default function StreamerConsole() {
           </div>
           <div className="flex items-center gap-1.5 text-accent">
             <Zap className="w-4 h-4" />
-            <span className="text-sm font-semibold">$127.50</span>
+            <span className="text-sm font-semibold">{streamData.tipsEarned}</span>
           </div>
+          <Button size="sm" variant="outline" onClick={() => setShowManager(true)}>Manager</Button>
         </div>
       </div>
 
