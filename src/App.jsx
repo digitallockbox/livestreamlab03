@@ -9,14 +9,10 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Layout
 import AppLayout from '@/components/layout/AppLayout';
 
-// Public
+// Pages
 import Landing from '@/pages/Landing';
-
-// Onboarding
-import CreatorOnboarding from '@/pages/onboarding/CreatorOnboarding';
-
-// Dashboard
 import Dashboard from '@/pages/Dashboard';
+import CreatorOnboarding from '@/pages/onboarding/CreatorOnboarding';
 
 // Vault
 import VaultOverview from '@/pages/vault/VaultOverview';
@@ -28,14 +24,15 @@ import TeamSplits from '@/pages/vault/TeamSplits';
 import GoLive from '@/pages/streaming/GoLive';
 import StreamerConsole from '@/pages/streaming/StreamerConsole';
 import StreamAnalytics from '@/pages/streaming/StreamAnalytics';
+import StreamPage from '@/pages/streaming/StreamPage';
 
-// Video
+// Videos
 import UploadVideo from '@/pages/videos/UploadVideo';
 import VideoLibrary from '@/pages/videos/VideoLibrary';
 import VideoPlayer from '@/pages/videos/VideoPlayer';
 import VideoAnalytics from '@/pages/videos/VideoAnalytics';
 
-// Podcast
+// Podcasts
 import UploadAudio from '@/pages/podcasts/UploadAudio';
 import PodcastLibrary from '@/pages/podcasts/PodcastLibrary';
 import PodcastEpisodePage from '@/pages/podcasts/PodcastEpisodePage';
@@ -51,26 +48,18 @@ import Checkout from '@/pages/store/Checkout';
 // Affiliates
 import AffiliateDashboard from '@/pages/affiliates/AffiliateDashboard';
 import AddAffiliateLink from '@/pages/affiliates/AddAffiliateLink';
-import AffiliateLinkList from '@/pages/affiliates/AffiliateLinkList';
-import AffiliateAnalytics from '@/pages/affiliates/AffiliateAnalytics';
 
 // Analytics
 import AnalyticsOverview from '@/pages/analytics/AnalyticsOverview';
-import CycleAnalytics from '@/pages/analytics/CycleAnalytics';
 
 // War Room
-import WarRoomHome from '@/pages/warroom/WarRoomHome';
-import SyncCenter from '@/pages/warroom/SyncCenter';
-import ClaimCenter from '@/pages/warroom/ClaimCenter';
-import VectorOutput from '@/pages/warroom/VectorOutput';
-import CycleVisibility from '@/pages/warroom/CycleVisibility';
+import WarRoom from '@/pages/warroom/WarRoom';
 
 // Settings
 import ProfileSettings from '@/pages/settings/ProfileSettings';
 import BrandingSettings from '@/pages/settings/BrandingSettings';
 import SecuritySettings from '@/pages/settings/SecuritySettings';
 import NotificationSettings from '@/pages/settings/NotificationSettings';
-import ConnectedAccounts from '@/pages/settings/ConnectedAccounts';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -78,19 +67,18 @@ const AuthenticatedApp = () => {
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
-          <p className="text-sm text-muted-foreground">Loading LiveStreamLab...</p>
-        </div>
+        <div className="w-8 h-8 border-4 border-border border-t-primary rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (authError) {
-    if (authError.type === 'user_not_registered') return <UserNotRegisteredError />;
-    if (authError.type === 'auth_required') { navigateToLogin(); return null; }
+    if (authError.type === 'user_not_registered') {
+      return <UserNotRegisteredError />;
+    } else if (authError.type === 'auth_required') {
+      navigateToLogin();
+      return null;
+    }
   }
 
   return (
@@ -98,8 +86,11 @@ const AuthenticatedApp = () => {
       {/* Public */}
       <Route path="/" element={<Landing />} />
       <Route path="/onboarding" element={<CreatorOnboarding />} />
+      <Route path="/stream/:id" element={<StreamPage />} />
+      <Route path="/store/product/:id" element={<ProductPage />} />
+      <Route path="/checkout" element={<Checkout />} />
 
-      {/* App shell */}
+      {/* App (with layout) */}
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
 
@@ -111,16 +102,16 @@ const AuthenticatedApp = () => {
 
         {/* Streaming */}
         <Route path="/go-live" element={<GoLive />} />
-        <Route path="/stream-console" element={<StreamerConsole />} />
+        <Route path="/streaming/console" element={<StreamerConsole />} />
         <Route path="/stream-analytics" element={<StreamAnalytics />} />
 
-        {/* Video */}
+        {/* Videos */}
         <Route path="/upload-video" element={<UploadVideo />} />
         <Route path="/videos" element={<VideoLibrary />} />
         <Route path="/videos/:id" element={<VideoPlayer />} />
         <Route path="/video-analytics" element={<VideoAnalytics />} />
 
-        {/* Podcast */}
+        {/* Podcasts */}
         <Route path="/upload-audio" element={<UploadAudio />} />
         <Route path="/podcasts" element={<PodcastLibrary />} />
         <Route path="/podcasts/:id" element={<PodcastEpisodePage />} />
@@ -129,34 +120,23 @@ const AuthenticatedApp = () => {
         {/* Store */}
         <Route path="/store" element={<StoreDashboard />} />
         <Route path="/store/add" element={<AddProduct />} />
-        <Route path="/store/add-product" element={<AddProduct />} />
         <Route path="/store/products" element={<ProductList />} />
-        <Route path="/store/products/:id" element={<ProductPage />} />
-        <Route path="/store/checkout" element={<Checkout />} />
 
         {/* Affiliates */}
         <Route path="/affiliates" element={<AffiliateDashboard />} />
         <Route path="/affiliates/add" element={<AddAffiliateLink />} />
-        <Route path="/affiliates/links" element={<AffiliateLinkList />} />
-        <Route path="/affiliates/analytics" element={<AffiliateAnalytics />} />
 
         {/* Analytics */}
         <Route path="/analytics" element={<AnalyticsOverview />} />
-        <Route path="/analytics/cycles" element={<CycleAnalytics />} />
 
         {/* War Room */}
-        <Route path="/war-room" element={<WarRoomHome />} />
-        <Route path="/war-room/syncing" element={<SyncCenter />} />
-        <Route path="/war-room/claiming" element={<ClaimCenter />} />
-        <Route path="/war-room/vectors" element={<VectorOutput />} />
-        <Route path="/war-room/cycles" element={<CycleVisibility />} />
+        <Route path="/war-room" element={<WarRoom />} />
 
         {/* Settings */}
         <Route path="/settings/profile" element={<ProfileSettings />} />
         <Route path="/settings/branding" element={<BrandingSettings />} />
         <Route path="/settings/security" element={<SecuritySettings />} />
         <Route path="/settings/notifications" element={<NotificationSettings />} />
-        <Route path="/settings/connected" element={<ConnectedAccounts />} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
@@ -174,7 +154,7 @@ function App() {
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>
-  );
+  )
 }
 
-export default App;
+export default App

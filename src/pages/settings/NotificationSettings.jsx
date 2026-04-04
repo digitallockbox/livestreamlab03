@@ -1,61 +1,36 @@
-import React from "react";
-import { Switch } from "@/components/ui/switch";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Bell } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
-const notifGroups = [
-  {
-    title: "Revenue & Payouts",
-    items: [
-      { label: "New tip received", sub: "Get notified when you receive a tip" },
-      { label: "Payout processed", sub: "When your payout is completed" },
-      { label: "New store sale", sub: "When someone buys your product" },
-    ],
-  },
-  {
-    title: "Content & Streaming",
-    items: [
-      { label: "Stream reminder", sub: "Before your scheduled stream" },
-      { label: "New comment", sub: "When someone comments on your content" },
-      { label: "Milestone reached", sub: "Follower or view milestones" },
-    ],
-  },
-  {
-    title: "Account & Security",
-    items: [
-      { label: "New login", sub: "When a new device logs in" },
-      { label: "Password changed", sub: "Security alerts" },
-    ],
-  },
+const notifications = [
+  { key: "new_follower", label: "New Followers", desc: "When someone follows your channel" },
+  { key: "new_tip", label: "Tips Received", desc: "When you receive a tip during a stream" },
+  { key: "new_sale", label: "Store Sales", desc: "When a product purchase is made" },
+  { key: "payout_ready", label: "Payout Ready", desc: "When your payout cycle completes" },
+  { key: "affiliate_conversion", label: "Affiliate Conversions", desc: "When an affiliate link converts" },
+  { key: "new_comment", label: "Comments & Replies", desc: "Activity on your videos and podcasts" },
 ];
 
 export default function NotificationSettings() {
+  const [prefs, setPrefs] = useState({ new_follower: true, new_tip: true, new_sale: true, payout_ready: true, affiliate_conversion: false, new_comment: false });
   return (
     <div className="p-6 lg:p-8 max-w-2xl mx-auto">
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold text-foreground">Notifications</h1>
-        <p className="text-muted-foreground mt-1">Choose what you want to be notified about.</p>
+        <p className="text-muted-foreground mt-1">Choose what updates you receive.</p>
       </div>
-      <div className="space-y-6">
-        {notifGroups.map((group) => (
-          <div key={group.title} className="bg-card border border-border rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Bell className="w-4 h-4 text-primary" />
-              <h3 className="font-display font-semibold text-foreground">{group.title}</h3>
+      <div className="bg-card border border-border rounded-2xl divide-y divide-border">
+        {notifications.map((n) => (
+          <div key={n.key} className="flex items-center justify-between p-5">
+            <div>
+              <p className="text-sm font-medium text-foreground">{n.label}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{n.desc}</p>
             </div>
-            <div className="space-y-4">
-              {group.items.map((item, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{item.label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{item.sub}</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              ))}
-            </div>
+            <Switch checked={prefs[n.key]} onCheckedChange={v => setPrefs(p => ({ ...p, [n.key]: v }))} />
           </div>
         ))}
+      </div>
+      <div className="mt-6">
         <Button className="bg-primary hover:bg-primary/90">Save Preferences</Button>
       </div>
     </div>
