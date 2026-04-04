@@ -5,10 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import StatCard from '@/components/ui/StatCard';
 import PageHeader from '@/components/ui/PageHeader';
 import { useMockTridentData } from '@/hooks/useMockTridentData';
+import { useMockDataHydration } from '@/hooks/useMockDataHydration';
 import RevenuePumping from '@/components/dashboard/RevenuePumping';
 import OversightMomentum from '@/components/dashboard/OversightMomentum';
 import AegisSecurityStatus from '@/components/dashboard/AegisSecurityStatus';
 import StreamingTokenFlow from '@/components/dashboard/StreamingTokenFlow';
+import MockDataPanel from '@/components/dashboard/MockDataPanel';
 
 const QUICK_ACTIONS = [
   { label: 'Go Live', icon: Radio, path: '/go-live', color: 'bg-red-500/20 text-red-400' },
@@ -37,6 +39,7 @@ const STORE_SALES = [
 
 export default function Dashboard() {
   const { realtimeTransaction, viewerCount, engagementVelocity, systemHealth, topFans, tokenSettlements } = useMockTridentData();
+  const { processingTransactions } = useMockDataHydration();
 
   return (
     <div className="p-6 md:p-8 space-y-8">
@@ -188,6 +191,13 @@ export default function Dashboard() {
           </table>
         </div>
       </div>
+
+      {/* Mock Transaction Monitor — Live Moke Layer Visibility */}
+      {processingTransactions.length > 0 && (
+        <div className="rounded-xl border border-accent/20 bg-accent/5 p-6">
+          <MockDataPanel transactions={processingTransactions} />
+        </div>
+      )}
     </div>
   );
 }
