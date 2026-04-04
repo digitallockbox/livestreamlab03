@@ -1,0 +1,47 @@
+{
+  "name": "PodcastEpisode",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "audio_url": {
+      "type": "string"
+    },
+    "thumbnail_url": {
+      "type": "string"
+    },
+    "series": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published"
+      ],
+      "default": "draft"
+    },
+    "listens": {
+      "type": "number",
+      "default": 0
+    },
+    "revenue": {
+      "type": "number",
+      "default": 0
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "show_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

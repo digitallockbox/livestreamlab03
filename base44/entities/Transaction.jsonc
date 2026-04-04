@@ -1,0 +1,49 @@
+{
+  "name": "Transaction",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "stream",
+        "store",
+        "affiliate",
+        "video",
+        "audio",
+        "podcast",
+        "payout"
+      ],
+      "default": "stream"
+    },
+    "amount": {
+      "type": "number",
+      "default": 0
+    },
+    "streaming_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "failed"
+      ],
+      "default": "completed"
+    },
+    "reference_id": {
+      "type": "string"
+    },
+    "cycle": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "type",
+    "amount"
+  ]
+}

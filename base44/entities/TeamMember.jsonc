@@ -1,0 +1,40 @@
+{
+  "name": "TeamMember",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "co_creator",
+        "editor",
+        "manager",
+        "moderator",
+        "other"
+      ],
+      "default": "co_creator"
+    },
+    "split_percentage": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "invited",
+        "removed"
+      ],
+      "default": "invited"
+    }
+  },
+  "required": [
+    "name",
+    "email"
+  ]
+}

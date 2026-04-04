@@ -1,0 +1,57 @@
+{
+  "name": "Stream",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "gaming",
+        "music",
+        "talk_show",
+        "education",
+        "creative",
+        "sports",
+        "tech",
+        "other"
+      ],
+      "default": "other"
+    },
+    "thumbnail_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "live",
+        "ended"
+      ],
+      "default": "scheduled"
+    },
+    "viewer_count": {
+      "type": "number",
+      "default": 0
+    },
+    "peak_viewers": {
+      "type": "number",
+      "default": 0
+    },
+    "tips_earned": {
+      "type": "number",
+      "default": 0
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}
