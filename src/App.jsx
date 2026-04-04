@@ -55,6 +55,7 @@ import AnalyticsOverview from '@/pages/analytics/AnalyticsOverview';
 
 // War Room
 import WarRoom from '@/pages/warroom/WarRoom';
+import OverwatchDashboard from '@/pages/warroom/OverwatchDashboard';
 
 // API Docs
 import ApiDocs from '@/pages/ApiDocs';
@@ -141,6 +142,7 @@ const AuthenticatedApp = () => {
 
         {/* War Room */}
         <Route path="/war-room" element={<WarRoom />} />
+        <Route path="/war-room/overwatch" element={<OverwatchDashboard />} />
 
         {/* Settings */}
         <Route path="/viewer/profile" element={<ViewerProfilePage />} />
