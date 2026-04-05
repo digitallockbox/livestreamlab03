@@ -59,6 +59,7 @@ import AnalyticsOverview from '@/pages/analytics/AnalyticsOverview';
 // War Room
 import WarRoom from '@/pages/warroom/WarRoom';
 import OverwatchDashboard from '@/pages/warroom/OverwatchDashboard';
+import BridgeStressTest from '@/pages/warroom/BridgeStressTest';
 
 // Token
 import StreamingToken from '@/pages/streaming/StreamingToken';
@@ -153,6 +154,7 @@ const AuthenticatedApp = () => {
         {/* War Room */}
         <Route path="/war-room" element={<WarRoom />} />
         <Route path="/war-room/overwatch" element={<OverwatchDashboard />} />
+        <Route path="/war-room/bridge-test" element={<BridgeStressTest />} />
         <Route path="/streaming/token" element={<StreamingToken />} />
 
         {/* Settings */}

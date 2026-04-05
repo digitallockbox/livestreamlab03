@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 const MOCK_TRANSACTIONS = [
   { id: 1, type: "digital_sale", amount: 50, currency: "USD", description: "$50 Digital Product Sale" },
@@ -6,6 +6,9 @@ const MOCK_TRANSACTIONS = [
   { id: 3, type: "ppv_unlock", amount: 19.99, currency: "USD", description: "$19.99 Video Unlock" },
   { id: 4, type: "subscription", amount: 9.99, currency: "USD", description: "$9.99 Monthly Sub" },
   { id: 5, type: "affiliate", amount: 125.50, currency: "USD", description: "$125.50 Affiliate Sale" },
+  { id: 6, type: "store_sale", amount: 39.99, currency: "USD", description: "$39.99 Store Sale" },
+  { id: 7, type: "stream_tip", amount: 500, currency: "STREAMING", description: "500 $STREAMING Tip" },
+  { id: 8, type: "ppv_unlock", amount: 4.99, currency: "USD", description: "$4.99 Episode Unlock" },
 ];
 
 const MOCK_TOP_FANS = [
@@ -30,6 +33,19 @@ export function useMockTridentData() {
   const [engagementVelocity, setEngagementVelocity] = useState(145);
   const [systemHealth, setSystemHealth] = useState("secure");
   const [tokenSettlements, setTokenSettlements] = useState(MOCK_TOKEN_SETTLEMENTS);
+  const [stressMode, setStressMode] = useState(false);
+
+  const triggerBurst = useCallback(async (count = 10, delayMs = 200) => {
+    setStressMode(true);
+    for (let i = 0; i < count; i++) {
+      const randomTx = MOCK_TRANSACTIONS[Math.floor(Math.random() * MOCK_TRANSACTIONS.length)];
+      setRealtimeTransaction({ ...randomTx, id: Date.now() + i, timestamp: new Date().toLocaleTimeString() });
+      setViewerCount(prev => Math.min(prev + Math.floor(Math.random() * 200 + 50), 10000));
+      setEngagementVelocity(prev => Math.min(prev + Math.floor(Math.random() * 80 + 20), 500));
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+    setStressMode(false);
+  }, []);
 
   useEffect(() => {
     // Simulate random transactions every 3-7 seconds
@@ -84,5 +100,7 @@ export function useMockTridentData() {
     systemHealth,
     topFans: MOCK_TOP_FANS,
     tokenSettlements,
+    stressMode,
+    triggerBurst,
   };
 }

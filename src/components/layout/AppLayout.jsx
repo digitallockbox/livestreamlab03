@@ -3,7 +3,7 @@ import { useState } from 'react';
 import {
   LayoutDashboard, Radio, Video, Mic2, ShoppingBag, Link2,
   BarChart3, Shield, Settings, Wallet, ChevronLeft, ChevronRight,
-  Zap, Bell, Menu, X, LogOut, User, Brain
+  Zap, Bell, Menu, X, LogOut, User, Brain, Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,6 +56,7 @@ const NAV = [
   { section: 'War Room', items: [
     { label: 'War Room', icon: Shield, path: '/war-room' },
     { label: 'Overwatch Intelligence', icon: Brain, path: '/war-room/overwatch' },
+    { label: 'Bridge Stress Test', icon: Activity, path: '/war-room/bridge-test' },
     { label: 'Syncing', icon: Shield, path: '/war-room/syncing' },
     { label: 'Claiming', icon: Shield, path: '/war-room/claiming' },
     { label: 'Vector Output', icon: Shield, path: '/war-room/vectors' },

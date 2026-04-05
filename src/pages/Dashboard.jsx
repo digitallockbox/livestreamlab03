@@ -11,6 +11,7 @@ import OversightMomentum from '@/components/dashboard/OversightMomentum';
 import AegisSecurityStatus from '@/components/dashboard/AegisSecurityStatus';
 import StreamingTokenFlow from '@/components/dashboard/StreamingTokenFlow';
 import MockDataPanel from '@/components/dashboard/MockDataPanel';
+import TokenVelocity from '@/components/dashboard/TokenVelocity';
 
 const QUICK_ACTIONS = [
   { label: 'Go Live', icon: Radio, path: '/go-live', color: 'bg-red-500/20 text-red-400' },
@@ -76,9 +77,15 @@ export default function Dashboard() {
         <OversightMomentum viewerCount={viewerCount} engagementVelocity={engagementVelocity} topFans={topFans} />
       </div>
 
-      <div>
-        <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">$STREAMING Token Flow</h2>
-        <StreamingTokenFlow tokenSettlements={tokenSettlements} />
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div>
+          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">$STREAMING Token Flow</h2>
+          <StreamingTokenFlow tokenSettlements={tokenSettlements} />
+        </div>
+        <div>
+          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Token Velocity</h2>
+          <TokenVelocity tokenSettlements={tokenSettlements} realtimeTransaction={realtimeTransaction} />
+        </div>
       </div>
 
       {/* Quick Actions */}
