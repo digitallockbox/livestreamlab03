@@ -59,6 +59,8 @@ import AnalyticsOverview from '@/pages/analytics/AnalyticsOverview';
 // Admin & Founder
 import AdminConsole from '@/pages/admin/AdminConsole';
 import FounderDashboard from '@/pages/founder/FounderDashboard';
+import TridentLogin from '@/pages/TridentLogin';
+import TridentAdmin from '@/pages/TridentAdmin';
 
 // War Room
 import WarRoom from '@/pages/warroom/WarRoom';
@@ -105,6 +107,7 @@ const AuthenticatedApp = () => {
     <Routes>
       {/* Public */}
       <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<TridentLogin />} />
       <Route path="/onboarding" element={<CreatorOnboarding />} />
       <Route path="/stream/:id" element={<StreamPage />} />
       <Route path="/store/product/:id" element={<ProductPage />} />
@@ -157,6 +160,7 @@ const AuthenticatedApp = () => {
 
         {/* Admin & Founder */}
         <Route path="/admin" element={<AdminConsole />} />
+        <Route path="/trident/admin" element={<TridentAdmin />} />
         <Route path="/founder" element={<FounderDashboard />} />
         <Route path="/founder/dashboard" element={<FounderDashboard />} />
 

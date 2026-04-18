@@ -3,7 +3,7 @@ import { useState } from 'react';
 import {
   LayoutDashboard, Radio, Video, Mic2, ShoppingBag, Link2,
   BarChart3, Shield, ShieldCheck, Settings, Wallet, ChevronLeft, ChevronRight,
-  Zap, Bell, Menu, X, LogOut, User, Brain, Activity, Crown
+  Zap, Bell, Menu, X, LogOut, User, Brain, Activity, Crown, Cpu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ const NAV = [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { label: 'Admin Console', icon: ShieldCheck, path: '/admin' },
     { label: 'Founder Console', icon: Crown, path: '/founder' },
+    { label: 'Trident Admin', icon: Cpu, path: '/trident/admin' },
   ]},
   { section: 'CreatorVault', items: [
     { label: 'Overview', icon: Wallet, path: '/vault' },
