@@ -56,6 +56,10 @@ import AffiliateManager from '@/pages/affiliates/AffiliateManager';
 // Analytics
 import AnalyticsOverview from '@/pages/analytics/AnalyticsOverview';
 
+// Admin & Founder
+import AdminConsole from '@/pages/admin/AdminConsole';
+import FounderDashboard from '@/pages/founder/FounderDashboard';
+
 // War Room
 import WarRoom from '@/pages/warroom/WarRoom';
 import OverwatchDashboard from '@/pages/warroom/OverwatchDashboard';
@@ -150,6 +154,11 @@ const AuthenticatedApp = () => {
 
         {/* Analytics */}
         <Route path="/analytics" element={<AnalyticsOverview />} />
+
+        {/* Admin & Founder */}
+        <Route path="/admin" element={<AdminConsole />} />
+        <Route path="/founder" element={<FounderDashboard />} />
+        <Route path="/founder/dashboard" element={<FounderDashboard />} />
 
         {/* War Room */}
         <Route path="/war-room" element={<WarRoom />} />

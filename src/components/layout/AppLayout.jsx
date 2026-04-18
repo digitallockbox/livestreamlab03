@@ -2,8 +2,8 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import {
   LayoutDashboard, Radio, Video, Mic2, ShoppingBag, Link2,
-  BarChart3, Shield, Settings, Wallet, ChevronLeft, ChevronRight,
-  Zap, Bell, Menu, X, LogOut, User, Brain, Activity
+  BarChart3, Shield, ShieldCheck, Settings, Wallet, ChevronLeft, ChevronRight,
+  Zap, Bell, Menu, X, LogOut, User, Brain, Activity, Crown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,8 @@ import TridentStatus from '@/components/trident/TridentStatus';
 const NAV = [
   { section: 'Core', items: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    { label: 'Admin Console', icon: ShieldCheck, path: '/admin' },
+    { label: 'Founder Console', icon: Crown, path: '/founder' },
   ]},
   { section: 'CreatorVault', items: [
     { label: 'Overview', icon: Wallet, path: '/vault' },
