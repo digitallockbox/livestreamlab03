@@ -9,16 +9,7 @@
       "type": "string"
     },
     "category": {
-      "type": "string",
-      "enum": [
-        "tech",
-        "fashion",
-        "gaming",
-        "health",
-        "finance",
-        "other"
-      ],
-      "default": "other"
+      "type": "string"
     },
     "clicks": {
       "type": "number",
@@ -35,14 +26,6 @@
     "streaming_bonus": {
       "type": "number",
       "default": 0
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "active",
-        "paused"
-      ],
-      "default": "active"
     }
   },
   "required": [

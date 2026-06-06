@@ -16,10 +16,10 @@
       "type": "number",
       "default": 0
     },
-    "file_url": {
+    "image_url": {
       "type": "string"
     },
-    "thumbnail_url": {
+    "file_url": {
       "type": "string"
     },
     "status": {
@@ -39,15 +39,7 @@
       "default": 0
     },
     "category": {
-      "type": "string",
-      "enum": [
-        "digital",
-        "physical",
-        "course",
-        "membership",
-        "other"
-      ],
-      "default": "digital"
+      "type": "string"
     }
   },
   "required": [

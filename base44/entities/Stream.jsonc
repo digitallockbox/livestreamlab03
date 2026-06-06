@@ -3,7 +3,8 @@
   "type": "object",
   "properties": {
     "title": {
-      "type": "string"
+      "type": "string",
+      "description": "Stream title"
     },
     "category": {
       "type": "string",
@@ -16,11 +17,11 @@
         "sports",
         "tech",
         "other"
-      ],
-      "default": "other"
+      ]
     },
     "thumbnail_url": {
-      "type": "string"
+      "type": "string",
+      "description": "Thumbnail image URL"
     },
     "status": {
       "type": "string",

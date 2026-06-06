@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   Zap, Shield, Eye, EyeOff, Radio, Lock,
-  CheckCircle2, ArrowRight, Cpu, Globe
+  CheckCircle2, ArrowRight, Cpu, Globe, AlertTriangle
 } from 'lucide-react';
 
 const FEATURES = [
@@ -24,7 +24,40 @@ export default function TridentLogin() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [phantomLoading, setPhantomLoading] = useState(false);
+  const [phantomError, setPhantomError] = useState('');
   const navigate = useNavigate();
+
+  const connectPhantom = async () => {
+    try {
+      setPhantomError('');
+      setPhantomLoading(true);
+      
+      // Check if Phantom is installed
+      const provider = window.phantom?.solana;
+      if (!provider) {
+        setPhantomError('Phantom wallet not found. Install it at phantom.app');
+        setPhantomLoading(false);
+        return;
+      }
+
+      // Request connection
+      const response = await provider.connect();
+      const userPublicKey = response.publicKey.toString();
+      
+      // Simulate auth with wallet address
+      await new Promise(r => setTimeout(r, 800));
+      
+      // Store wallet address and proceed
+      localStorage.setItem('phantomWallet', userPublicKey);
+      navigate('/dashboard');
+    } catch (err) {
+      if (err.code !== 4001) {
+        setPhantomError(err.message || 'Failed to connect Phantom');
+      }
+      setPhantomLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -228,12 +261,34 @@ export default function TridentLogin() {
           </div>
 
           {/* SSO Buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            {['Continue with Google', 'Continue with Solana'].map(label => (
-              <Button key={label} variant="outline" className="h-10 text-xs gap-2 border-border" type="button">
-                <Lock className="w-3.5 h-3.5" /> {label}
-              </Button>
-            ))}
+          <div className="space-y-3">
+            <Button
+              onClick={connectPhantom}
+              disabled={phantomLoading}
+              className="w-full h-10 bg-purple-600 hover:bg-purple-700 text-white text-xs gap-2 font-semibold"
+              type="button"
+            >
+              {phantomLoading ? (
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11z" />
+                  </svg>
+                  Connect Phantom Wallet
+                </>
+              )}
+            </Button>
+            {phantomError && (
+              <p className="text-xs text-destructive flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" /> {phantomError}
+              </p>
+            )}
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+              <div className="relative flex justify-center text-xs text-muted-foreground bg-background px-3">or email</div>
+            </div>
           </div>
 
           {/* Toggle Mode */}

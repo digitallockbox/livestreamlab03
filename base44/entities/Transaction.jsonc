@@ -5,15 +5,14 @@
     "type": {
       "type": "string",
       "enum": [
-        "stream",
-        "store",
+        "stream_tip",
+        "store_sale",
         "affiliate",
-        "video",
-        "audio",
+        "video_unlock",
+        "audio_boost",
         "podcast",
         "payout"
-      ],
-      "default": "stream"
+      ]
     },
     "amount": {
       "type": "number",
@@ -35,10 +34,7 @@
       ],
       "default": "completed"
     },
-    "reference_id": {
-      "type": "string"
-    },
-    "cycle": {
+    "source": {
       "type": "string"
     }
   },
