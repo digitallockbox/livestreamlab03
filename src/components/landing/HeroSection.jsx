@@ -27,6 +27,11 @@ export default function HeroSection() {
       <div className="absolute bottom-1/4 right-1/5 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px]" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[180px]" />
 
+      {/* Banner */}
+      <div className="relative z-10 max-w-6xl mx-auto px-6 mb-8">
+        <img src="https://media.base44.com/images/public/69d070a8ef568ebbd93e386a/ebe43dac1_FB_IMG_1779727679444.jpg" alt="LiveStreamLab.live Banner" className="w-full rounded-2xl object-cover shadow-2xl" />
+      </div>
+
       <div className="relative z-10 max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center py-16">
         {/* Left — copy */}
         <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>

@@ -26,9 +26,7 @@ export default function LandingNav() {
       <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/30">
-            <Radio className="w-4 h-4 text-white" />
-          </div>
+          <img src="https://media.base44.com/images/public/69d070a8ef568ebbd93e386a/d080e7767_copilot_image_1775491380461.jpg" alt="LiveStreamLab" className="w-9 h-9 object-contain" />
           <div>
             <span className="font-display font-bold text-base text-foreground tracking-tight">LiveStreamLab</span>
             <span className="text-primary text-xs font-bold">.live</span>
