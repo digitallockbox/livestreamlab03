@@ -2,9 +2,9 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import {
   LayoutDashboard, Radio, Video, Mic2, ShoppingBag, Link2,
-  BarChart3, Shield, ShieldCheck, Settings, Wallet, ChevronLeft, ChevronRight,
-  Zap, Bell, Menu, X, LogOut, User, Brain, Activity, Crown, Cpu,
-  Globe, DollarSign, GitFork, Play, Terminal, Mail
+  BarChart3, Settings, Wallet, ChevronLeft, ChevronRight,
+  Zap, Bell, Menu, LogOut, User, Plus, Package, Receipt, PieChart,
+  TrendingUp, Upload, Palette, Shield, Mail, MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,80 +12,59 @@ import { base44 } from '@/api/base44Client';
 import TridentStatus from '@/components/trident/TridentStatus';
 
 const NAV = [
-  { section: 'Core', items: [
-    { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { label: 'Explore', icon: Globe, path: '/explore' },
-    { label: 'Earnings', icon: DollarSign, path: '/earnings' },
-    { label: 'Auto-Splits', icon: GitFork, path: '/autosplits' },
-    { label: '$STREAMING Wallet', icon: Zap, path: '/wallet/streaming-token' },
-  ]},
-  { section: 'Admin & Founder', items: [
-    { label: 'Block Explorer', icon: Activity, path: '/explorer' },
-    { label: 'Email OS', icon: Mail, path: '/email-os' },
-    { label: 'Domain Registry', icon: Globe, path: '/domains' },
-    { label: 'Admin Console', icon: ShieldCheck, path: '/admin' },
-    { label: 'Founder Console', icon: Crown, path: '/founder' },
-    { label: 'Trident Admin', icon: Cpu, path: '/trident/admin' },
-    { label: 'Engine Control', icon: Play, path: '/engine' },
-    { label: 'Kernel Logs', icon: Terminal, path: '/logs' },
-  ]},
-  { section: 'CreatorVault', items: [
-    { label: 'Overview', icon: Wallet, path: '/vault' },
-    { label: 'Transactions', icon: Zap, path: '/vault/transactions' },
-    { label: 'Payout History', icon: BarChart3, path: '/vault/payouts' },
-    { label: 'Team Splits', icon: Shield, path: '/vault/team' },
+  { section: 'Dashboard', items: [
+    { label: 'Overview', icon: LayoutDashboard, path: '/dashboard' },
+    { label: 'Analytics', icon: BarChart3, path: '/analytics' },
+    { label: 'Notifications', icon: Bell, path: '/dashboard' },
   ]},
   { section: 'Streaming', items: [
     { label: 'Go Live', icon: Radio, path: '/go-live' },
-    { label: 'Stream Analytics', icon: BarChart3, path: '/stream-analytics' },
-    { label: '$STREAMING Token', icon: Zap, path: '/streaming/token' },
+    { label: 'Streams Hub', icon: Radio, path: '/streaming/console' },
+    { label: 'Stream Analytics', icon: TrendingUp, path: '/stream-analytics' },
+    { label: 'Past Streams', icon: Video, path: '/streaming/console' },
   ]},
   { section: 'Video', items: [
-    { label: 'Upload Video', icon: Video, path: '/upload-video' },
+    { label: 'Upload Video', icon: Upload, path: '/upload-video' },
     { label: 'Video Library', icon: Video, path: '/videos' },
-    { label: 'Video Manager', icon: Video, path: '/videos/manager' },
+    { label: 'Video Manager', icon: Settings, path: '/videos/manager' },
     { label: 'Video Analytics', icon: BarChart3, path: '/video-analytics' },
   ]},
   { section: 'Audio / Podcast', items: [
     { label: 'Upload Audio', icon: Mic2, path: '/upload-audio' },
     { label: 'Podcast Library', icon: Mic2, path: '/podcasts' },
-    { label: 'Podcast Manager', icon: Mic2, path: '/podcasts/manager' },
+    { label: 'Podcast Manager', icon: Settings, path: '/podcasts/manager' },
     { label: 'Podcast Analytics', icon: BarChart3, path: '/podcast-analytics' },
   ]},
   { section: 'Store', items: [
     { label: 'Store Dashboard', icon: ShoppingBag, path: '/store' },
-    { label: 'Add Product', icon: ShoppingBag, path: '/store/add' },
-    { label: 'Products', icon: ShoppingBag, path: '/store/products' },
+    { label: 'Add Product', icon: Plus, path: '/store/add' },
+    { label: 'Products', icon: Package, path: '/store/products' },
+    { label: 'Orders', icon: Receipt, path: '/store' },
   ]},
   { section: 'Affiliates', items: [
     { label: 'Affiliate Dashboard', icon: Link2, path: '/affiliates' },
-    { label: 'Add Link', icon: Link2, path: '/affiliates/add' },
+    { label: 'Add Link', icon: Plus, path: '/affiliates/add' },
     { label: 'Link List', icon: Link2, path: '/affiliates/links' },
-    { label: 'Affiliate Manager', icon: Link2, path: '/affiliates/manager' },
-    { label: 'Affiliate Analytics', icon: BarChart3, path: '/affiliates/analytics' },
+    { label: 'Affiliate Manager', icon: Settings, path: '/affiliates/manager' },
+    { label: 'Affiliate Analytics', icon: BarChart3, path: '/affiliates' },
   ]},
-  { section: 'Intelligence', items: [
-    { label: 'Analytics Overview', icon: BarChart3, path: '/analytics' },
-    { label: 'Cycle Analytics', icon: BarChart3, path: '/analytics/cycles' },
+  { section: 'Vault', items: [
+    { label: 'Creator Wallet', icon: Wallet, path: '/vault' },
+    { label: 'Transactions', icon: Receipt, path: '/vault/transactions' },
+    { label: 'Payout History', icon: BarChart3, path: '/vault/payouts' },
+    { label: 'Team Splits', icon: PieChart, path: '/vault/team' },
   ]},
-  { section: 'War Room', items: [
-    { label: 'War Room', icon: Shield, path: '/war-room' },
-    { label: 'Overwatch Intelligence', icon: Brain, path: '/war-room/overwatch' },
-    { label: 'Bridge Stress Test', icon: Activity, path: '/war-room/bridge-test' },
-    { label: 'Syncing', icon: Shield, path: '/war-room/syncing' },
-    { label: 'Claiming', icon: Shield, path: '/war-room/claiming' },
-    { label: 'Vector Output', icon: Shield, path: '/war-room/vectors' },
-    { label: 'Cycle Visibility', icon: Shield, path: '/war-room/cycles' },
-  ]},
-  { section: 'Viewer', items: [
-    { label: 'My Profile', icon: User, path: '/viewer/profile' },
+  { section: 'Community', items: [
+    { label: 'Comments', icon: MessageSquare, path: '/dashboard' },
+    { label: 'Messages', icon: Mail, path: '/dashboard' },
+    { label: 'Followers', icon: User, path: '/dashboard' },
   ]},
   { section: 'Settings', items: [
-    { label: 'Profile', icon: Settings, path: '/settings/profile' },
-    { label: 'Channel Branding', icon: Settings, path: '/settings/branding' },
-    { label: 'Security', icon: Settings, path: '/settings/security' },
-    { label: 'Notifications', icon: Settings, path: '/settings/notifications' },
-    { label: 'Connected Accounts', icon: Settings, path: '/settings/connected' },
+    { label: 'Profile', icon: User, path: '/settings/profile' },
+    { label: 'Channel Branding', icon: Palette, path: '/settings/branding' },
+    { label: 'Security', icon: Shield, path: '/settings/security' },
+    { label: 'Notifications', icon: Bell, path: '/settings/notifications' },
+    { label: 'Connected Accounts', icon: Link2, path: '/settings/connected' },
   ]},
 ];
 

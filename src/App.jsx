@@ -55,14 +55,8 @@ import AffiliateManager from '@/pages/affiliates/AffiliateManager';
 // Analytics
 import AnalyticsOverview from '@/pages/analytics/AnalyticsOverview';
 
-// Admin & Founder
-import AdminConsole from '@/pages/admin/AdminConsole';
-import FounderDashboard from '@/pages/founder/FounderDashboard';
+// Auth
 import TridentLogin from '@/pages/TridentLogin';
-import TridentAdmin from '@/pages/TridentAdmin';
-import Engine from '@/pages/founder/Engine';
-import KernelLogs from '@/pages/founder/KernelLogs';
-
 
 // Creator
 import Earnings from '@/pages/Earnings';
@@ -73,13 +67,7 @@ import UserProfile from '@/pages/public/UserProfile';
 // Wallet
 import StreamingWalletPage from '@/pages/wallet/StreamingWalletPage';
 
-// War Room
-import WarRoom from '@/pages/warroom/WarRoom';
-import OverwatchDashboard from '@/pages/warroom/OverwatchDashboard';
-import BridgeStressTest from '@/pages/warroom/BridgeStressTest';
 
-// Token
-import StreamingToken from '@/pages/streaming/StreamingToken';
 
 // API Docs
 import ApiDocs from '@/pages/ApiDocs';
@@ -160,6 +148,9 @@ const AuthenticatedApp = () => {
 
         {/* Analytics */}
         <Route path="/analytics" element={<AnalyticsOverview />} />
+        <Route path="/analytics/creator" element={<AnalyticsOverview />} />
+        <Route path="/analytics/audience" element={<AnalyticsOverview />} />
+        <Route path="/analytics/revenue" element={<AnalyticsOverview />} />
 
         {/* Creator */}
         <Route path="/earnings" element={<Earnings />} />
@@ -168,32 +159,14 @@ const AuthenticatedApp = () => {
         {/* Wallet */}
         <Route path="/wallet/streaming-token" element={<StreamingWalletPage />} />
 
-        {/* Admin & Founder */}
-        <Route path="/admin" element={<AdminConsole />} />
-        <Route path="/trident/admin" element={<TridentAdmin />} />
-        <Route path="/founder" element={<FounderDashboard />} />
-        <Route path="/founder/dashboard" element={<FounderDashboard />} />
-        <Route path="/engine" element={<Engine />} />
-        <Route path="/logs" element={<KernelLogs />} />
 
-        {/* War Room */}
-        <Route path="/war-room" element={<WarRoom />} />
-        <Route path="/war-room/overwatch" element={<OverwatchDashboard />} />
-        <Route path="/war-room/bridge-test" element={<BridgeStressTest />} />
-        <Route path="/streaming/token" element={<StreamingToken />} />
 
         {/* Settings */}
-        <Route path="/viewer/profile" element={<ViewerProfilePage />} />
-
         <Route path="/settings/profile" element={<ProfileSettings />} />
         <Route path="/settings/branding" element={<BrandingSettings />} />
         <Route path="/settings/security" element={<SecuritySettings />} />
         <Route path="/settings/notifications" element={<NotificationSettings />} />
         <Route path="/settings/connected" element={<ConnectedAccounts />} />
-        <Route path="/api-docs" element={<ApiDocs />} />
-        <Route path="/explorer" element={<BlockExplorer />} />
-        <Route path="/email-os" element={<EmailOS />} />
-        <Route path="/domains" element={<DomainRegistry />} />
 
       </Route>
 
