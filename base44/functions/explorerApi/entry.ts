@@ -56,8 +56,8 @@ Deno.serve(async (req) => {
     const path = url.pathname;
     const segments = path.split('/').filter(Boolean);
     
-    // GET /explorer/blocks
-    if (path === '/explorer/blocks') {
+    // GET /blocks
+    if (path === '/blocks' || path === '/explorer/blocks') {
       const { blocks } = generateSampleData();
       return new Response(JSON.stringify({
         success: true,
@@ -68,9 +68,9 @@ Deno.serve(async (req) => {
       });
     }
     
-    // GET /explorer/block/:id
-    if (path.match(/^\/explorer\/block\/(.+)$/)) {
-      const id = segments[2];
+    // GET /block/:id
+    if (path.match(/^\/(explorer\/)?block\/(.+)$/)) {
+      const id = segments[path.includes('/explorer/') ? 2 : 1];
       const { blocks, transactions } = generateSampleData();
       let block;
       
@@ -99,9 +99,9 @@ Deno.serve(async (req) => {
       });
     }
     
-    // GET /explorer/address/:address
-    if (path.match(/^\/explorer\/address\/(.+)$/)) {
-      const address = decodeURIComponent(segments[2]);
+    // GET /address/:address
+    if (path.match(/^\/(explorer\/)?address\/(.+)$/)) {
+      const address = decodeURIComponent(segments[path.includes('/explorer/') ? 2 : 1]);
       const { transactions } = generateSampleData();
       
       const addrTxs = transactions.filter(tx => 
@@ -126,8 +126,8 @@ Deno.serve(async (req) => {
       });
     }
     
-    // GET /explorer/stats
-    if (path === '/explorer/stats') {
+    // GET /stats
+    if (path === '/stats' || path === '/explorer/stats') {
       const { blocks, transactions } = generateSampleData();
       const latestBlock = blocks[blocks.length - 1];
       
@@ -145,9 +145,9 @@ Deno.serve(async (req) => {
       });
     }
     
-    // GET /explorer/transaction/:hash
-    if (path.match(/^\/explorer\/transaction\/(.+)$/)) {
-      const hash = segments[2];
+    // GET /transaction/:hash
+    if (path.match(/^\/(explorer\/)?transaction\/(.+)$/)) {
+      const hash = segments[path.includes('/explorer/') ? 2 : 1];
       const { transactions } = generateSampleData();
       const tx = transactions.find(t => t.hash === hash);
       
