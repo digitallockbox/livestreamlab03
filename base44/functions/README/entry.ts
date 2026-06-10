@@ -1,119 +1,171 @@
-# TridentOS Express Backend
+# LiveStreamLab Backend OS - Session Isolation Architecture
 
-Isolated session architecture with separate creator and admin authentication guards.
+## 🔒 Security Overview
 
-## Architecture
+This backend implements **isolated session architecture** with hard security boundaries between creator and admin access at the API level.
 
-- **Creator Session**: 7-day JWT, scoped to `/api/creator/*` routes
-- **Admin Session**: 1-day JWT, scoped to `/api/admin/*` routes (founder/admin roles only)
+## Session Types
 
-## Setup
+| Session Type | Duration | JWT Secret | Cookie Name | Access Paths |
+|-------------|----------|------------|-------------|--------------|
+| **Creator** | 7 days | `CREATOR_JWT_SECRET` | `creator_session` | `/api/creator/*` |
+| **Admin** | 1 day | `ADMIN_JWT_SECRET` | `admin_session` | `/api/admin/*` |
 
-### 1. Install Dependencies
+## File Structure
 
-```bash
-npm install express cookie-parser cors jsonwebtoken
+```
+backend/
+├── middleware/
+│   └── authGuards.js          # requireCreator, requireAdmin guards
+├── routes/
+│   ├── authRoutes.js          # Isolated login/logout/validate endpoints
+│   ├── creatorApi.js          # Creator-facing API routes
+│   └── adminApi.js            # Admin/Founder API routes
+├── services/
+│   ├── AuthService.js         # authenticateCreatorUser, authenticateAdminUser
+│   └── SessionService.js      # generateJWT, verifySession
+├── server.js                  # Main Express application
+└── .env                       # Environment variables (JWT secrets)
 ```
 
-### 2. Set Environment Variables
+## Authentication Flow
+
+### Creator Login
+```
+POST /auth/creator/login
+Body: { email, password }
+→ authenticateCreatorUser()
+→ generateJWT(creator, CREATOR_JWT_SECRET, '7d')
+→ Set cookie: creator_session
+→ Response: { success: true, redirect: '/creator/dashboard' }
+```
+
+### Admin Login
+```
+POST /auth/admin/login
+Body: { email, password }
+→ authenticateAdminUser()
+→ generateJWT(admin, ADMIN_JWT_SECRET, '1d')
+→ Set cookie: admin_session
+→ Response: { success: true, redirect: '/admin/dashboard' }
+```
+
+### Protected Route Access
+```
+GET /api/creator/analytics
+Headers: Cookie: creator_session=eyJ...
+→ requireCreator middleware
+→ verifySession(token, CREATOR_JWT_SECRET)
+→ req.creator = decoded
+→ Next: creatorApiRoutes
+```
+
+## Environment Variables
+
+Required secrets (set in `.env`):
 
 ```bash
-# Required Secrets
-CREATOR_JWT_SECRET=your-super-secret-creator-key-change-in-production
-ADMIN_JWT_SECRET=your-super-secret-admin-key-change-in-production
+# JWT Secrets (MUST be different for security isolation)
+CREATOR_JWT_SECRET=your-super-secret-creator-key-min-32-chars
+ADMIN_JWT_SECRET=your-super-secret-admin-key-min-32-chars
+
+# Server Config
 NODE_ENV=production
-FRONTEND_URL=https://your-app.base44.app
 PORT=5000
+FRONTEND_URL=https://your-base44-app.base44.app
+
+# Database
+DATABASE_URL=your-database-connection-string
 ```
-
-### 3. Run Server
-
-```bash
-node server.js
-```
-
-## API Endpoints
-
-### Authentication (Public)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/creator/login` | Creator login, issues `creator_session` cookie |
-| POST | `/auth/admin/login` | Admin login, issues `admin_session` cookie |
-| POST | `/auth/creator/logout` | Clear creator session |
-| POST | `/auth/admin/logout` | Clear admin session |
-| GET | `/auth/creator/validate` | Validate creator session |
-| GET | `/auth/admin/validate` | Validate admin session |
-
-### Creator API (Protected)
-
-All endpoints require valid `creator_session` cookie or `x-creator-session` header.
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/creator/dashboard` | Creator dashboard data |
-| GET | `/api/creator/wallet/balance` | Wallet balances |
-| GET | `/api/creator/content/streams` | Creator's streams |
-| GET | `/api/creator/content/videos` | Creator's videos |
-| GET | `/api/creator/content/podcasts` | Creator's podcasts |
-| GET | `/api/creator/store/products` | Creator's products |
-| GET | `/api/creator/affiliates/links` | Creator's affiliate links |
-
-### Admin API (Protected)
-
-All endpoints require valid `admin_session` cookie or `x-admin-session` header.
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/admin/dashboard` | Admin dashboard data |
-| GET | `/api/admin/overwatch/status` | System status overview |
-| GET | `/api/admin/ledger/transactions` | Transaction ledger |
-| POST | `/api/admin/ledger/process-payout` | Process creator payout |
-| GET | `/api/admin/engine/status` | Engine health status |
-| POST | `/api/admin/engine/restart` | Restart engines (founder only) |
-| GET | `/api/admin/users` | List all users |
-| GET | `/api/admin/creators` | List all creators |
 
 ## Security Features
 
-1. **Isolated Sessions**: Creator and admin sessions use different JWT secrets and cookie names
-2. **Role Verification**: Admin routes explicitly check for 'founder' or 'admin' roles
-3. **Shorter Admin Token**: Admin tokens expire in 1 day vs 7 days for creators
-4. **HTTP-Only Cookies**: Prevents XSS token theft
-5. **SameSite Strict**: Prevents CSRF attacks
-6. **Secure in Production**: Cookies only sent over HTTPS in production
+1. **HTTP-Only Cookies** - Prevents XSS token theft
+2. **SameSite Strict** - Prevents CSRF attacks
+3. **Secure Flag** - Cookies only sent over HTTPS in production
+4. **Different JWT Secrets** - Compromise of one doesn't affect the other
+5. **Shorter Admin Tokens** - 1 day vs 7 days reduces admin token abuse window
+6. **Explicit Role Checks** - Admin ≠ Founder for critical operations
+7. **Path-Based Isolation** - Creator routes cannot access admin endpoints
 
-## Frontend Integration Example
+## API Endpoints
 
-```javascript
-// Login
-const login = async (email, password, type) => {
-  const res = await fetch(`/auth/${type}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // Important for cookies
-    body: JSON.stringify({ email, password })
-  });
-  const data = await res.json();
-  if (data.success) {
-    window.location.href = data.redirect;
-  }
-};
+### Public Auth
+- `POST /auth/creator/login` - Creator login
+- `POST /auth/admin/login` - Admin/Founder login
+- `POST /auth/creator/logout` - Clear creator session
+- `POST /auth/admin/logout` - Clear admin session
+- `GET /auth/creator/validate` - Validate creator session
+- `GET /auth/admin/validate` - Validate admin session
 
-// API Call (cookies sent automatically with credentials: 'include')
-const fetchCreatorData = async () => {
-  const res = await fetch('/api/creator/dashboard', {
-    credentials: 'include'
-  });
-  return await res.json();
-};
+### Creator API (Protected)
+- `/api/creator/analytics`
+- `/api/creator/profile`
+- `/api/creator/earnings`
+- `/api/creator/wallet/*`
+- `/api/creator/streaming/*`
+- `/api/creator/content/*`
+- `/api/creator/store/*`
+- `/api/creator/affiliates/*`
+
+### Admin API (Protected)
+- `/api/admin/overwatch/*`
+- `/api/admin/ledger/*`
+- `/api/admin/engine/*`
+- `/api/admin/founder/*`
+- `/api/admin/users/*`
+- `/api/admin/payouts/*`
+- `/api/admin/moderation/*`
+
+## Error Responses
+
+| Status | Meaning |
+|--------|---------|
+| 401 | Missing or expired session cookie |
+| 403 | Invalid token or insufficient privileges |
+| 500 | Server error |
+
+## Testing
+
+```bash
+# Test creator login
+curl -X POST http://localhost:5000/auth/creator/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"creator@example.com","password":"password"}' \
+  -c cookies.txt
+
+# Test protected creator route
+curl http://localhost:5000/api/creator/analytics \
+  -b cookies.txt
+
+# Test admin login
+curl -X POST http://localhost:5000/auth/admin/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"password"}' \
+  -c admin-cookies.txt
+
+# Test protected admin route
+curl http://localhost:5000/api/admin/overwatch \
+  -b admin-cookies.txt
 ```
 
-## Production Deployment
+## Production Checklist
 
-1. Set strong, unique JWT secrets in environment variables
-2. Enable HTTPS for secure cookie transmission
-3. Configure CORS with specific frontend origins
-4. Monitor failed authentication attempts
-5. Implement rate limiting on auth endpoints
-6. Add database integration for actual user authentication
+- [ ] Set strong, unique `CREATOR_JWT_SECRET` (min 32 chars)
+- [ ] Set strong, unique `ADMIN_JWT_SECRET` (min 32 chars)
+- [ ] Enable HTTPS for secure cookies
+- [ ] Configure CORS with specific origins
+- [ ] Implement rate limiting on auth endpoints
+- [ ] Set up monitoring for failed auth attempts
+- [ ] Regular secret rotation schedule
+- [ ] Audit log for admin/founder operations
+- [ ] Database session backup (optional)
+
+## Related Files
+
+- `middleware/authGuards.js` - Session validation guards
+- `routes/authRoutes.js` - Authentication endpoints
+- `services/AuthService.js` - User authentication logic
+- `services/SessionService.js` - JWT generation/verification
+- `routes/creatorApi.js` - Creator API routes
+- `routes/adminApi.js` - Admin API routes
