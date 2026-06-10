@@ -1,19 +1,9 @@
-import { useState } from 'react';
-import { Download, Filter } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Download, Filter, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import PageHeader from '@/components/ui/PageHeader';
-
-const ALL_TXS = [
-  { id: 1, type: 'stream', desc: 'Live Stream Tips — Late Night Q&A', amount: 320, streaming: 960, date: '2026-04-03', status: 'completed' },
-  { id: 2, type: 'store', desc: 'Creator Starter Kit — Sale', amount: 29, streaming: 0, date: '2026-04-03', status: 'completed' },
-  { id: 3, type: 'affiliate', desc: 'TechGear Pro — Commission', amount: 44, streaming: 130, date: '2026-04-02', status: 'completed' },
-  { id: 4, type: 'video', desc: 'Premium Video Unlock — Mindset Masterclass', amount: 15, streaming: 450, date: '2026-04-02', status: 'completed' },
-  { id: 5, type: 'podcast', desc: 'Podcast Boost — Episode 42', amount: 8, streaming: 240, date: '2026-04-01', status: 'completed' },
-  { id: 6, type: 'audio', desc: 'Audio Content Subscription', amount: 12, streaming: 360, date: '2026-04-01', status: 'completed' },
-  { id: 7, type: 'stream', desc: 'Live Stream Tips — Gaming Marathon', amount: 890, streaming: 2670, date: '2026-03-30', status: 'completed' },
-  { id: 8, type: 'payout', desc: 'March Cycle Payout', amount: -4200, streaming: 0, date: '2026-03-31', status: 'completed' },
-];
+import { creatorWalletApi } from '@/lib/creatorApi';
 
 const TYPE_COLORS = {
   stream: 'bg-red-500/20 text-red-400',
@@ -29,7 +19,31 @@ const FILTERS = ['all', 'stream', 'store', 'affiliate', 'video', 'audio', 'podca
 
 export default function VaultTransactions() {
   const [filter, setFilter] = useState('all');
-  const filtered = filter === 'all' ? ALL_TXS : ALL_TXS.filter(t => t.type === filter);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await creatorWalletApi.transactions();
+        setTransactions(data || []);
+      } catch (err) {
+        console.error('Transactions load error:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const filtered = filter === 'all' ? transactions : transactions.filter(t => t.type === filter);
+
+  if (loading) {
+    return (
+      <div className="p-6 md:p-8 flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 space-y-6">
@@ -62,18 +76,22 @@ export default function VaultTransactions() {
               <th className="py-3 px-4 font-medium">Status</th>
             </tr></thead>
             <tbody className="divide-y divide-border/50">
-              {filtered.map(({ id, type, desc, amount, streaming, date, status }) => (
-                <tr key={id} className="hover:bg-muted/20 transition-colors">
-                  <td className="py-3 px-4 font-medium">{desc}</td>
-                  <td className="py-3 px-4"><Badge className={`${TYPE_COLORS[type]} capitalize`}>{type}</Badge></td>
-                  <td className={`py-3 px-4 font-semibold ${amount < 0 ? 'text-destructive' : 'text-accent'}`}>
-                    {amount < 0 ? '-' : '+'}${Math.abs(amount)}
-                  </td>
-                  <td className="py-3 px-4 text-primary">{streaming > 0 ? `+${streaming}` : '—'}</td>
-                  <td className="py-3 px-4 text-muted-foreground">{date}</td>
-                  <td className="py-3 px-4"><Badge className="bg-accent/15 text-accent border-accent/30 capitalize">{status}</Badge></td>
-                </tr>
-              ))}
+              {filtered.length === 0 ? (
+                <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">No transactions found</td></tr>
+              ) : (
+                filtered.map(({ id, type, description, amount, streaming, date, status }) => (
+                  <tr key={id} className="hover:bg-muted/20 transition-colors">
+                    <td className="py-3 px-4 font-medium">{description}</td>
+                    <td className="py-3 px-4"><Badge className={`${TYPE_COLORS[type]} capitalize`}>{type}</Badge></td>
+                    <td className={`py-3 px-4 font-semibold ${amount < 0 ? 'text-destructive' : 'text-accent'}`}>
+                      {amount < 0 ? '-' : '+'}${Math.abs(amount)}
+                    </td>
+                    <td className="py-3 px-4 text-primary">{streaming > 0 ? `+${streaming}` : '—'}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{new Date(date).toLocaleDateString()}</td>
+                    <td className="py-3 px-4"><Badge className="bg-accent/15 text-accent border-accent/30 capitalize">{status}</Badge></td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

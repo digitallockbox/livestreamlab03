@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { Plus, Trash2, UserPlus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Trash2, UserPlus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageHeader from '@/components/ui/PageHeader';
+import { creatorDashboardApi } from '@/lib/creatorApi';
 
 const INITIAL = [
   { id: 1, name: 'You', email: 'you@example.com', role: 'owner', split: 70, status: 'active' },
