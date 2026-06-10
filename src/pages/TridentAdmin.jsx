@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { base44 } from '@/api/base44Client';
 import {
   Shield, Cpu, Zap, Activity, Server, Database, Globe,
   Lock, CheckCircle2, AlertTriangle, XCircle, RefreshCw,
@@ -55,16 +56,24 @@ const FEATURE_FLAGS = [
 
 const TABS = ['Node Status', 'Live Events', 'Latency Monitor', 'Feature Flags'];
 
+const PLATFORM_CONFIG = {
+  domain: 'livestreamlab.live',
+  adminEmail: 'Livestreamlab@livestreamlab.live',
+  apiBase: 'https://api.livestreamlab.live'
+};
+
 export default function TridentAdmin() {
   const [activeTab, setActiveTab] = useState('Node Status');
   const [flags, setFlags] = useState(FEATURE_FLAGS);
   const [events, setEvents] = useState(LIVE_EVENTS);
   const [latencyData, setLatencyData] = useState(LATENCY_DATA);
   const [liveMonitor, setLiveMonitor] = useState(true);
-  const [adminKey, setAdminKey] = useState('');
+  const [email, setEmail] = useState(PLATFORM_CONFIG.adminEmail);
+  const [password, setPassword] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
-  const [showKey, setShowKey] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Simulate live event ticker
   useEffect(() => {
@@ -109,13 +118,33 @@ export default function TridentAdmin() {
     setFlags(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
   };
 
-  const handleAuth = (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault();
-    if (adminKey === 'TRIDENT-ADMIN' || adminKey === 'trident') {
-      setAuthenticated(true);
-      setAuthError('');
-    } else {
-      setAuthError('Invalid Trident admin key. Try: TRIDENT-ADMIN');
+    setLoading(true);
+    setAuthError('');
+
+    try {
+      // Enforce admin email lock
+      if (email.toLowerCase() !== PLATFORM_CONFIG.adminEmail.toLowerCase()) {
+        throw new Error('Admin access restricted to platform owner');
+      }
+
+      const response = await base44.functions.invoke('tridentProxy', {
+        method: 'POST',
+        path: '/auth/admin/login',
+        body: { email: email.toLowerCase(), password },
+      });
+
+      if (response.data.success) {
+        sessionStorage.setItem('admin_session', response.data.user.sessionToken || 'authenticated');
+        setAuthenticated(true);
+      } else {
+        throw new Error(response.data.error || 'Authentication failed');
+      }
+    } catch (err) {
+      setAuthError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -141,7 +170,7 @@ export default function TridentAdmin() {
     return 'text-muted-foreground';
   };
 
-  // Auth Gate
+  // Auth Gate - Domain & Email Locked
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -161,31 +190,49 @@ export default function TridentAdmin() {
                 <Shield className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <h1 className="font-display text-2xl font-bold text-foreground">Trident Admin</h1>
-                <p className="text-muted-foreground text-sm mt-1">Enter your admin key to access the Trident OS console.</p>
+                <h1 className="font-display text-2xl font-bold text-foreground">TRIDENT ADMIN</h1>
+                <p className="text-muted-foreground text-sm mt-1">Platform Owner Authentication</p>
+                <p className="text-xs text-muted-foreground mt-1 font-mono">{PLATFORM_CONFIG.domain}</p>
               </div>
               <Badge className="bg-primary/10 text-primary border-primary/20 font-mono text-xs gap-1">
-                <Cpu className="w-3 h-3" /> Trident OS — Restricted Zone
+                <Cpu className="w-3 h-3" /> Restricted Access
               </Badge>
             </div>
 
             <form onSubmit={handleAuth} className="space-y-4">
               <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
+                  Admin Email
+                </label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={PLATFORM_CONFIG.adminEmail}
+                  className="bg-muted/50"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
+                  Password
+                </label>
                 <div className="relative">
                   <Input
-                    type={showKey ? 'text' : 'password'}
-                    value={adminKey}
-                    onChange={e => setAdminKey(e.target.value)}
-                    placeholder="Enter admin key..."
-                    className="bg-secondary border-border h-11 font-mono pr-11"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter admin password"
+                    className="bg-secondary border-border h-11 pr-11"
                     required
                   />
                   <button
                     type="button"
-                    onClick={() => setShowKey(!showKey)}
+                    onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
                   >
-                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
                 {authError && (
@@ -194,14 +241,19 @@ export default function TridentAdmin() {
                   </p>
                 )}
               </div>
-              <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary/90 gap-2 font-semibold">
-                <Lock className="w-4 h-4" /> Authenticate
+
+              <Button 
+                type="submit" 
+                className="w-full h-11 bg-primary hover:bg-primary/90 gap-2 font-semibold"
+                disabled={loading}
+              >
+                <Lock className="w-4 h-4" /> {loading ? 'Authenticating...' : 'Login to Admin Console'}
               </Button>
             </form>
 
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground border-t border-border pt-4">
               <Lock className="w-3 h-3" />
-              <span>AES-256 encrypted · Trident OS v2.4.1</span>
+              <span>Domain-locked session · {PLATFORM_CONFIG.adminEmail}</span>
             </div>
           </div>
         </motion.div>
@@ -219,21 +271,27 @@ export default function TridentAdmin() {
               <Shield className="w-4 h-4 text-white" />
             </div>
             <div>
-              <span className="font-display font-bold text-foreground text-sm">Trident OS Admin</span>
+              <span className="font-display font-bold text-foreground text-sm">TRIDENT ADMIN</span>
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse inline-block" />
-                <span className="text-xs text-muted-foreground font-mono">All systems nominal</span>
+                <span className="text-xs text-muted-foreground font-mono">{PLATFORM_CONFIG.domain}</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Badge className="bg-primary/10 text-primary border-primary/20 font-mono text-xs">
+              {PLATFORM_CONFIG.domain}
+            </Badge>
             <Badge className="bg-accent/10 text-accent border-accent/20 font-mono text-xs gap-1">
-              <Cpu className="w-3 h-3" /> v2.4.1
+              <Shield className="w-3 h-3" /> Admin: {PLATFORM_CONFIG.adminEmail}
             </Badge>
             <Button variant="outline" size="sm" className="gap-2 text-xs">
               <Download className="w-3.5 h-3.5" /> Export Logs
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setAuthenticated(false)} className="text-muted-foreground text-xs gap-1.5">
+            <Button size="sm" variant="ghost" onClick={() => {
+              sessionStorage.removeItem('admin_session');
+              setAuthenticated(false);
+            }} className="text-muted-foreground text-xs gap-1.5">
               <Lock className="w-3.5 h-3.5" /> Lock
             </Button>
           </div>

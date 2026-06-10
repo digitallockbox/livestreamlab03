@@ -10,7 +10,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import jwt from 'npm:jsonwebtoken@9.0.2';
 
-const TRIDENT_BASE = "https://api.tridentsystem.live";
+const TRIDENT_BASE = "https://api.livestreamlab.live"; // Production domain
 
 // Session type definitions
 const CREATOR_PATHS = ['/creator/', '/wallet/', '/content/', '/store/', '/affiliates/', '/dashboard'];
@@ -98,6 +98,14 @@ Deno.serve(async (req) => {
       
       // Additional founder-only path check
       if (FOUNDER_ONLY_PATHS.some(p => path.startsWith(p) || path === p)) {
+        // Enforce admin email lock - only Livestreamlab@livestreamlab.live
+        if (validation.user.email !== 'livestreamlab@livestreamlab.live') {
+          return Response.json({ 
+            success: false, 
+            error: 'Admin access restricted to platform owner' 
+          }, { status: 403 });
+        }
+
         if (validation.user.role !== 'founder') {
           return Response.json({ 
             success: false, 
@@ -118,11 +126,12 @@ Deno.serve(async (req) => {
       req.creator = validation.user;
     }
 
-    // Build headers with session context
+    // Build headers with session context and domain lock
     const headers = { 
       "X-Session-Type": requiredSession,
       "X-User-ID": user.id,
-      "X-User-Email": user.email
+      "X-User-Email": user.email,
+      "X-Domain": "livestreamlab.live"
     };
     
     // Don't set Content-Type for FormData - browser will set it with boundary
@@ -134,6 +143,7 @@ Deno.serve(async (req) => {
     if (req.admin) {
       headers["X-Admin-ID"] = req.admin.id;
       headers["X-Admin-Role"] = req.admin.role;
+      headers["X-Admin-Email"] = req.admin.email;
     }
 
     // Forward request to Trident API
