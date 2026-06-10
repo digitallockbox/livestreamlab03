@@ -87,6 +87,9 @@ import ApiDocs from '@/pages/ApiDocs';
 // Block Explorer
 import BlockExplorer from '@/pages/explorer/BlockExplorer';
 
+// Email OS
+import EmailOS from '@/pages/emailos/EmailOS';
+
 // Viewer
 import ViewerProfilePage from '@/pages/viewer/ViewerProfile';
 
@@ -205,6 +208,7 @@ const AuthenticatedApp = () => {
         <Route path="/settings/connected" element={<ConnectedAccounts />} />
         <Route path="/api-docs" element={<ApiDocs />} />
         <Route path="/explorer" element={<BlockExplorer />} />
+        <Route path="/email-os" element={<EmailOS />} />
 
       </Route>
 

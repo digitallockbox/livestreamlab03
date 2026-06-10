@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Radio, Video, Mic2, ShoppingBag, Link2,
   BarChart3, Shield, ShieldCheck, Settings, Wallet, ChevronLeft, ChevronRight,
   Zap, Bell, Menu, X, LogOut, User, Brain, Activity, Crown, Cpu,
-  Globe, DollarSign, GitFork, Play, Terminal
+  Globe, DollarSign, GitFork, Play, Terminal, Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,7 @@ const NAV = [
   ]},
   { section: 'Admin & Founder', items: [
     { label: 'Block Explorer', icon: Activity, path: '/explorer' },
+    { label: 'Email OS', icon: Mail, path: '/email-os' },
     { label: 'Admin Console', icon: ShieldCheck, path: '/admin' },
     { label: 'Founder Console', icon: Crown, path: '/founder' },
     { label: 'Trident Admin', icon: Cpu, path: '/trident/admin' },

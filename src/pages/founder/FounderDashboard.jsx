@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   DollarSign, Users, TrendingUp, Zap, Globe, BarChart3,
   ShieldCheck, Layers, ArrowUpRight, Download, RefreshCw,
-  Crown, Target, Rocket, Radio, Lock, ChevronRight, Activity
+  Crown, Target, Rocket, Radio, Lock, ChevronRight, Activity, Mail
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -213,6 +213,7 @@ export default function FounderDashboard() {
               { label: 'War Room', path: '/war-room', icon: Activity, color: 'text-red-400 bg-red-400/10' },
               { label: 'Vault Overview', path: '/vault', icon: DollarSign, color: 'text-accent bg-accent/10' },
               { label: 'Analytics', path: '/analytics', icon: BarChart3, color: 'text-chart-4 bg-chart-4/10' },
+              { label: 'Email OS', path: '/email-os', icon: Mail, color: 'text-chart-4 bg-chart-4/10' },
             ].map(({ label, path, icon: Icon, color }) => (
               <Link key={label} to={path}>
                 <div className="rounded-xl border border-border bg-card hover:border-primary/40 p-4 flex items-center gap-3 transition-all cursor-pointer group">

@@ -4,7 +4,7 @@ import {
   Users, ShieldCheck, Zap, TrendingUp, AlertTriangle, CheckCircle2,
   XCircle, Search, MoreHorizontal, Ban, Eye, RefreshCw, Download,
   Radio, ShoppingBag, DollarSign, Activity, Server, Database,
-  ChevronRight, Clock, Filter
+  ChevronRight, Clock, Filter, Mail
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -99,6 +99,11 @@ export default function AdminConsole() {
           <p className="text-muted-foreground mt-1">Platform-wide oversight, creator management & system health.</p>
         </div>
         <div className="flex items-center gap-2">
+          <Link to="/email-os">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Mail className="w-4 h-4" /> Email OS
+            </Button>
+          </Link>
           <Button variant="outline" size="sm" className="gap-2">
             <Download className="w-4 h-4" /> Export Report
           </Button>
