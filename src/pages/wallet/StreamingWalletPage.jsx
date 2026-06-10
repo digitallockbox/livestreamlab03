@@ -241,6 +241,31 @@ export default function StreamingWalletPage() {
           </div>
         )}
 
+        {/* Balance History Chart — Overview only */}
+        {activeTab === 'Overview' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-card border border-border rounded-2xl p-6">
+            <h3 className="font-display font-semibold text-foreground mb-4">Balance History (8 days)</h3>
+            <ResponsiveContainer width="100%" height={180}>
+              <AreaChart data={sparklineData}>
+                <defs>
+                  <linearGradient id="balGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(165 82% 51%)" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="hsl(165 82% 51%)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(230 18% 17%)" />
+                <XAxis dataKey="day" tick={{ fill: "hsl(220 10% 48%)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "hsl(220 10% 48%)", fontSize: 11 }} axisLine={false} tickLine={false} width={52} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(230 22% 10%)", border: "1px solid hsl(230 18% 17%)", borderRadius: 10 }}
+                  formatter={(v) => [`${v.toLocaleString()} $STREAM`, "Balance"]}
+                />
+                <Area type="monotone" dataKey="balance" stroke="hsl(165 82% 51%)" fill="url(#balGrad)" strokeWidth={2} dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </motion.div>
+        )}
+
         {/* Overview / Transactions */}
         {(activeTab === 'Overview' || activeTab === 'Transactions') && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
