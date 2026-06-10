@@ -66,15 +66,12 @@ export default function TridentLogin() {
     setLoading(true);
     
     try {
-      // Determine login type based on email domain/role (can be enhanced with role selector)
-      const isAdmin = email.toLowerCase().includes('admin') || email.toLowerCase().includes('founder');
-      const endpoint = isAdmin ? authApi.adminLogin : authApi.creatorLogin;
-      
-      const result = await endpoint({ email, password });
+      // Use creator login by default (TridentLogin is for creators)
+      const result = await authApi.creatorLogin({ email, password });
       
       if (result.success) {
-        toast.success(isAdmin ? 'Admin access granted' : 'Welcome back, Creator!');
-        navigate(result.redirect || (isAdmin ? '/admin' : '/dashboard'));
+        toast.success('Welcome back, Creator!');
+        navigate(result.redirect || '/dashboard');
       } else {
         toast.error(result.error || 'Authentication failed');
       }

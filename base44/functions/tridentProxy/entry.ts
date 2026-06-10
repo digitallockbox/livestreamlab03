@@ -73,11 +73,15 @@ Deno.serve(async (req) => {
       }, { status: 401 });
     }
 
-    const { method, path, body, session_token } = await req.json();
+    const { method, path, body, session_token, formData } = await req.json();
 
     if (!path || !path.startsWith("/")) {
       return Response.json({ error: "Invalid path" }, { status: 400 });
     }
+
+    // Handle file uploads - pass through FormData or use regular JSON body
+    const requestBody = formData ? formData : (body ? JSON.stringify(body) : undefined);
+    const isFormData = !!formData;
 
     // Determine required session type
     const requiredSession = getRequiredSessionType(path);
@@ -116,11 +120,15 @@ Deno.serve(async (req) => {
 
     // Build headers with session context
     const headers = { 
-      "Content-Type": "application/json",
       "X-Session-Type": requiredSession,
       "X-User-ID": user.id,
       "X-User-Email": user.email
     };
+    
+    // Don't set Content-Type for FormData - browser will set it with boundary
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
 
     // Add admin context if applicable
     if (req.admin) {
@@ -132,7 +140,7 @@ Deno.serve(async (req) => {
     const res = await fetch(`${TRIDENT_BASE}${path}`, {
       method: method || "GET",
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: requestBody,
     });
 
     const data = await res.json().catch(() => ({}));

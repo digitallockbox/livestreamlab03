@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import StatCard from '@/components/ui/StatCard';
 import PageHeader from '@/components/ui/PageHeader';
-import { creatorDashboardApi, creatorWalletApi } from '@/lib/creatorApi';
+import { creatorDashboardApi, creatorWalletApi, contentApi, creatorStoreApi } from '@/lib/creatorApi';
 
 const QUICK_ACTIONS = [
   { label: 'Go Live', icon: Radio, path: '/go-live', color: 'bg-red-500/20 text-red-400' },
@@ -25,9 +25,9 @@ export default function Dashboard() {
         const [overview, wallet, streams, videos, products] = await Promise.all([
           creatorDashboardApi.overview(),
           creatorWalletApi.balance(),
-          creatorDashboardApi.analytics({ type: 'streams', limit: 3 }),
-          creatorDashboardApi.analytics({ type: 'videos', limit: 3 }),
-          creatorDashboardApi.analytics({ type: 'products', limit: 3 }),
+          contentApi.listStreams(),
+          contentApi.listVideos(),
+          creatorStoreApi.listProducts(),
         ]);
         setDashboardData({ overview, wallet, streams, videos, products });
       } catch (err) {

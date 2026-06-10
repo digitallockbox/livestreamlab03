@@ -17,30 +17,40 @@ async function call(path, body = {}, method = 'POST') {
   return res.data;
 }
 
+// Special handler for file uploads with FormData
+async function uploadFile(path, formData) {
+  const res = await base44.functions.invoke('tridentProxy', {
+    method: 'POST',
+    path: `${BASE_PATH}${path}`,
+    formData,
+  });
+  return res.data;
+}
+
 // ─── Creator Dashboard ─────────────────────────────────────────────────────
 export const creatorDashboardApi = {
   overview: () => call('/creator/dashboard/overview', {}, 'GET'),
   earnings: () => call('/creator/earnings', {}, 'GET'),
-  analytics: (filters) => call('/creator/analytics', filters),
+  analytics: (filters) => call('/creator/analytics', filters, 'POST'),
 };
 
 // ─── Content Management ────────────────────────────────────────────────────
 export const contentApi = {
   // Videos
-  uploadVideo: (body) => call('/video/upload', body),
+  uploadVideo: (formData) => call('/video/upload', formData),
   listVideos: () => call('/video/list', {}, 'GET'),
-  getVideo: (id) => call('/video/get', { id }),
+  getVideo: (id) => call('/video/get', { video_id: id }, 'GET'),
   updateVideo: (body) => call('/video/update', body),
   deleteVideo: (body) => call('/video/delete', body),
   
   // Podcasts/Audio
-  uploadAudio: (body) => call('/audio/upload', body),
+  uploadAudio: (formData) => call('/audio/upload', formData),
   listAudio: () => call('/audio/list', {}, 'GET'),
-  getAudio: (id) => call('/audio/get', { id }),
+  getAudio: (id) => call('/audio/get', { audio_id: id }, 'GET'),
   
   // Streams
   listStreams: () => call('/creator/streams', {}, 'GET'),
-  getStream: (id) => call('/creator/stream', { id }),
+  getStream: (id) => call('/creator/stream', { stream_id: id }, 'GET'),
 };
 
 // ─── Wallet & Earnings ─────────────────────────────────────────────────────
