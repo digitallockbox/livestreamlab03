@@ -61,6 +61,16 @@ import AdminConsole from '@/pages/admin/AdminConsole';
 import FounderDashboard from '@/pages/founder/FounderDashboard';
 import TridentLogin from '@/pages/TridentLogin';
 import TridentAdmin from '@/pages/TridentAdmin';
+import Engine from '@/pages/founder/Engine';
+import KernelLogs from '@/pages/founder/KernelLogs';
+
+// Creator
+import Earnings from '@/pages/Earnings';
+import AutoSplits from '@/pages/AutoSplits';
+import Explore from '@/pages/Explore';
+
+// Wallet
+import StreamingWalletPage from '@/pages/wallet/StreamingWalletPage';
 
 // War Room
 import WarRoom from '@/pages/warroom/WarRoom';
@@ -107,6 +117,7 @@ const AuthenticatedApp = () => {
     <Routes>
       {/* Public */}
       <Route path="/" element={<Landing />} />
+      <Route path="/explore" element={<Explore />} />
       <Route path="/login" element={<TridentLogin />} />
       <Route path="/onboarding" element={<CreatorOnboarding />} />
       <Route path="/stream/:id" element={<StreamPage />} />
@@ -158,11 +169,20 @@ const AuthenticatedApp = () => {
         {/* Analytics */}
         <Route path="/analytics" element={<AnalyticsOverview />} />
 
+        {/* Creator */}
+        <Route path="/earnings" element={<Earnings />} />
+        <Route path="/autosplits" element={<AutoSplits />} />
+
+        {/* Wallet */}
+        <Route path="/wallet/streaming-token" element={<StreamingWalletPage />} />
+
         {/* Admin & Founder */}
         <Route path="/admin" element={<AdminConsole />} />
         <Route path="/trident/admin" element={<TridentAdmin />} />
         <Route path="/founder" element={<FounderDashboard />} />
         <Route path="/founder/dashboard" element={<FounderDashboard />} />
+        <Route path="/engine" element={<Engine />} />
+        <Route path="/logs" element={<KernelLogs />} />
 
         {/* War Room */}
         <Route path="/war-room" element={<WarRoom />} />

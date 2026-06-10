@@ -3,7 +3,8 @@ import { useState } from 'react';
 import {
   LayoutDashboard, Radio, Video, Mic2, ShoppingBag, Link2,
   BarChart3, Shield, ShieldCheck, Settings, Wallet, ChevronLeft, ChevronRight,
-  Zap, Bell, Menu, X, LogOut, User, Brain, Activity, Crown, Cpu
+  Zap, Bell, Menu, X, LogOut, User, Brain, Activity, Crown, Cpu,
+  Globe, DollarSign, GitFork, Play, Terminal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,9 +14,17 @@ import TridentStatus from '@/components/trident/TridentStatus';
 const NAV = [
   { section: 'Core', items: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    { label: 'Explore', icon: Globe, path: '/explore' },
+    { label: 'Earnings', icon: DollarSign, path: '/earnings' },
+    { label: 'Auto-Splits', icon: GitFork, path: '/autosplits' },
+    { label: '$STREAMING Wallet', icon: Zap, path: '/wallet/streaming-token' },
+  ]},
+  { section: 'Admin & Founder', items: [
     { label: 'Admin Console', icon: ShieldCheck, path: '/admin' },
     { label: 'Founder Console', icon: Crown, path: '/founder' },
     { label: 'Trident Admin', icon: Cpu, path: '/trident/admin' },
+    { label: 'Engine Control', icon: Play, path: '/engine' },
+    { label: 'Kernel Logs', icon: Terminal, path: '/logs' },
   ]},
   { section: 'CreatorVault', items: [
     { label: 'Overview', icon: Wallet, path: '/vault' },
