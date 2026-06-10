@@ -1,7 +1,9 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Zap, TrendingUp, ShoppingBag, Radio, Lock, ArrowRight } from "lucide-react";
+import { Zap, TrendingUp, ShoppingBag, Radio, Lock, Copy, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { STREAMING_TOKEN_MINT } from "@/lib/constants/tokens";
 
 const usecases = [
   { icon: Radio, title: "Tip Streamers Live", desc: "Send $STREAMING tokens during any live broadcast. Creators receive 100% — zero platform cut.", color: "text-primary", bg: "bg-primary/10" },
@@ -11,6 +13,13 @@ const usecases = [
 ];
 
 export default function TokenSection() {
+  const [copied, setCopied] = useState(false);
+  const copyMint = () => {
+    navigator.clipboard.writeText(STREAMING_TOKEN_MINT);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <section id="ecosystem" className="py-28 px-6 relative overflow-hidden">
       <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/8 rounded-full blur-[140px] pointer-events-none" />
@@ -39,16 +48,21 @@ export default function TokenSection() {
               $STREAMING is the native utility token that powers every transaction on LiveStreamLab. Tips, unlocks, store purchases, affiliate bonuses — all flow through one token economy.
             </p>
 
-            <div className="flex items-center gap-3 p-4 bg-card border border-border rounded-2xl mb-6">
+            <button onClick={copyMint} className="w-full flex items-center gap-3 p-4 bg-card border border-border rounded-2xl mb-6 hover:border-accent/40 transition-all group text-left">
               <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center shrink-0">
                 <Zap className="w-5 h-5 text-accent" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground mb-0.5">Token Address (Solana)</p>
-                <code className="text-xs font-mono text-foreground truncate block">8jExKCc1Y4LEjVjBLRGZEeY7vWBVzr9iTPRKh8Jzmoon</code>
+                <p className="text-xs text-muted-foreground mb-0.5">Token Mint Address (Solana SPL)</p>
+                <code className="text-xs font-mono text-foreground truncate block">{STREAMING_TOKEN_MINT}</code>
               </div>
-              <Badge className="bg-accent/10 text-accent border-accent/20 shrink-0">SPL</Badge>
-            </div>
+              <div className="shrink-0 flex items-center gap-2">
+                <Badge className="bg-accent/10 text-accent border-accent/20">SPL</Badge>
+                {copied
+                  ? <CheckCircle2 className="w-4 h-4 text-accent" />
+                  : <Copy className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />}
+              </div>
+            </button>
 
             <div className="flex flex-wrap gap-3">
               {["0% creator fee", "Instant settlement", "Solana speed"].map(tag => (

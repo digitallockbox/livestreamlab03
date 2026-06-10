@@ -1,10 +1,25 @@
-import React from "react";
-import { Zap, Play, ArrowRight, Radio, Users, DollarSign } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Zap, Play, ArrowRight, Radio, Users, DollarSign, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
+const TICKER = [
+  "neon_wolf tipped 500 $STREAM",
+  "pixelqueen unlocked premium video",
+  "darkbyte_ joined Pro",
+  "luna_stream went LIVE",
+  "cryptosage earned $1,240 this week",
+  "shadow_fx sold 3 store items",
+];
+
 export default function HeroSection() {
+  const [tickerIdx, setTickerIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTickerIdx(i => (i + 1) % TICKER.length), 2800);
+    return () => clearInterval(t);
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Background orbs */}
@@ -44,16 +59,27 @@ export default function HeroSection() {
             </Button>
           </div>
 
+          {/* Live ticker */}
+          <div className="flex items-center gap-2 bg-card border border-border rounded-full px-4 py-2 mb-8 w-fit">
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse flex-shrink-0" />
+            <span className="text-xs text-muted-foreground font-mono truncate max-w-[240px]">{TICKER[tickerIdx]}</span>
+          </div>
+
           {/* Stats row */}
           <div className="flex gap-8">
             {[
-              { value: "10K+", label: "Creators" },
-              { value: "$2.4M", label: "Paid Out" },
-              { value: "50M+", label: "Views" },
+              { value: "10K+", label: "Creators", icon: Users },
+              { value: "$2.4M", label: "Paid Out", icon: DollarSign },
+              { value: "50M+", label: "Views", icon: TrendingUp },
             ].map((s) => (
-              <div key={s.label}>
-                <p className="text-2xl font-display font-bold text-foreground">{s.value}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+              <div key={s.label} className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <s.icon className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xl font-display font-bold text-foreground leading-none">{s.value}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+                </div>
               </div>
             ))}
           </div>

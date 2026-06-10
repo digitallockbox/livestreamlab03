@@ -18,7 +18,7 @@ export default function LandingNav() {
     { label: "How It Works", href: "#how-it-works" },
     { label: "$STREAMING", href: "#ecosystem" },
     { label: "Pricing", href: "#pricing" },
-    { label: "FAQ", href: "#faq" },
+    { label: "API Docs", href: "/api-docs", isRoute: true },
   ];
 
   return (
@@ -38,9 +38,9 @@ export default function LandingNav() {
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-7">
           {links.map((l) => (
-            <a key={l.label} href={l.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
-              {l.label}
-            </a>
+            l.isRoute
+              ? <Link key={l.label} to={l.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">{l.label}</Link>
+              : <a key={l.label} href={l.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">{l.label}</a>
           ))}
         </div>
 
@@ -66,9 +66,9 @@ export default function LandingNav() {
       {open && (
         <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl px-6 py-4 space-y-3">
           {links.map((l) => (
-            <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground py-1.5 font-medium">
-              {l.label}
-            </a>
+            l.isRoute
+              ? <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground py-1.5 font-medium">{l.label}</Link>
+              : <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground py-1.5 font-medium">{l.label}</a>
           ))}
           <div className="flex gap-3 pt-2 border-t border-border">
             <Link to="/dashboard" className="flex-1"><Button variant="outline" size="sm" className="w-full">Log In</Button></Link>

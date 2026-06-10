@@ -1,5 +1,5 @@
 import React from "react";
-import { Radio, Zap, Twitter, Youtube, Github } from "lucide-react";
+import { Radio, Zap, Twitter, Youtube, Github, MessageCircle, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const links = {
@@ -11,18 +11,22 @@ const links = {
     { label: "Affiliates", href: "#features" },
   ],
   Token: [
-    { label: "$STREAMING", href: "#ecosystem" },
+    { label: "$STREAMING Token", href: "#ecosystem" },
     { label: "CreatorVault", href: "#ecosystem" },
     { label: "Tip Economy", href: "#ecosystem" },
     { label: "Team Splits", href: "#ecosystem" },
+    { label: "API Docs", href: "/api-docs" },
   ],
   Company: [
     { label: "About", href: "#" },
     { label: "Blog", href: "#" },
     { label: "Careers", href: "#" },
     { label: "Contact", href: "#" },
+    { label: "Status", href: "#" },
   ],
 };
+
+const SOCIAL_ICONS = [Twitter, Youtube, Github, MessageCircle, Send];
 
 export default function LandingFooter() {
   return (
@@ -43,8 +47,8 @@ export default function LandingFooter() {
             <p className="text-xs text-muted-foreground leading-relaxed mb-4 max-w-xs">
               The sovereign creator platform. Stream, monetize, and own every dollar you earn.
             </p>
-            <div className="flex gap-3">
-              {[Twitter, Youtube, Github].map((SocialIcon, i) => (
+            <div className="flex flex-wrap gap-2">
+              {SOCIAL_ICONS.map((SocialIcon, i) => (
                 <a key={i} href="#" className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors">
                   <SocialIcon className="w-3.5 h-3.5" />
                 </a>
