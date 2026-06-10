@@ -5,23 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Radio, Users, Zap, Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff, Send, Gift, Wifi, Loader2 } from "lucide-react";
 import StreamManager from "@/components/streaming/StreamManager";
-import { streamingApi } from "@/lib/tridentApi";
+import { contentApi } from "@/lib/creatorApi";
 
-const MOCK_CHAT = [
-  { user: "neon_wolf", msg: "🔥 Let's goooo!", type: "chat" },
-  { user: "pixelqueen", msg: "tipped 250 $STREAMING!", type: "tip", amount: "250 $STR" },
-  { user: "darkbyte_", msg: "First time catching you live, amazing!", type: "chat" },
-  { user: "cyber_rex", msg: "gifted a ⚡ Lightning Bolt!", type: "gift" },
-  { user: "viewer_99", msg: "What's your setup?", type: "chat" },
-  { user: "shadow99", msg: "tipped 100 $STREAMING!", type: "tip", amount: "100 $STR" },
-  { user: "luna_stream", msg: "This is incredible content 🎮", type: "chat" },
-];
-
-const RECENT_TIPS = [
-  { user: "pixelqueen", amount: "250 $STR", time: "2s ago" },
-  { user: "shadow99", amount: "100 $STR", time: "45s ago" },
-  { user: "darkbyte_", amount: "$10.00", time: "2m ago" },
-];
 
 export default function StreamerConsole() {
   const location = useLocation();
@@ -38,33 +23,42 @@ export default function StreamerConsole() {
 
   // Live stats from API
   const [liveStats, setLiveStats] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [recentTips, setRecentTips] = useState([]);
   const pollRef = useRef(null);
 
   useEffect(() => {
     if (!streamId) return;
     const poll = async () => {
       try {
-        const s = await streamingApi.status(streamId);
-        setLiveStats(s);
+        const [status, chat, tips] = await Promise.all([
+          contentApi.getStream(streamId),
+          // Chat would be WebSocket-based in production
+          Promise.resolve([]),
+          Promise.resolve([]),
+        ]);
+        setLiveStats(status);
+        setChatMessages(chat);
+        setRecentTips(tips);
       } catch { /* keep last known */ }
     };
     poll();
-    pollRef.current = setInterval(poll, 15000);
+    pollRef.current = setInterval(poll, 5000);
     return () => clearInterval(pollRef.current);
   }, [streamId]);
 
   const handleEndStream = async () => {
     setEndingStream(true);
     try {
-      if (streamId) await streamingApi.end({ stream_id: streamId });
+      if (streamId) await contentApi.uploadVideo({ stream_id: streamId, action: 'end' });
     } catch { /* navigate anyway */ }
     navigate('/stream-analytics');
   };
 
-  const viewers    = liveStats?.viewer_count  ?? 2431;
-  const tipsEarned = liveStats?.tips_earned   ?? "$127.50";
-  const uptime     = liveStats?.uptime        ?? "1:24:07";
-  const bitrate    = liveStats?.bitrate       ?? "6.5 Mbps";
+  const viewers    = liveStats?.viewer_count  ?? 0;
+  const tipsEarned = liveStats?.tips_earned   ?? 0;
+  const uptime     = liveStats?.uptime        ?? "0:00:00";
+  const bitrate    = liveStats?.bitrate       ?? "0 Mbps";
 
   const streamData = {
     title: streamTitle, status: "live",
@@ -187,13 +181,17 @@ export default function StreamerConsole() {
               <span className="text-xs text-muted-foreground">2,431 watching</span>
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {MOCK_CHAT.map((c, i) => (
-                <div key={i} className={`text-xs rounded-lg px-2.5 py-1.5 ${c.type === 'tip' ? 'bg-accent/10 border border-accent/20' : c.type === 'gift' ? 'bg-chart-3/10 border border-chart-3/20' : 'bg-transparent'}`}>
-                  <span className={`font-semibold ${c.type === 'tip' ? 'text-accent' : c.type === 'gift' ? 'text-chart-3' : 'text-primary'}`}>@{c.user}</span>
-                  {c.type === 'tip' && <span className="text-accent ml-1 font-bold">+{c.amount}</span>}
-                  {c.type !== 'tip' && <span className="text-foreground ml-1">{c.msg}</span>}
-                </div>
-              ))}
+              {chatMessages.length > 0 ? (
+                chatMessages.map((c, i) => (
+                  <div key={i} className={`text-xs rounded-lg px-2.5 py-1.5 ${c.type === 'tip' ? 'bg-accent/10 border border-accent/20' : c.type === 'gift' ? 'bg-chart-3/10 border border-chart-3/20' : 'bg-transparent'}`}>
+                    <span className={`font-semibold ${c.type === 'tip' ? 'text-accent' : c.type === 'gift' ? 'text-chart-3' : 'text-primary'}`}>@{c.user}</span>
+                    {c.type === 'tip' && <span className="text-accent ml-1 font-bold">+{c.amount}</span>}
+                    {c.type !== 'tip' && <span className="text-foreground ml-1">{c.msg}</span>}
+                  </div>
+                ))
+              ) : (
+                <div className="text-xs text-muted-foreground text-center py-4">No chat messages yet</div>
+              )}
             </div>
             <div className="p-3 flex-shrink-0 border-t border-border">
               <div className="flex gap-2">
@@ -213,15 +211,19 @@ export default function StreamerConsole() {
             </div>
             {/* Recent tips */}
             <div className="space-y-1.5 mb-3">
-              {RECENT_TIPS.map((t, i) => (
-                <div key={i} className="flex items-center justify-between text-xs bg-accent/5 border border-accent/10 rounded-lg px-2.5 py-1.5">
-                  <span className="text-muted-foreground">@{t.user}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-accent">{t.amount}</span>
-                    <span className="text-muted-foreground/50">{t.time}</span>
+              {recentTips.length > 0 ? (
+                recentTips.map((t, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs bg-accent/5 border border-accent/10 rounded-lg px-2.5 py-1.5">
+                    <span className="text-muted-foreground">@{t.user}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-accent">{t.amount}</span>
+                      <span className="text-muted-foreground/50">{t.time}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="text-xs text-muted-foreground text-center py-2">No tips yet</div>
+              )}
             </div>
             {/* Quick tip amounts */}
             <div className="grid grid-cols-4 gap-1.5 mb-2">

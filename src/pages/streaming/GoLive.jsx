@@ -5,7 +5,7 @@ import {
   Calendar, Clock, Tag, Plus, X, UserPlus, Shield, Key, ChevronDown, ChevronRight,
   Loader2, AlertCircle
 } from 'lucide-react';
-import { streamingApi } from '@/lib/tridentApi';
+import { contentApi } from '@/lib/creatorApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,8 +21,7 @@ const VISIBILITY = [
   { value: 'private',     label: 'Private',      IconComp: Lock,  desc: 'Only you' },
 ];
 
-const MOCK_STREAM_KEY = 'sk_live_a3f9c2d1e8b74g5h6j7k';
-const MOCK_RTMP_URL   = 'rtmp://live.trident.io/app';
+
 
 function SectionCard({ title, icon: Icon, children, collapsible = false }) {
   const [open, setOpen] = useState(true);
@@ -126,7 +125,7 @@ export default function GoLive() {
     setGoLiveLoading(true);
     setGoLiveError(null);
     try {
-      const res = await streamingApi.start({
+      const res = await contentApi.uploadVideo({
         title, category, description, tags, visibility,
         resolution, bitrate, latency,
         tips_enabled: tipsEnabled, tip_goal: tipGoal,
@@ -406,31 +405,8 @@ export default function GoLive() {
           <SectionCard title="Streaming Software (OBS / RTMP)" icon={Key} collapsible>
             <p className="text-xs text-muted-foreground">Use these credentials in OBS, Streamlabs, or any RTMP-compatible software.</p>
             <div className="space-y-3">
-              <div>
-                <Label className="mb-1.5 block text-xs">RTMP Server URL</Label>
-                <div className="flex gap-2">
-                  <Input readOnly value={MOCK_RTMP_URL} className="bg-secondary border-border text-sm font-mono text-muted-foreground" />
-                  <Button size="icon" variant="outline" className="border-border shrink-0"
-                    onClick={() => copyText(MOCK_RTMP_URL, setUrlCopied)}>
-                    {urlCopied ? <Check className="w-4 h-4 text-accent" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
-              </div>
-              <div>
-                <Label className="mb-1.5 block text-xs">Stream Key</Label>
-                <div className="flex gap-2">
-                  <Input readOnly type={keyVisible ? 'text' : 'password'} value={MOCK_STREAM_KEY}
-                    className="bg-secondary border-border text-sm font-mono text-muted-foreground" />
-                  <Button size="sm" variant="outline" className="border-border shrink-0 text-xs h-9 px-3"
-                    onClick={() => setKeyVisible(v => !v)}>
-                    {keyVisible ? 'Hide' : 'Show'}
-                  </Button>
-                  <Button size="icon" variant="outline" className="border-border shrink-0"
-                    onClick={() => copyText(MOCK_STREAM_KEY, setKeyCopied)}>
-                    {keyCopied ? <Check className="w-4 h-4 text-accent" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
-                <p className="text-xs text-destructive/70 mt-1">Never share your stream key publicly.</p>
+              <div className="text-sm text-muted-foreground">
+                RTMP credentials will be generated after you start your stream. Check the Streamer Console for your unique stream key.
               </div>
             </div>
           </SectionCard>

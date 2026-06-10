@@ -9,8 +9,9 @@ import {
   Upload, Image, Zap, DollarSign, Users, Lock, Globe,
   CheckCircle2, FileVideo, X, ChevronDown, Loader2
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { contentApi } from "@/lib/creatorApi";
 
 const CATEGORIES = ["Gaming", "Music", "Education", "Tech", "Fitness", "Lifestyle", "Art & Creative", "Talk / Commentary", "Other"];
 
@@ -44,41 +45,33 @@ export default function UploadVideo() {
 
   const toggleMono = (key) => setMonetization(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const handleUploadAll = () => {
+  const navigate = useNavigate();
+
+  const handleUploadAll = async () => {
     if (!title.trim()) { toast.error("Please enter a title."); return; }
     setUploading(true);
     setUploadProgress(0);
 
-    const form = new FormData();
-    form.append("title", title);
-    form.append("description", description);
-    form.append("category", category);
-    form.append("visibility", visibility);
-    form.append("monetization", JSON.stringify(monetization));
-    if (ppvPrice) form.append("ppv_price", ppvPrice);
-    if (streamingPrice) form.append("streaming_price", streamingPrice);
-    if (videoFile) form.append("file", videoFile);
-    if (thumbFile) form.append("thumbnail", thumbFile);
+    try {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("category", category);
+      formData.append("visibility", visibility);
+      formData.append("monetization", JSON.stringify(monetization));
+      if (ppvPrice) formData.append("ppv_price", ppvPrice);
+      if (streamingPrice) formData.append("streaming_price", streamingPrice);
+      if (videoFile) formData.append("file", videoFile);
+      if (thumbFile) formData.append("thumbnail", thumbFile);
 
-    const xhr = new XMLHttpRequest();
-    xhrRef.current = xhr;
-    xhr.open("POST", "https://api.tridentsystem.live/video/upload");
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
-    };
-    xhr.onload = () => {
+      const result = await contentApi.uploadVideo(formData);
+      toast.success("Video uploaded successfully!");
+      navigate('/videos');
+    } catch (err) {
+      toast.error(`Upload failed: ${err.message}`);
+    } finally {
       setUploading(false);
-      if (xhr.status >= 200 && xhr.status < 300) {
-        toast.success("Video uploaded successfully!");
-        setTitle(""); setDescription(""); setCategory(""); setVideoFile(null); setThumbFile(null);
-        setMonetization({ ppv: false, subscription: false, streaming: false });
-        setUploadProgress(0);
-      } else {
-        toast.error(`Upload failed (${xhr.status})`);
-      }
-    };
-    xhr.onerror = () => { setUploading(false); toast.error("Network error during upload."); };
-    xhr.send(form);
+    }
   };
 
   const cancelUpload = () => { xhrRef.current?.abort(); setUploading(false); setUploadProgress(0); };
