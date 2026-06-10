@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users, ShieldCheck, Zap, TrendingUp, AlertTriangle, CheckCircle2,
@@ -14,50 +14,8 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer
 } from 'recharts';
-
-const PLATFORM_STATS = [
-  { label: 'Total Creators', value: '14,829', change: '+248 this week', up: true, icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
-  { label: 'Active Streams', value: '342', change: 'Live right now', up: true, icon: Radio, color: 'text-red-400', bg: 'bg-red-400/10' },
-  { label: 'Platform Revenue', value: '$284,120', change: '+18% this month', up: true, icon: DollarSign, color: 'text-accent', bg: 'bg-accent/10' },
-  { label: 'Pending Flags', value: '7', change: '2 critical', up: false, icon: AlertTriangle, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
-];
-
-const REVENUE_CHART = [
-  { day: 'Mon', revenue: 18400, creators: 210 },
-  { day: 'Tue', revenue: 22100, creators: 234 },
-  { day: 'Wed', revenue: 19800, creators: 198 },
-  { day: 'Thu', revenue: 27600, creators: 287 },
-  { day: 'Fri', revenue: 31200, creators: 312 },
-  { day: 'Sat', revenue: 38900, creators: 356 },
-  { day: 'Sun', revenue: 35100, creators: 328 },
-];
-
-const CREATOR_TABLE = [
-  { id: 'CR-001', name: 'Alex Rivera', email: 'alex@creator.io', status: 'active', revenue: '$12,400', streams: 48, joined: 'Jan 2026', flag: null },
-  { id: 'CR-002', name: 'Luna Storm', email: 'luna@streamlab.io', status: 'active', revenue: '$9,820', streams: 36, joined: 'Feb 2026', flag: null },
-  { id: 'CR-003', name: 'NeonWolf99', email: 'neon@wolf.tv', status: 'flagged', revenue: '$4,100', streams: 12, joined: 'Mar 2026', flag: 'TOS Violation' },
-  { id: 'CR-004', name: 'DarkByte_', email: 'dark@byte.live', status: 'active', revenue: '$7,650', streams: 29, joined: 'Jan 2026', flag: null },
-  { id: 'CR-005', name: 'Pixel Queen', email: 'pixel@queen.me', status: 'suspended', revenue: '$2,900', streams: 8, joined: 'Mar 2026', flag: 'Payment Dispute' },
-  { id: 'CR-006', name: 'CryptoSage', email: 'sage@crypto.live', status: 'active', revenue: '$18,200', streams: 67, joined: 'Dec 2025', flag: null },
-  { id: 'CR-007', name: 'StreamKing', email: 'king@stream.gg', status: 'active', revenue: '$11,340', streams: 52, joined: 'Jan 2026', flag: null },
-];
-
-const SYSTEM_SERVICES = [
-  { name: 'Trident API Gateway', status: 'operational', latency: '12ms', uptime: '99.98%' },
-  { name: 'Stream Ingest Node', status: 'operational', latency: '8ms', uptime: '99.95%' },
-  { name: 'Payment Processor', status: 'operational', latency: '45ms', uptime: '100%' },
-  { name: 'Token Settlement Engine', status: 'degraded', latency: '210ms', uptime: '97.2%' },
-  { name: 'CDN Edge Network', status: 'operational', latency: '3ms', uptime: '99.99%' },
-  { name: 'Database Cluster', status: 'operational', latency: '6ms', uptime: '100%' },
-];
-
-const RECENT_FLAGS = [
-  { id: 'F-001', creator: 'NeonWolf99', type: 'TOS Violation', severity: 'high', time: '2h ago', resolved: false },
-  { id: 'F-002', creator: 'TempUser_4482', type: 'Spam Activity', severity: 'medium', time: '5h ago', resolved: false },
-  { id: 'F-003', creator: 'Pixel Queen', type: 'Payment Dispute', severity: 'high', time: '1d ago', resolved: false },
-  { id: 'F-004', creator: 'CyberRex', type: 'Fake Viewers', severity: 'low', time: '2d ago', resolved: true },
-  { id: 'F-005', creator: 'AnonCast', type: 'DMCA Report', severity: 'medium', time: '3d ago', resolved: true },
-];
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 const TABS = ['Overview', 'Creators', 'System Health', 'Flags & Moderation'];
 
@@ -65,9 +23,55 @@ export default function AdminConsole() {
   const [activeTab, setActiveTab] = useState('Overview');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  
+  // Real data state
+  const [platformStats, setPlatformStats] = useState(null);
+  const [revenueData, setRevenueData] = useState([]);
+  const [creators, setCreators] = useState([]);
+  const [systemHealth, setSystemHealth] = useState([]);
+  const [flags, setFlags] = useState([]);
 
-  const filteredCreators = CREATOR_TABLE.filter(c => {
-    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase());
+  // Fetch real production data
+  useEffect(() => {
+    fetchAdminData();
+  }, [activeTab]);
+
+  const fetchAdminData = async () => {
+    try {
+      setLoading(true);
+      const response = await base44.functions.invoke('tridentProxy', {
+        method: 'GET',
+        path: `/admin/overwatch`,
+      });
+      
+      if (response.data) {
+        const data = response.data;
+        setPlatformStats(data.platform_stats);
+        setRevenueData(data.revenue_chart || []);
+        setCreators(data.creators || []);
+        setSystemHealth(data.system_health || []);
+        setFlags(data.flags || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch admin data:', error);
+      toast.error('Failed to load admin dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSync = async () => {
+    try {
+      await fetchAdminData();
+      toast.success('Data synced successfully');
+    } catch (error) {
+      toast.error('Failed to sync data');
+    }
+  };
+
+  const filteredCreators = creators.filter(c => {
+    const matchSearch = c.name?.toLowerCase().includes(search.toLowerCase()) || c.email?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || c.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -107,8 +111,8 @@ export default function AdminConsole() {
           <Button variant="outline" size="sm" className="gap-2">
             <Download className="w-4 h-4" /> Export Report
           </Button>
-          <Button size="sm" className="bg-primary gap-2">
-            <RefreshCw className="w-4 h-4" /> Sync Data
+          <Button size="sm" className="bg-primary gap-2" onClick={handleSync} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Sync Data
           </Button>
         </div>
       </div>
@@ -133,85 +137,137 @@ export default function AdminConsole() {
       {/* OVERVIEW TAB */}
       {activeTab === 'Overview' && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-          {/* Platform Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {PLATFORM_STATS.map(({ label, value, change, up, icon: Icon, color, bg }) => (
-              <div key={label} className="rounded-xl border border-border bg-card p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{label}</p>
-                  <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}>
-                    <Icon className={`w-4 h-4 ${color}`} />
-                  </div>
-                </div>
-                <p className="font-display text-2xl font-bold text-foreground">{value}</p>
-                <p className={`text-xs mt-1 ${up ? 'text-accent' : 'text-yellow-400'}`}>{change}</p>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center">
+                <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
+                <p className="text-muted-foreground">Loading platform data...</p>
               </div>
-            ))}
-          </div>
-
-          {/* Revenue Chart */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-display font-semibold text-foreground">Platform Revenue — 7 Days</h2>
-              <Badge className="bg-accent/10 text-accent border-accent/20">This Week</Badge>
             </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={REVENUE_CHART}>
-                <defs>
-                  <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, color: 'hsl(var(--foreground))' }} formatter={(v) => [`$${v.toLocaleString()}`, 'Revenue']} />
-                <Area type="monotone" dataKey="revenue" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#revenueGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Creator Signups Bar */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h2 className="font-display font-semibold text-foreground mb-4">Daily Active Creators</h2>
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={REVENUE_CHART}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, color: 'hsl(var(--foreground))' }} />
-                <Bar dataKey="creators" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} opacity={0.8} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Recent Flags Summary */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-semibold text-foreground">Open Flags</h2>
-              <Button variant="ghost" size="sm" onClick={() => setActiveTab('Flags & Moderation')} className="text-primary text-xs">
-                View All <ChevronRight className="w-3 h-3 ml-1" />
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {RECENT_FLAGS.filter(f => !f.resolved).map(flag => (
-                <div key={flag.id} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium">{flag.creator}</p>
-                      <p className="text-xs text-muted-foreground">{flag.type} · {flag.time}</p>
+          ) : platformStats ? (
+            <>
+              {/* Platform Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="rounded-xl border border-border bg-card p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Creators</p>
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Users className="w-4 h-4 text-primary" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {severityBadge(flag.severity)}
-                    <Button size="sm" variant="outline" className="text-xs h-7 px-2">Review</Button>
-                  </div>
+                  <p className="font-display text-2xl font-bold text-foreground">{platformStats.total_creators || '0'}</p>
+                  <p className="text-xs mt-1 text-accent">{platformStats.new_creators || '0'} this week</p>
                 </div>
-              ))}
+                <div className="rounded-xl border border-border bg-card p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Active Streams</p>
+                    <div className="w-8 h-8 rounded-lg bg-red-400/10 flex items-center justify-center">
+                      <Radio className="w-4 h-4 text-red-400" />
+                    </div>
+                  </div>
+                  <p className="font-display text-2xl font-bold text-foreground">{platformStats.active_streams || '0'}</p>
+                  <p className="text-xs mt-1 text-accent">Live right now</p>
+                </div>
+                <div className="rounded-xl border border-border bg-card p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Platform Revenue</p>
+                    <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                      <DollarSign className="w-4 h-4 text-accent" />
+                    </div>
+                  </div>
+                  <p className="font-display text-2xl font-bold text-foreground">${platformStats.total_revenue || '0'}</p>
+                  <p className="text-xs mt-1 text-accent">+{platformStats.revenue_growth || '0'}% this month</p>
+                </div>
+                <div className="rounded-xl border border-border bg-card p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Pending Flags</p>
+                    <div className="w-8 h-8 rounded-lg bg-yellow-400/10 flex items-center justify-center">
+                      <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                    </div>
+                  </div>
+                  <p className="font-display text-2xl font-bold text-foreground">{platformStats.pending_flags || '0'}</p>
+                  <p className="text-xs mt-1 text-yellow-400">{platformStats.critical_flags || '0'} critical</p>
+                </div>
+              </div>
+
+              {/* Revenue Chart */}
+              {revenueData.length > 0 && (
+                <div className="rounded-xl border border-border bg-card p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="font-display font-semibold text-foreground">Platform Revenue — 7 Days</h2>
+                    <Badge className="bg-accent/10 text-accent border-accent/20">This Week</Badge>
+                  </div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <AreaChart data={revenueData}>
+                      <defs>
+                        <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.3} />
+                          <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="day" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
+                      <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, color: 'hsl(var(--foreground))' }} formatter={(v) => [`$${v.toLocaleString()}`, 'Revenue']} />
+                      <Area type="monotone" dataKey="revenue" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#revenueGrad)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Creator Signups Bar */}
+              {revenueData.length > 0 && (
+                <div className="rounded-xl border border-border bg-card p-6">
+                  <h2 className="font-display font-semibold text-foreground mb-4">Daily Active Creators</h2>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <BarChart data={revenueData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="day" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, color: 'hsl(var(--foreground))' }} />
+                      <Bar dataKey="creators" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} opacity={0.8} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Recent Flags Summary */}
+              <div className="rounded-xl border border-border bg-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-display font-semibold text-foreground">Open Flags</h2>
+                  <Button variant="ghost" size="sm" onClick={() => setActiveTab('Flags & Moderation')} className="text-primary text-xs">
+                    View All <ChevronRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {flags.filter(f => !f.resolved).slice(0, 5).map(flag => (
+                    <div key={flag.id} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{flag.creator}</p>
+                          <p className="text-xs text-muted-foreground">{flag.type} · {flag.time}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {severityBadge(flag.severity)}
+                        <Button size="sm" variant="outline" className="text-xs h-7 px-2">Review</Button>
+                      </div>
+                    </div>
+                  ))}
+                  {flags.filter(f => !f.resolved).length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No open flags</p>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-20">
+              <AlertTriangle className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
+              <p className="text-muted-foreground">Failed to load platform data</p>
+              <Button onClick={fetchAdminData} className="mt-4">Retry</Button>
             </div>
-          </div>
+          )}
         </motion.div>
       )}
 
@@ -284,7 +340,7 @@ export default function AdminConsole() {
               </table>
             </div>
             <div className="p-4 border-t border-border bg-secondary/20 flex items-center justify-between text-xs text-muted-foreground">
-              <span>Showing {filteredCreators.length} of {CREATOR_TABLE.length} creators</span>
+              <span>Showing {filteredCreators.length} of {creators.length} creators</span>
               <span>Page 1 of 1</span>
             </div>
           </div>
@@ -294,22 +350,36 @@ export default function AdminConsole() {
       {/* SYSTEM HEALTH TAB */}
       {activeTab === 'System Health' && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {SYSTEM_SERVICES.map(service => (
-              <div key={service.name} className="rounded-xl border border-border bg-card p-5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2.5 h-2.5 rounded-full ${service.status === 'operational' ? 'bg-accent' : service.status === 'degraded' ? 'bg-yellow-400' : 'bg-destructive'} ${service.status !== 'operational' ? '' : 'animate-pulse'}`} />
-                  <div>
-                    <p className="font-medium text-foreground text-sm">{service.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Latency: {service.latency} · Uptime: {service.uptime}</p>
-                  </div>
-                </div>
-                <Badge className={`${service.status === 'operational' ? 'bg-accent/15 text-accent border-accent/30' : service.status === 'degraded' ? 'bg-yellow-400/15 text-yellow-400 border-yellow-400/30' : 'bg-destructive/15 text-destructive border-destructive/30'} capitalize`}>
-                  {service.status}
-                </Badge>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center">
+                <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
+                <p className="text-muted-foreground">Loading system health data...</p>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : systemHealth && systemHealth.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {systemHealth.map(service => (
+                <div key={service.name} className="rounded-xl border border-border bg-card p-5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2.5 h-2.5 rounded-full ${service.status === 'operational' ? 'bg-accent' : service.status === 'degraded' ? 'bg-yellow-400' : 'bg-destructive'} ${service.status !== 'operational' ? '' : 'animate-pulse'}`} />
+                    <div>
+                      <p className="font-medium text-foreground text-sm">{service.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Latency: {service.latency} · Uptime: {service.uptime}</p>
+                    </div>
+                  </div>
+                  <Badge className={`${service.status === 'operational' ? 'bg-accent/15 text-accent border-accent/30' : service.status === 'degraded' ? 'bg-yellow-400/15 text-yellow-400 border-yellow-400/30' : 'bg-destructive/15 text-destructive border-destructive/30'} capitalize`}>
+                    {service.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <Server className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">No system health data available</p>
+            </div>
+          )}
 
           {/* Server Metrics */}
           <div className="rounded-xl border border-border bg-card p-6">
@@ -399,7 +469,7 @@ export default function AdminConsole() {
               <span className="text-sm font-medium text-foreground">All Moderation Flags</span>
             </div>
             <div className="divide-y divide-border/50">
-              {RECENT_FLAGS.map(flag => (
+              {flags.map(flag => (
                 <div key={flag.id} className="p-4 flex items-center justify-between hover:bg-secondary/20 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${flag.resolved ? 'bg-accent' : flag.severity === 'high' ? 'bg-destructive' : 'bg-yellow-400'}`} />
