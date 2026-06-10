@@ -63,6 +63,8 @@ import TridentLogin from '@/pages/TridentLogin';
 import TridentAdmin from '@/pages/TridentAdmin';
 import Engine from '@/pages/founder/Engine';
 import KernelLogs from '@/pages/founder/KernelLogs';
+import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
+import CreatorProtectedRoute from '@/components/creator/CreatorProtectedRoute';
 
 // Creator
 import Earnings from '@/pages/Earnings';
@@ -139,67 +141,72 @@ const AuthenticatedApp = () => {
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
 
-        {/* Vault */}
-        <Route path="/vault" element={<VaultOverview />} />
-        <Route path="/vault/transactions" element={<VaultTransactions />} />
-        <Route path="/vault/payouts" element={<PayoutHistory />} />
-        <Route path="/vault/team" element={<TeamSplits />} />
+        {/* Creator Routes (Protected) */}
+        <Route element={<CreatorProtectedRoute />}>
+          {/* Vault */}
+          <Route path="/vault" element={<VaultOverview />} />
+          <Route path="/vault/transactions" element={<VaultTransactions />} />
+          <Route path="/vault/payouts" element={<PayoutHistory />} />
+          <Route path="/vault/team" element={<TeamSplits />} />
 
-        {/* Streaming */}
-        <Route path="/go-live" element={<GoLive />} />
-        <Route path="/streaming/go-live" element={<GoLive />} />
-        <Route path="/streaming/console" element={<StreamerConsole />} />
-        <Route path="/stream-analytics" element={<StreamAnalytics />} />
-        <Route path="/streaming/analytics" element={<StreamAnalytics />} />
+          {/* Streaming */}
+          <Route path="/go-live" element={<GoLive />} />
+          <Route path="/streaming/go-live" element={<GoLive />} />
+          <Route path="/streaming/console" element={<StreamerConsole />} />
+          <Route path="/stream-analytics" element={<StreamAnalytics />} />
+          <Route path="/streaming/analytics" element={<StreamAnalytics />} />
 
-        {/* Videos */}
-        <Route path="/upload-video" element={<UploadVideo />} />
-        <Route path="/videos" element={<VideoLibrary />} />
-        <Route path="/videos/:id" element={<VideoPlayer />} />
-        <Route path="/video-analytics" element={<VideoAnalytics />} />
-        <Route path="/videos/manager" element={<VideoManager />} />
+          {/* Videos */}
+          <Route path="/upload-video" element={<UploadVideo />} />
+          <Route path="/videos" element={<VideoLibrary />} />
+          <Route path="/videos/:id" element={<VideoPlayer />} />
+          <Route path="/video-analytics" element={<VideoAnalytics />} />
+          <Route path="/videos/manager" element={<VideoManager />} />
 
-        {/* Podcasts */}
-        <Route path="/upload-audio" element={<UploadAudio />} />
-        <Route path="/podcasts" element={<PodcastLibrary />} />
-        <Route path="/podcasts/:id" element={<PodcastEpisodePage />} />
-        <Route path="/podcast-analytics" element={<PodcastAnalytics />} />
-        <Route path="/podcasts/manager" element={<PodcastManager />} />
+          {/* Podcasts */}
+          <Route path="/upload-audio" element={<UploadAudio />} />
+          <Route path="/podcasts" element={<PodcastLibrary />} />
+          <Route path="/podcasts/:id" element={<PodcastEpisodePage />} />
+          <Route path="/podcast-analytics" element={<PodcastAnalytics />} />
+          <Route path="/podcasts/manager" element={<PodcastManager />} />
 
-        {/* Store */}
-        <Route path="/store" element={<StoreDashboard />} />
-        <Route path="/store/add" element={<AddProduct />} />
-        <Route path="/store/products" element={<ProductList />} />
+          {/* Store */}
+          <Route path="/store" element={<StoreDashboard />} />
+          <Route path="/store/add" element={<AddProduct />} />
+          <Route path="/store/products" element={<ProductList />} />
 
-        {/* Affiliates */}
-        <Route path="/affiliates" element={<AffiliateDashboard />} />
-        <Route path="/affiliates/add" element={<AddAffiliateLink />} />
-        <Route path="/affiliates/links" element={<AffiliateLinkList />} />
-        <Route path="/affiliates/manager" element={<AffiliateManager />} />
+          {/* Affiliates */}
+          <Route path="/affiliates" element={<AffiliateDashboard />} />
+          <Route path="/affiliates/add" element={<AddAffiliateLink />} />
+          <Route path="/affiliates/links" element={<AffiliateLinkList />} />
+          <Route path="/affiliates/manager" element={<AffiliateManager />} />
 
-        {/* Analytics */}
-        <Route path="/analytics" element={<AnalyticsOverview />} />
+          {/* Analytics */}
+          <Route path="/analytics" element={<AnalyticsOverview />} />
 
-        {/* Creator */}
-        <Route path="/earnings" element={<Earnings />} />
-        <Route path="/autosplits" element={<AutoSplits />} />
+          {/* Creator */}
+          <Route path="/earnings" element={<Earnings />} />
+          <Route path="/autosplits" element={<AutoSplits />} />
 
-        {/* Wallet */}
-        <Route path="/wallet/streaming-token" element={<StreamingWalletPage />} />
+          {/* Wallet */}
+          <Route path="/wallet/streaming-token" element={<StreamingWalletPage />} />
+        </Route>
 
-        {/* Admin & Founder */}
-        <Route path="/admin" element={<AdminConsole />} />
-        <Route path="/trident/admin" element={<TridentAdmin />} />
-        <Route path="/founder" element={<FounderDashboard />} />
-        <Route path="/founder/dashboard" element={<FounderDashboard />} />
-        <Route path="/engine" element={<Engine />} />
-        <Route path="/logs" element={<KernelLogs />} />
+        {/* Admin & Founder Routes (Protected) */}
+        <Route element={<AdminProtectedRoute />}>
+          <Route path="/admin" element={<AdminConsole />} />
+          <Route path="/trident/admin" element={<TridentAdmin />} />
+          <Route path="/founder" element={<FounderDashboard />} />
+          <Route path="/founder/dashboard" element={<FounderDashboard />} />
+          <Route path="/engine" element={<Engine />} />
+          <Route path="/logs" element={<KernelLogs />} />
 
-        {/* War Room */}
-        <Route path="/war-room" element={<WarRoom />} />
-        <Route path="/war-room/overwatch" element={<OverwatchDashboard />} />
-        <Route path="/war-room/bridge-test" element={<BridgeStressTest />} />
-        <Route path="/streaming/token" element={<StreamingToken />} />
+          {/* War Room */}
+          <Route path="/war-room" element={<WarRoom />} />
+          <Route path="/war-room/overwatch" element={<OverwatchDashboard />} />
+          <Route path="/war-room/bridge-test" element={<BridgeStressTest />} />
+          <Route path="/streaming/token" element={<StreamingToken />} />
+        </Route>
 
         {/* Settings */}
         <Route path="/viewer/profile" element={<ViewerProfilePage />} />

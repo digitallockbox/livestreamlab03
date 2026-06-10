@@ -13,6 +13,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { Link } from 'react-router-dom';
+import { ledgerApi, engineApi, platformAnalyticsApi } from '@/lib/adminApi';
 
 const FOUNDER_KPIS = [
   { label: 'Total ARR', value: '$3.41M', change: '+38% YoY', up: true, icon: DollarSign, color: 'text-accent', bg: 'bg-accent/10' },
@@ -57,17 +58,14 @@ const TOKEN_ALLOCATION = [
 
 const TABS = ['Executive Summary', 'Growth Metrics', 'Token Economy', 'Roadmap'];
 
-const proxyGet = (path) =>
-  base44.functions.invoke('tridentProxy', { method: 'GET', path }).then(r => r.data);
-
 export default function FounderDashboard() {
   const [activeTab, setActiveTab] = useState('Executive Summary');
   const [ledger, setLedger] = useState(null);
   const [engineStatus, setEngineStatus] = useState(null);
 
   useEffect(() => {
-    proxyGet('/founder/ledger').then(setLedger).catch(() => {});
-    proxyGet('/founder/engine/status').then(setEngineStatus).catch(() => {});
+    ledgerApi.overview().then(setLedger).catch(() => {});
+    engineApi.status().then(setEngineStatus).catch(() => {});
   }, []);
 
   return (

@@ -3,16 +3,13 @@ import { motion } from 'framer-motion';
 import { Cpu, Play, Square, RefreshCw, Terminal, Zap, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { base44 } from '@/api/base44Client';
-// All engine calls go through tridentProxy → api.tridentsystem.live/founder/*
-const invoke = (method, path, body) =>
-  base44.functions.invoke('tridentProxy', { method, path, body }).then(r => r.data);
+import { engineApi } from '@/lib/adminApi';
 
 const proxy = {
-  run:     (body) => invoke('POST', '/founder/engine/run', body),
-  status:  ()     => invoke('GET',  '/founder/engine/status'),
-  restart: ()     => invoke('POST', '/founder/engine/restart'),
-  mode:    (mode) => invoke('POST', '/founder/engine/mode', { mode }),
+  run:     (body) => engineApi.run(body.engine_id),
+  status:  ()     => engineApi.status(),
+  restart: ()     => engineApi.restart(),
+  mode:    (mode) => engineApi.mode(mode),
 };
 
 const ENGINES = [

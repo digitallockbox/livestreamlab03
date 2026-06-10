@@ -10,16 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { base44 } from '@/api/base44Client';
-
-// Thin wrapper — routes all wallet calls through the secure tridentProxy backend function
-const walletApi = {
-  balance:      ()     => base44.functions.invoke('tridentProxy', { method: 'GET',  path: '/wallet/streaming/balance' }).then(r => r.data),
-  transactions: ()     => base44.functions.invoke('tridentProxy', { method: 'GET',  path: '/wallet/streaming/transactions' }).then(r => r.data),
-  deposit:      (body) => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/wallet/streaming/deposit', body }).then(r => r.data),
-  withdraw:     (body) => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/wallet/streaming/withdraw', body }).then(r => r.data),
-  transfer:     (body) => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/wallet/streaming/transfer', body }).then(r => r.data),
-};
+import { creatorWalletApi } from '@/lib/creatorApi';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 const BALANCE_SPARKLINE_FALLBACK = [
@@ -66,8 +57,8 @@ export default function StreamingWalletPage() {
     setError(null);
     try {
       const [bal, txs] = await Promise.all([
-        walletApi.balance({}),
-        walletApi.transactions({}),
+        creatorWalletApi.balance(),
+        creatorWalletApi.transactions(),
       ]);
       setWalletData(bal);
       setTransactions(Array.isArray(txs?.transactions) ? txs.transactions : []);
@@ -91,7 +82,7 @@ export default function StreamingWalletPage() {
     e.preventDefault();
     setTxLoading(true); setTxResult(null);
     try {
-      const res = await walletApi.withdraw({ address: withdrawAddr, amount: Number(withdrawAmt) });
+      const res = await creatorWalletApi.withdraw({ address: withdrawAddr, amount: Number(withdrawAmt) });
       setTxResult({ ok: true, msg: res?.message ?? 'Withdrawal submitted.' });
       setWithdrawAddr(''); setWithdrawAmt('');
       fetchWallet();
@@ -104,7 +95,7 @@ export default function StreamingWalletPage() {
     e.preventDefault();
     setTxLoading(true); setTxResult(null);
     try {
-      const res = await walletApi.transfer({ to: transferTo, amount: Number(transferAmt), memo: transferMemo });
+      const res = await creatorWalletApi.transfer({ to: transferTo, amount: Number(transferAmt), memo: transferMemo });
       setTxResult({ ok: true, msg: res?.message ?? 'Transfer sent.' });
       setTransferTo(''); setTransferAmt(''); setTransferMemo('');
       fetchWallet();
@@ -116,7 +107,7 @@ export default function StreamingWalletPage() {
   async function handleDeposit() {
     setTxLoading(true); setTxResult(null);
     try {
-      const res = await walletApi.deposit({});
+      const res = await creatorWalletApi.deposit({});
       setTxResult({ ok: true, msg: res?.message ?? 'Deposit address ready.' });
     } catch (err) {
       setTxResult({ ok: false, msg: err.message });
