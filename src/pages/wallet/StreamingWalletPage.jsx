@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { STREAMING_TOKEN_MINT, STREAMING_TOKEN_USD_RATE } from '@/lib/constants/tokens';
 import { motion } from 'framer-motion';
 import {
   Zap, ArrowDownLeft, ArrowUpRight, ArrowLeftRight,
@@ -34,7 +35,7 @@ export default function StreamingWalletPage() {
   const [amount, setAmount] = useState('');
   const walletAddress = '7xKp...f3Nq';
   const balance = 14280;
-  const usdValue = (balance * 0.10).toFixed(2);
+  const usdValue = (balance * STREAMING_TOKEN_USD_RATE).toFixed(2);
 
   const copyAddress = () => {
     navigator.clipboard.writeText('7xKpABCDEF1234567890f3Nq');
@@ -77,7 +78,10 @@ export default function StreamingWalletPage() {
             <p className="text-muted-foreground text-sm mt-1">≈ ${usdValue} USD</p>
 
             <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/50">
-              <p className="text-xs text-muted-foreground font-mono">{walletAddress}</p>
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xs text-muted-foreground font-mono">{walletAddress}</p>
+                <p className="text-xs text-muted-foreground/50 font-mono">Mint: {STREAMING_TOKEN_MINT.slice(0, 16)}…</p>
+              </div>
               <button onClick={copyAddress} className="text-muted-foreground hover:text-foreground transition-colors">
                 {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-accent" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
