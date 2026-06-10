@@ -20,6 +20,7 @@ const NAV = [
     { label: '$STREAMING Wallet', icon: Zap, path: '/wallet/streaming-token' },
   ]},
   { section: 'Admin & Founder', items: [
+    { label: 'Block Explorer', icon: Activity, path: '/explorer' },
     { label: 'Admin Console', icon: ShieldCheck, path: '/admin' },
     { label: 'Founder Console', icon: Crown, path: '/founder' },
     { label: 'Trident Admin', icon: Cpu, path: '/trident/admin' },

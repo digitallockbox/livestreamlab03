@@ -84,6 +84,9 @@ import StreamingToken from '@/pages/streaming/StreamingToken';
 // API Docs
 import ApiDocs from '@/pages/ApiDocs';
 
+// Block Explorer
+import BlockExplorer from '@/pages/explorer/BlockExplorer';
+
 // Viewer
 import ViewerProfilePage from '@/pages/viewer/ViewerProfile';
 
@@ -201,6 +204,7 @@ const AuthenticatedApp = () => {
         <Route path="/settings/notifications" element={<NotificationSettings />} />
         <Route path="/settings/connected" element={<ConnectedAccounts />} />
         <Route path="/api-docs" element={<ApiDocs />} />
+        <Route path="/explorer" element={<BlockExplorer />} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
