@@ -75,6 +75,9 @@ import ApiDocs from '@/pages/ApiDocs';
 // Block Explorer
 import BlockExplorer from '@/pages/explorer/BlockExplorer';
 
+// System Health
+import SystemHealth from '@/pages/SystemHealth';
+
 // Email OS
 import EmailOS from '@/pages/emailos/EmailOS';
 
@@ -104,6 +107,7 @@ const AuthenticatedApp = () => {
       <Route path="/stream/:id" element={<StreamPage />} />
       <Route path="/store/product/:id" element={<ProductPage />} />
       <Route path="/checkout" element={<Checkout />} />
+      <Route path="/system/health" element={<SystemHealth />} />
 
       {/* Creator App (with layout) */}
       <Route element={<AppLayout />}>
