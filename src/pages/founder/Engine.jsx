@@ -4,14 +4,15 @@ import { Cpu, Play, Square, RefreshCw, Terminal, Zap, CheckCircle2, AlertTriangl
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
-import { founderApi } from '@/lib/tridentApi';
+// All engine calls go through tridentProxy → api.tridentsystem.live/founder/*
+const invoke = (method, path, body) =>
+  base44.functions.invoke('tridentProxy', { method, path, body }).then(r => r.data);
 
-// Route all engine calls through the secure tridentProxy backend function
 const proxy = {
-  run:     (body) => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/engine/run', body }).then(r => r.data),
-  status:  ()     => base44.functions.invoke('tridentProxy', { method: 'GET',  path: '/founder/engine/status' }).then(r => r.data),
-  restart: ()     => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/founder/engine/restart' }).then(r => r.data),
-  mode:    (mode) => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/founder/engine/mode', body: { mode } }).then(r => r.data),
+  run:     (body) => invoke('POST', '/founder/engine/run', body),
+  status:  ()     => invoke('GET',  '/founder/engine/status'),
+  restart: ()     => invoke('POST', '/founder/engine/restart'),
+  mode:    (mode) => invoke('POST', '/founder/engine/mode', { mode }),
 };
 
 const ENGINES = [

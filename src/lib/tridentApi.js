@@ -106,9 +106,10 @@ export const payoutsApi = {
 };
 
 // ─── Founder OS ───────────────────────────────────────────────────────────
+// Deprecated: use founderApi instead — kept for backwards compat
 export const engineApi = {
-  run: (body) => call('/engine/run', body),
-  status: () => call('/engine/status'),
+  run: (body) => call('/founder/engine/run', body),
+  status: () => call('/founder/engine/status', {}, 'GET'),
   logs: (body) => call('/kernel/logs', body),
 };
 

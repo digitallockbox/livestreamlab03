@@ -22,8 +22,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Invalid path" }, { status: 400 });
     }
 
-    // Block engine/internal paths — sovereign protection
-    const blocked = ["/engine", "/internal", "/private", "/bridge"];
+    // Founder-only paths require admin role
+    const founderPaths = ["/founder/", "/founder"];
+    const isFounderPath = founderPaths.some(p => path.startsWith(p));
+    if (isFounderPath && user.role !== 'admin') {
+      return Response.json({ error: "Forbidden: Founder access required" }, { status: 403 });
+    }
+
+    // Block truly internal paths — not founder routes
+    const blocked = ["/internal", "/private", "/bridge"];
     if (blocked.some(b => path.startsWith(b))) {
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }
