@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 import {
   Zap, Shield, Eye, EyeOff, Radio, Lock,
   CheckCircle2, ArrowRight, Cpu, Globe, AlertTriangle
 } from 'lucide-react';
+import { authApi } from '@/lib/tridentApi';
 
 const FEATURES = [
   { icon: Zap, label: '$STREAMING Token Economy', desc: 'Earn and spend native tokens across the platform.' },
@@ -62,12 +64,24 @@ export default function TridentLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setLoading(false);
-    if (mode === 'register') {
-      navigate('/onboarding');
-    } else {
-      navigate('/dashboard');
+    
+    try {
+      // Determine login type based on email domain/role (can be enhanced with role selector)
+      const isAdmin = email.toLowerCase().includes('admin') || email.toLowerCase().includes('founder');
+      const endpoint = isAdmin ? authApi.adminLogin : authApi.creatorLogin;
+      
+      const result = await endpoint({ email, password });
+      
+      if (result.success) {
+        toast.success(isAdmin ? 'Admin access granted' : 'Welcome back, Creator!');
+        navigate(result.redirect || (isAdmin ? '/admin' : '/dashboard'));
+      } else {
+        toast.error(result.error || 'Authentication failed');
+      }
+    } catch (error) {
+      toast.error(error.message || 'Connection failed');
+    } finally {
+      setLoading(false);
     }
   };
 

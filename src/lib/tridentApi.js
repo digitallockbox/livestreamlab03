@@ -6,11 +6,12 @@
 
 const BASE_URL = 'https://api.tridentsystem.live';
 
-async function call(path, body = {}, method = 'POST') {
+async function call(path, body = {}, method = 'POST', includeCredentials = false) {
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: method !== 'GET' ? JSON.stringify(body) : undefined,
+    credentials: includeCredentials ? 'include' : 'omit',
   });
 
   if (!res.ok) {
@@ -23,7 +24,15 @@ async function call(path, body = {}, method = 'POST') {
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────────────
+// Isolated session authentication (creator vs admin)
 export const authApi = {
+  creatorLogin: (body) => call('/auth/creator/login', body, 'POST', true),
+  adminLogin: (body) => call('/auth/admin/login', body, 'POST', true),
+  creatorLogout: () => call('/auth/creator/logout', {}, 'POST', true),
+  adminLogout: () => call('/auth/admin/logout', {}, 'POST', true),
+  validateCreator: () => call('/auth/creator/validate', {}, 'GET', true),
+  validateAdmin: () => call('/auth/admin/validate', {}, 'GET', true),
+  // Legacy support
   login: (body) => call('/auth/login', body),
   register: (body) => call('/auth/register', body),
   walletAuth: (body) => call('/auth/wallet', body),

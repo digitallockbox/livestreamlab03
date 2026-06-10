@@ -2,57 +2,38 @@
  * Trident Session Manager
  * Handles isolated creator and admin session authentication
  */
-import { base44 } from '@/api/base44Client';
-
-const TRIDENT_API_BASE = 'https://api.tridentsystem.live';
+import { authApi } from '@/lib/tridentApi';
 
 /**
- * Login as creator - issues 7-day creator_session
+ * Login as creator - issues 7-day creator_session cookie
  */
 export const creatorLogin = async (email, password) => {
   try {
-    const response = await fetch(`${TRIDENT_API_BASE}/auth/creator/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await response.json();
+    const result = await authApi.creatorLogin({ email, password });
     
-    if (data.success) {
-      // Store session token for tridentProxy calls
-      sessionStorage.setItem('creator_session', data.session_token);
-      return { success: true, redirect: data.redirect, user: data.user };
+    if (result.success) {
+      // Session cookie is set by backend automatically
+      return { success: true, redirect: result.redirect, user: result.user };
     }
     
-    return { success: false, error: data.error };
+    return { success: false, error: result.error };
   } catch (error) {
     return { success: false, error: error.message };
   }
 };
 
 /**
- * Login as admin/founder - issues 1-day admin_session
+ * Login as admin/founder - issues 1-day admin_session cookie
  */
 export const adminLogin = async (email, password) => {
   try {
-    const response = await fetch(`${TRIDENT_API_BASE}/auth/admin/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await response.json();
+    const result = await authApi.adminLogin({ email, password });
     
-    if (data.success) {
-      // Store session token for tridentProxy calls
-      sessionStorage.setItem('admin_session', data.session_token);
-      return { success: true, redirect: data.redirect, user: data.user };
+    if (result.success) {
+      return { success: true, redirect: result.redirect, user: result.user };
     }
     
-    return { success: false, error: data.error };
+    return { success: false, error: result.error };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -63,11 +44,7 @@ export const adminLogin = async (email, password) => {
  */
 export const creatorLogout = async () => {
   try {
-    await fetch(`${TRIDENT_API_BASE}/auth/creator/logout`, {
-      method: 'POST',
-      credentials: 'include'
-    });
-    sessionStorage.removeItem('creator_session');
+    await authApi.creatorLogout();
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -79,11 +56,7 @@ export const creatorLogout = async () => {
  */
 export const adminLogout = async () => {
   try {
-    await fetch(`${TRIDENT_API_BASE}/auth/admin/logout`, {
-      method: 'POST',
-      credentials: 'include'
-    });
-    sessionStorage.removeItem('admin_session');
+    await authApi.adminLogout();
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -95,11 +68,8 @@ export const adminLogout = async () => {
  */
 export const validateCreatorSession = async () => {
   try {
-    const response = await fetch(`${TRIDENT_API_BASE}/auth/creator/validate`, {
-      credentials: 'include'
-    });
-    const data = await response.json();
-    return data.valid;
+    const result = await authApi.validateCreator();
+    return result.valid;
   } catch (error) {
     return false;
   }
@@ -110,46 +80,22 @@ export const validateCreatorSession = async () => {
  */
 export const validateAdminSession = async () => {
   try {
-    const response = await fetch(`${TRIDENT_API_BASE}/auth/admin/validate`, {
-      credentials: 'include'
-    });
-    const data = await response.json();
-    return data.valid;
+    const result = await authApi.validateAdmin();
+    return result.valid;
   } catch (error) {
     return false;
   }
 };
 
 /**
- * Call Trident API through tridentProxy with session token
+ * Get current session type
  */
-export const callTridentAPI = async (path, method = 'GET', body = null, sessionType = 'creator') => {
-  const sessionToken = sessionType === 'admin' 
-    ? sessionStorage.getItem('admin_session')
-    : sessionStorage.getItem('creator_session');
-
-  const response = await base44.functions.invoke('tridentProxy', {
-    method,
-    path,
-    body,
-    session_token: sessionToken
-  });
-
-  return response.data;
-};
-
-/**
- * Get current session info
- */
-export const getCurrentSession = () => {
-  const creatorSession = sessionStorage.getItem('creator_session');
-  const adminSession = sessionStorage.getItem('admin_session');
+export const getCurrentSessionType = async () => {
+  const adminValid = await validateAdminSession();
+  if (adminValid) return 'admin';
   
-  if (adminSession) {
-    return { type: 'admin', token: adminSession };
-  }
-  if (creatorSession) {
-    return { type: 'creator', token: creatorSession };
-  }
-  return { type: null, token: null };
+  const creatorValid = await validateCreatorSession();
+  if (creatorValid) return 'creator';
+  
+  return null;
 };
