@@ -71,6 +71,13 @@ export const walletApi = {
   connectExternal: (body) => call('/wallet/streaming/connect', body),
 };
 
+// ─── Audio ────────────────────────────────────────────────────────────────
+export const audioApi = {
+  upload: (body) => call('/audio/upload', body),
+  list: (body) => call('/audio/list', body),
+  get: (id) => call('/audio/get', { id }),
+};
+
 // ─── Auto-Splits ──────────────────────────────────────────────────────────
 export const autosplitsApi = {
   list: (body) => call('/autosplits/list', body),

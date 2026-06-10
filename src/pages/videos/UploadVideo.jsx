@@ -7,11 +7,11 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   Upload, Image, Zap, DollarSign, Users, Lock, Globe,
-  CheckCircle2, FileVideo, X, ChevronDown
+  CheckCircle2, FileVideo, X, ChevronDown, Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useMockDataHydration } from "@/hooks/useMockDataHydration";
-import MockDataPanel from "@/components/dashboard/MockDataPanel";
+import { videoApi } from "@/lib/tridentApi";
+import { toast } from "sonner";
 
 const CATEGORIES = ["Gaming", "Music", "Education", "Tech", "Fitness", "Lifestyle", "Art & Creative", "Talk / Commentary", "Other"];
 
@@ -39,12 +39,33 @@ export default function UploadVideo() {
   const [streamingPrice, setStreamingPrice] = useState("");
   const [videoDragging, setVideoDragging] = useState(false);
   const [thumbDragging, setThumbDragging] = useState(false);
-  const { uploadedAssets, processingTransactions, simulateUploadAll } = useMockDataHydration();
+  const [uploading, setUploading] = useState(false);
 
   const toggleMono = (key) => setMonetization(prev => ({ ...prev, [key]: !prev[key] }));
-  
-  const handleUploadAll = () => {
-    simulateUploadAll();
+
+  const handleUploadAll = async () => {
+    if (!title.trim()) { toast.error("Please enter a title."); return; }
+    setUploading(true);
+    try {
+      await videoApi.upload({
+        title,
+        description,
+        category,
+        visibility,
+        monetization,
+        ppv_price: ppvPrice ? parseFloat(ppvPrice) : undefined,
+        streaming_price: streamingPrice ? parseFloat(streamingPrice) : undefined,
+        filename: videoFile?.name || null,
+        thumbnail: thumbFile?.name || null,
+      });
+      toast.success("Video uploaded successfully!");
+      setTitle(""); setDescription(""); setCategory(""); setVideoFile(null); setThumbFile(null);
+      setMonetization({ ppv: false, subscription: false, streaming: false });
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -195,38 +216,14 @@ export default function UploadVideo() {
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1 border-border">Save as Draft</Button>
-            <Button onClick={handleUploadAll} className="flex-1 bg-primary hover:bg-primary/90 gap-2">
-              <Upload className="w-4 h-4" /> Upload All
+            <Button variant="outline" className="flex-1 border-border" disabled={uploading}>Save as Draft</Button>
+            <Button onClick={handleUploadAll} disabled={uploading} className="flex-1 bg-primary hover:bg-primary/90 gap-2">
+              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {uploading ? "Uploading..." : "Upload"}
             </Button>
           </div>
-
-          {/* Mock Data Panel */}
-          {uploadedAssets.length > 0 && (
-            <div className="bg-accent/5 border border-accent/20 rounded-xl p-4">
-              <p className="text-xs font-semibold text-accent mb-3">✓ Mock Assets Verified ({uploadedAssets.length})</p>
-              <div className="space-y-2">
-                {uploadedAssets.map(asset => (
-                  <div key={asset.id} className="text-xs bg-background rounded px-2.5 py-1.5 border border-accent/10">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-accent">{asset.assetId}</span>
-                      <span className="text-muted-foreground">{asset.fileSize}</span>
-                    </div>
-                    <p className="text-muted-foreground mt-1">{asset.title}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
-
-      {/* Sidebar — Mock Transaction Monitor */}
-      {processingTransactions.length > 0 && (
-        <div className="mt-8 max-w-4xl mx-auto">
-          <MockDataPanel transactions={processingTransactions} />
-        </div>
-      )}
     </div>
   );
 }
