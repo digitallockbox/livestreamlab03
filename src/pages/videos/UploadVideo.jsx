@@ -47,34 +47,64 @@ export default function UploadVideo() {
 
   const navigate = useNavigate();
 
-  const handleUploadAll = async () => {
+  const handleUploadAll = () => {
     if (!title.trim()) { toast.error("Please enter a title."); return; }
+    if (!videoFile) { toast.error("Please select a video file."); return; }
+    
     setUploading(true);
     setUploadProgress(0);
 
-    try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("category", category);
-      formData.append("visibility", visibility);
-      formData.append("monetization", JSON.stringify(monetization));
-      if (ppvPrice) formData.append("ppv_price", ppvPrice);
-      if (streamingPrice) formData.append("streaming_price", streamingPrice);
-      if (videoFile) formData.append("file", videoFile);
-      if (thumbFile) formData.append("thumbnail", thumbFile);
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("category", category);
+    formData.append("visibility", visibility);
+    formData.append("monetization", JSON.stringify(monetization));
+    if (ppvPrice) formData.append("ppv_price", ppvPrice);
+    if (streamingPrice) formData.append("streaming_price", streamingPrice);
+    formData.append("file", videoFile);
+    if (thumbFile) formData.append("thumbnail", thumbFile);
 
-      const result = await contentApi.uploadVideo(formData);
-      toast.success("Video uploaded successfully!");
-      navigate('/videos');
-    } catch (err) {
-      toast.error(`Upload failed: ${err.message}`);
-    } finally {
+    // XHR-based upload with progress tracking
+    const xhr = new XMLHttpRequest();
+    xhrRef.current = xhr;
+
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        setUploadProgress(percent);
+      }
+    });
+
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        toast.success("Video uploaded successfully!");
+        navigate('/videos');
+      } else {
+        toast.error(`Upload failed: ${xhr.statusText}`);
+      }
       setUploading(false);
-    }
+      setUploadProgress(0);
+    });
+
+    xhr.addEventListener("error", () => {
+      toast.error("Upload failed: Network error");
+      setUploading(false);
+      setUploadProgress(0);
+    });
+
+    xhr.open("POST", "https://api.tridentsystem.live/video/upload");
+    xhr.send(formData);
   };
 
-  const cancelUpload = () => { xhrRef.current?.abort(); setUploading(false); setUploadProgress(0); };
+  const cancelUpload = () => { 
+    if (xhrRef.current) {
+      xhrRef.current.abort();
+      setUploading(false); 
+      setUploadProgress(0);
+      toast.info("Upload cancelled");
+    }
+  };
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto">
