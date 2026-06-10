@@ -10,7 +10,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { walletApi } from '@/lib/tridentApi';
+import { base44 } from '@/api/base44Client';
+
+// Thin wrapper — routes all wallet calls through the secure tridentProxy backend function
+const walletApi = {
+  balance:      ()     => base44.functions.invoke('tridentProxy', { method: 'GET',  path: '/wallet/streaming/balance' }).then(r => r.data),
+  transactions: ()     => base44.functions.invoke('tridentProxy', { method: 'GET',  path: '/wallet/streaming/transactions' }).then(r => r.data),
+  deposit:      (body) => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/wallet/streaming/deposit', body }).then(r => r.data),
+  withdraw:     (body) => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/wallet/streaming/withdraw', body }).then(r => r.data),
+  transfer:     (body) => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/wallet/streaming/transfer', body }).then(r => r.data),
+};
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 const BALANCE_SPARKLINE_FALLBACK = [
