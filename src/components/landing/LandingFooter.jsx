@@ -1,6 +1,7 @@
 import React from "react";
 import { Radio, Zap, Twitter, Youtube, Github, MessageCircle, Send } from "lucide-react";
 import { Link } from "react-router-dom";
+import { EMAILS } from "@/lib/constants/emails";
 
 const links = {
   Platform: [
@@ -17,12 +18,12 @@ const links = {
     { label: "Team Splits", href: "#ecosystem" },
     { label: "API Docs", href: "/api-docs" },
   ],
-  Company: [
-    { label: "About", href: "#" },
-    { label: "Blog", href: "#" },
-    { label: "Careers", href: "#" },
-    { label: "Contact", href: "#" },
-    { label: "Status", href: "#" },
+  Contact: [
+    { label: "General", href: `mailto:${EMAILS.contact}` },
+    { label: "Creator Support", href: `mailto:${EMAILS.support}` },
+    { label: "Billing & Payouts", href: `mailto:${EMAILS.billing}` },
+    { label: "Security", href: `mailto:${EMAILS.security}` },
+    { label: "Operators", href: `mailto:${EMAILS.operators}` },
   ],
 };
 

@@ -466,6 +466,7 @@ export default function ApiDocs() {
         <p className="text-xs text-muted-foreground">
           <span className="text-foreground font-medium">Frontend calls endpoints → Backend calls engines → Engines stay private.</span>
           <br />The Trident engines (Omega, Aegis, Overwatch) are never exposed to the frontend. All logic runs server-side.
+          <br className="mt-2" />Questions? Contact <a href="mailto:support@livestreamlab.live" className="text-primary hover:underline">support@livestreamlab.live</a> or <a href="mailto:admin@livestreamlab.live" className="text-primary hover:underline">admin@livestreamlab.live</a>
         </p>
       </div>
       </>}
