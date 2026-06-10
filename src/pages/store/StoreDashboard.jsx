@@ -1,58 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   ShoppingBag, DollarSign, TrendingUp, Zap, Plus, Package,
-  Eye, ArrowRight, CheckCircle2, Clock, BarChart2
+  Eye, ArrowRight, BarChart2, Loader2
 } from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, BarChart, Bar
-} from "recharts";
-
-const CHART_STYLE = {
-  grid: "hsl(230, 18%, 18%)",
-  axis: "hsl(220, 10%, 50%)",
-  tooltip: { background: "hsl(230, 22%, 10%)", border: "1px solid hsl(230, 18%, 18%)", borderRadius: "12px", color: "hsl(220, 20%, 95%)" },
-};
-
-const SALES_DATA = [
-  { day: "Mar 29", usd: 120, streaming: 80 },
-  { day: "Mar 30", usd: 190, streaming: 140 },
-  { day: "Mar 31", usd: 95, streaming: 60 },
-  { day: "Apr 1", usd: 280, streaming: 200 },
-  { day: "Apr 2", usd: 175, streaming: 130 },
-  { day: "Apr 3", usd: 310, streaming: 240 },
-  { day: "Apr 4", usd: 220, streaming: 180 },
-];
-
-const TOP_PRODUCTS = [
-  { name: "Preset Pack v2", sales: 18, revenue: 449.82, streaming: true },
-  { name: "Editing Course", sales: 8, revenue: 399.92, streaming: false },
-  { name: "Audio Samples Pack", sales: 12, revenue: 179.88, streaming: true },
-  { name: "LUT Bundle", sales: 6, revenue: 149.94, streaming: true },
-];
-
-const RECENT_ORDERS = [
-  { id: "#ORD-1041", product: "Preset Pack v2", buyer: "@viewer123", amount: 24.99, method: "usd", date: "Apr 4, 10:22am", status: "completed" },
-  { id: "#ORD-1040", product: "Audio Samples Pack", buyer: "@music_fan", amount: 14.99, method: "streaming", date: "Apr 3, 6:14pm", status: "completed" },
-  { id: "#ORD-1039", product: "Editing Course", buyer: "@newcreator", amount: 49.99, method: "usd", date: "Apr 3, 2:08pm", status: "completed" },
-  { id: "#ORD-1038", product: "LUT Bundle", buyer: "@filmmaker99", amount: 19.99, method: "streaming", date: "Apr 2, 9:55am", status: "completed" },
-  { id: "#ORD-1037", product: "Preset Pack v2", buyer: "@colorist_x", amount: 24.99, method: "usd", date: "Apr 1, 4:33pm", status: "completed" },
-];
-
-const STATS = [
-  { label: "Total Sales", value: "$1,389", sub: "+23% this week", icon: DollarSign, color: "text-primary", bg: "bg-primary/10" },
-  { label: "Total Orders", value: "47", sub: "5 today", icon: ShoppingBag, color: "text-accent", bg: "bg-accent/10" },
-  { label: "$STREAMING Sales", value: "2,840 $S", sub: "+41% this week", icon: Zap, color: "text-chart-4", bg: "bg-chart-4/10" },
-  { label: "Active Products", value: "8", sub: "2 drafts", icon: Package, color: "text-chart-3", bg: "bg-chart-3/10" },
-];
-
-const PERIODS = ["7D", "30D", "All"];
+import { creatorStoreApi } from "@/lib/creatorApi";
 
 export default function StoreDashboard() {
-  const [period, setPeriod] = useState("7D");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await creatorStoreApi.listProducts();
+        setProducts(data);
+      } catch (err) {
+        console.error('Store dashboard load error:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const totalRevenue = products.filter(p => p.status === "published").reduce((s, p) => s + (p.revenue || 0), 0);
+  const totalSales = products.reduce((s, p) => s + (p.sales || 0), 0);
+  const streamingEnabled = products.filter(p => p.streaming_price > 0).length;
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
@@ -73,121 +48,93 @@ export default function StoreDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {STATS.map(({ label, value, sub, icon: Icon, color, bg }) => (
-          <div key={label} className="bg-card border border-border rounded-2xl p-5">
-            <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center mb-3`}>
-              <Icon className={`w-4 h-4 ${color}`} />
-            </div>
-            <p className="text-2xl font-display font-bold text-foreground">{value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-            <p className="text-xs text-accent mt-1">{sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Sales Chart + Top Products */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Sales Chart */}
-        <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <BarChart2 className="w-4 h-4 text-primary" />
-              <h3 className="font-display font-semibold text-foreground">Revenue by Day</h3>
-            </div>
-            <div className="flex items-center gap-1 bg-secondary rounded-xl p-1">
-              {PERIODS.map(p => (
-                <button key={p} onClick={() => setPeriod(p)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${period === p ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"}`}>
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={SALES_DATA}>
-              <CartesianGrid strokeDasharray="3 3" stroke={CHART_STYLE.grid} />
-              <XAxis dataKey="day" stroke={CHART_STYLE.axis} fontSize={11} />
-              <YAxis stroke={CHART_STYLE.axis} fontSize={11} />
-              <Tooltip contentStyle={CHART_STYLE.tooltip} />
-              <Bar dataKey="usd" name="USD Sales" fill="hsl(262, 83%, 62%)" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="streaming" name="$STREAMING" fill="hsl(165, 82%, 51%)" radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-          <div className="flex gap-4 mt-3">
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="w-2.5 h-2.5 rounded bg-primary inline-block" /> USD Sales</span>
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="w-2.5 h-2.5 rounded bg-accent inline-block" /> $STREAMING</span>
-          </div>
+      {loading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="bg-card border border-border rounded-2xl p-5 animate-pulse"><div className="h-9 w-9 rounded-xl bg-muted mb-3"></div><div className="h-6 bg-muted rounded w-20 mb-2"></div><div className="h-4 bg-muted rounded w-16"></div></div>)}
         </div>
-
-        {/* Top Products */}
-        <div className="bg-card border border-border rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-4 h-4 text-chart-3" />
-            <h3 className="font-display font-semibold text-foreground">Top Products</h3>
-          </div>
-          <div className="space-y-3">
-            {TOP_PRODUCTS.map(({ name, sales, revenue, streaming }, i) => (
-              <div key={name} className="flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/50 transition-colors">
-                <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${i === 0 ? "bg-primary/20 text-primary" : i === 1 ? "bg-accent/20 text-accent" : "bg-secondary text-muted-foreground"}`}>
-                  {i + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{name}</p>
-                  <p className="text-xs text-muted-foreground">{sales} sales · ${revenue}</p>
-                </div>
-                {streaming && <Zap className="w-3.5 h-3.5 text-accent shrink-0" />}
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: "Total Revenue", value: `$${totalRevenue.toFixed(0)}`, sub: "All time", icon: DollarSign, color: "text-primary", bg: "bg-primary/10" },
+            { label: "Total Sales", value: totalSales.toString(), sub: "Units sold", icon: ShoppingBag, color: "text-accent", bg: "bg-accent/10" },
+            { label: "$STREAMING Enabled", value: `${streamingEnabled} products`, sub: "Accepting tokens", icon: Zap, color: "text-chart-4", bg: "bg-chart-4/10" },
+            { label: "Active Products", value: products.filter(p => p.status === "published").length.toString(), sub: `${products.filter(p => p.status === "draft").length} drafts`, icon: Package, color: "text-chart-3", bg: "bg-chart-3/10" },
+          ].map(({ label, value, sub, icon: Icon, color, bg }) => (
+            <div key={label} className="bg-card border border-border rounded-2xl p-5">
+              <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center mb-3`}>
+                <Icon className={`w-4 h-4 ${color}`} />
               </div>
-            ))}
+              <p className="text-2xl font-display font-bold text-foreground">{value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+              <p className="text-xs text-accent mt-1">{sub}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Recent Products */}
+      <div className="bg-card border border-border rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <ShoppingBag className="w-4 h-4 text-accent" />
+            <h3 className="font-display font-semibold text-foreground">Your Products</h3>
           </div>
+          <Badge className="bg-accent/10 text-accent border-accent/20 text-xs">{products.length} products</Badge>
+        </div>
+        {products.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                  <th className="pb-3 pr-4 font-medium">Product</th>
+                  <th className="pb-3 pr-4 font-medium">Category</th>
+                  <th className="pb-3 pr-4 font-medium">Price</th>
+                  <th className="pb-3 pr-4 font-medium">Sales</th>
+                  <th className="pb-3 pr-4 font-medium">Revenue</th>
+                  <th className="pb-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.slice(0, 10).map((product) => (
+                  <tr key={product.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                    <td className="py-3 pr-4">
+                      <p className="text-sm font-medium text-foreground">{product.name}</p>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <Badge variant="outline" className="text-xs border-border">{product.category}</Badge>
+                    </td>
+                    <td className="py-3 pr-4 text-sm text-foreground">
+                      <div className="flex items-center gap-2">
+                        <span>${product.price}</span>
+                        {product.streaming_price > 0 && (
+                          <span className="text-xs text-accent">/ {product.streaming_price} $S</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 pr-4 text-sm text-foreground">{product.sales || 0}</td>
+                    <td className="py-3 pr-4 text-sm font-semibold text-foreground">${product.revenue?.toFixed(0) || "0"}</td>
+                    <td className="py-3 pr-4">
+                      <Badge className={`text-xs border ${product.status === "published" ? "bg-accent/10 text-accent border-accent/20" : "bg-muted text-muted-foreground border-border"}`}>
+                        {product.status}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground text-center py-8">
+            No products yet. <Link to="/store/add" className="text-primary hover:underline">Add your first product</Link>
+          </div>
+        )}
+        {products.length > 10 && (
           <Link to="/store/products">
             <Button variant="outline" className="w-full mt-4 border-border gap-2 text-xs">
               View All Products <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           </Link>
-        </div>
-      </div>
-
-      {/* Recent Orders */}
-      <div className="bg-card border border-border rounded-2xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="w-4 h-4 text-accent" />
-            <h3 className="font-display font-semibold text-foreground">Recent Orders</h3>
-          </div>
-          <Badge className="bg-accent/10 text-accent border-accent/20 text-xs">{RECENT_ORDERS.length} orders</Badge>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="pb-3 pr-4 font-medium">Order ID</th>
-                <th className="pb-3 pr-4 font-medium">Product</th>
-                <th className="pb-3 pr-4 font-medium">Buyer</th>
-                <th className="pb-3 pr-4 font-medium">Method</th>
-                <th className="pb-3 pr-4 font-medium">Amount</th>
-                <th className="pb-3 font-medium">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {RECENT_ORDERS.map((order) => (
-                <tr key={order.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
-                  <td className="py-3 pr-4 text-xs font-mono text-muted-foreground">{order.id}</td>
-                  <td className="py-3 pr-4 text-sm text-foreground">{order.product}</td>
-                  <td className="py-3 pr-4 text-sm text-muted-foreground">{order.buyer}</td>
-                  <td className="py-3 pr-4">
-                    {order.method === "streaming"
-                      ? <Badge className="bg-accent/10 text-accent border-accent/20 gap-1 text-xs"><Zap className="w-2.5 h-2.5" />$STREAMING</Badge>
-                      : <Badge className="bg-secondary text-muted-foreground border-border text-xs">USD</Badge>
-                    }
-                  </td>
-                  <td className="py-3 pr-4 text-sm font-medium text-foreground">${order.amount.toFixed(2)}</td>
-                  <td className="py-3 text-xs text-muted-foreground">{order.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        )}
       </div>
 
       {/* Quick Actions */}
@@ -195,7 +142,7 @@ export default function StoreDashboard() {
         {[
           { label: "Add New Product", desc: "List a digital or physical product", icon: Plus, to: "/store/add", primary: true },
           { label: "View All Products", desc: "Manage your product catalog", icon: Package, to: "/store/products", primary: false },
-          { label: "Stream Analytics", desc: "Revenue & performance deep dive", icon: BarChart2, to: "/analytics", primary: false },
+          { label: "Analytics", desc: "Revenue & performance deep dive", icon: BarChart2, to: "/analytics", primary: false },
         ].map(({ label, desc, icon: Icon, to, primary }) => (
           <Link key={label} to={to}>
             <div className={`p-4 rounded-2xl border cursor-pointer transition-all hover:border-primary/30 ${primary ? "bg-primary/10 border-primary/20" : "bg-card border-border"}`}>

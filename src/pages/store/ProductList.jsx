@@ -1,21 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, ShoppingBag, Zap, Edit3, MoreVertical, Search, Download, ShirtIcon } from "lucide-react";
-
-const MOCK_PRODUCTS = [
-  { id: 1, name: "Preset Pack v2", price: 24.99, streamingPrice: 120, status: "published", sales: 18, revenue: 449.82, type: "digital", category: "Presets & LUTs" },
-  { id: 2, name: "Audio Samples Pack", price: 14.99, streamingPrice: 80, status: "published", sales: 12, revenue: 179.88, type: "digital", category: "Audio Samples" },
-  { id: 3, name: "Editing Course", price: 49.99, streamingPrice: 0, status: "published", sales: 8, revenue: 399.92, type: "digital", category: "Courses" },
-  { id: 4, name: "New Template Pack", price: 9.99, streamingPrice: 50, status: "draft", sales: 0, revenue: 0, type: "digital", category: "Templates" },
-  { id: 5, name: "Creator Hoodie", price: 59.99, streamingPrice: 0, status: "published", sales: 5, revenue: 299.95, type: "merch", category: "Merch" },
-  { id: 6, name: "LUT Bundle Pro", price: 34.99, streamingPrice: 160, status: "published", sales: 6, revenue: 209.94, type: "digital", category: "Presets & LUTs" },
-  { id: 7, name: "Podcast Starter Kit", price: 29.99, streamingPrice: 140, status: "draft", sales: 0, revenue: 0, type: "digital", category: "Bundles" },
-  { id: 8, name: "Brand Kit Vol.1", price: 19.99, streamingPrice: 90, status: "published", sales: 9, revenue: 179.91, type: "digital", category: "Templates" },
-];
+import { Plus, ShoppingBag, Zap, Edit3, MoreVertical, Search, Download, ShirtIcon, Loader2 } from "lucide-react";
+import { creatorStoreApi } from "@/lib/creatorApi";
 
 const STATUS_STYLES = {
   published: "bg-accent/10 text-accent border-accent/20",
@@ -30,19 +20,34 @@ const TYPE_ICONS = {
 export default function ProductList() {
   const [tab, setTab] = useState("all");
   const [search, setSearch] = useState("");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MOCK_PRODUCTS
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await creatorStoreApi.listProducts();
+        setProducts(data);
+      } catch (err) {
+        console.error('Product list load error:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const filtered = products
     .filter(p => {
       if (tab === "all") return true;
       if (tab === "draft" || tab === "published") return p.status === tab;
-      if (tab === "streaming") return p.streamingPrice > 0;
+      if (tab === "streaming") return p.streaming_price > 0;
       if (tab === "digital") return p.type === "digital";
       if (tab === "merch") return p.type === "merch";
       return true;
     })
     .filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
 
-  const totalRevenue = MOCK_PRODUCTS.filter(p => p.status === "published").reduce((s, p) => s + p.revenue, 0);
+  const totalRevenue = products.filter(p => p.status === "published").reduce((s, p) => s + (p.revenue || 0), 0);
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -58,19 +63,25 @@ export default function ProductList() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        {[
-          { label: "Total Products", value: MOCK_PRODUCTS.length },
-          { label: "Published", value: MOCK_PRODUCTS.filter(p => p.status === "published").length },
-          { label: "Total Revenue", value: `$${totalRevenue.toFixed(0)}` },
-          { label: "$STREAMING Enabled", value: MOCK_PRODUCTS.filter(p => p.streamingPrice > 0).length },
-        ].map(({ label, value }) => (
-          <div key={label} className="bg-card border border-border rounded-xl p-4 text-center">
-            <p className="text-xl font-display font-bold text-foreground">{value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {[1,2,3,4].map(i => <div key={i} className="bg-card border border-border rounded-xl p-4 animate-pulse"><div className="h-6 bg-muted rounded w-16 mb-2"></div><div className="h-4 bg-muted rounded w-12"></div></div>)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: "Total Products", value: products.length },
+            { label: "Published", value: products.filter(p => p.status === "published").length },
+            { label: "Total Revenue", value: `$${totalRevenue.toFixed(0)}` },
+            { label: "$STREAMING Enabled", value: products.filter(p => p.streaming_price > 0).length },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-card border border-border rounded-xl p-4 text-center">
+              <p className="text-xl font-display font-bold text-foreground">{value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -91,7 +102,12 @@ export default function ProductList() {
       </div>
 
       {/* Grid */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
+          <p className="text-muted-foreground mt-4">Loading products...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground">No products found.</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -105,7 +121,7 @@ export default function ProductList() {
                   <Badge className={`absolute top-2 left-2 text-xs border ${STATUS_STYLES[product.status]}`}>
                     {product.status}
                   </Badge>
-                  {product.streamingPrice > 0 && (
+                  {product.streaming_price > 0 && (
                     <div className="absolute top-2 right-2 w-6 h-6 rounded-md bg-accent/20 flex items-center justify-center">
                       <Zap className="w-3 h-3 text-accent" />
                     </div>
@@ -118,11 +134,11 @@ export default function ProductList() {
                   <div className="flex items-center justify-between mt-2">
                     <div>
                       <span className="text-sm font-bold text-foreground">${product.price}</span>
-                      {product.streamingPrice > 0 && (
-                        <span className="text-xs text-accent ml-2">/ {product.streamingPrice} $S</span>
+                      {product.streaming_price > 0 && (
+                        <span className="text-xs text-accent ml-2">/ {product.streaming_price} $S</span>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">{product.sales} sold</span>
+                    <span className="text-xs text-muted-foreground">{product.sales || 0} sold</span>
                   </div>
                 </div>
                 {/* Footer */}
@@ -142,7 +158,7 @@ export default function ProductList() {
 
       {/* Pagination */}
       <div className="flex items-center justify-between mt-8 text-sm text-muted-foreground">
-        <span>Showing {filtered.length} of {MOCK_PRODUCTS.length} products</span>
+        <span>Showing {filtered.length} of {products.length} products</span>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" disabled className="border-border">Previous</Button>
           <Button size="sm" variant="outline" className="border-border">Next</Button>

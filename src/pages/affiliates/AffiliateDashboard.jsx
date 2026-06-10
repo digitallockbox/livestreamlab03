@@ -1,50 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   MousePointer, DollarSign, Zap, Plus, TrendingUp, Search,
-  BarChart2, ExternalLink, Edit3, Copy, ArrowUpRight, ShoppingBag, Tag
+  ExternalLink, Edit3, Copy, ArrowUpRight, Tag, Loader2
 } from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from "recharts";
-
-const CHART_STYLE = {
-  tooltip: { background: "hsl(230, 22%, 10%)", border: "1px solid hsl(230, 18%, 18%)", borderRadius: "12px", color: "hsl(220, 20%, 95%)" },
-};
-
-const CLICK_DATA = [
-  { day: "Mar 29", clicks: 180, conversions: 9 },
-  { day: "Mar 30", clicks: 290, conversions: 14 },
-  { day: "Mar 31", clicks: 210, conversions: 11 },
-  { day: "Apr 1",  clicks: 420, conversions: 22 },
-  { day: "Apr 2",  clicks: 380, conversions: 19 },
-  { day: "Apr 3",  clicks: 510, conversions: 27 },
-  { day: "Apr 4",  clicks: 340, conversions: 18 },
-];
-
-const LINKS = [
-  { id: 1, title: "StreamDeck Pro",      category: "Tech",      url: "https://elgato.com/ref/sam", clicks: 1240, conversions: 38, ctr: 3.1, commission: 142.00, streaming: 380, status: "active" },
-  { id: 2, title: "Elgato Gear Link",    category: "Streaming", url: "https://elgato.com/ref/sam", clicks: 890,  conversions: 21, ctr: 2.4, commission: 98.50,  streaming: 210, status: "active" },
-  { id: 3, title: "SecretLab Chair",     category: "Gaming",    url: "https://secretlab.co/ref",   clicks: 2150, conversions: 54, ctr: 2.5, commission: 299.50, streaming: 540, status: "active" },
-  { id: 4, title: "Rode Microphones",    category: "Audio",     url: "https://rode.com/ref/sam",   clicks: 640,  conversions: 16, ctr: 2.5, commission: 88.00,  streaming: 160, status: "active" },
-  { id: 5, title: "Epidemic Sound",      category: "Audio",     url: "https://epidemicsound.com",  clicks: 310,  conversions: 9,  ctr: 2.9, commission: 45.00,  streaming: 90,  status: "paused" },
-  { id: 6, title: "NordVPN Creator",     category: "Tech",      url: "https://nordvpn.com/ref",    clicks: 760,  conversions: 28, ctr: 3.7, commission: 168.00, streaming: 280, status: "active" },
-];
-
-const STATS = [
-  { label: "Total Clicks",      value: "5,990",    sub: "+18% this week", icon: MousePointer, color: "text-primary",  bg: "bg-primary/10" },
-  { label: "Commissions",       value: "$841.00",  sub: "+$142 today",    icon: DollarSign,  color: "text-accent",   bg: "bg-accent/10" },
-  { label: "Conversions",       value: "166",      sub: "2.8% avg CTR",   icon: TrendingUp,  color: "text-chart-3",  bg: "bg-chart-3/10" },
-  { label: "$STREAMING Bonus",  value: "1,660 $S", sub: "+280 this week", icon: Zap,         color: "text-chart-4",  bg: "bg-chart-4/10" },
-];
-
-const STATUS_STYLES = {
-  active: "bg-accent/10 text-accent border-accent/20",
-  paused: "bg-muted text-muted-foreground border-border",
-};
+import { creatorAffiliateApi } from "@/lib/creatorApi";
 
 const CATEGORY_COLORS = {
   Tech:      "bg-primary/10 text-primary border-primary/20",
@@ -57,8 +20,27 @@ const CATEGORY_COLORS = {
 export default function AffiliateDashboard() {
   const [search, setSearch] = useState("");
   const [copied, setCopied] = useState(null);
+  const [links, setLinks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = LINKS.filter(l => l.title.toLowerCase().includes(search.toLowerCase()));
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await creatorAffiliateApi.listLinks();
+        setLinks(data);
+      } catch (err) {
+        console.error('Affiliate dashboard load error:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const filtered = links.filter(l => l.title.toLowerCase().includes(search.toLowerCase()));
+  const totalClicks = links.reduce((s, l) => s + (l.clicks || 0), 0);
+  const totalCommissions = links.reduce((s, l) => s + (l.commission || 0), 0);
+  const totalConversions = links.reduce((s, l) => s + (l.conversions || 0), 0);
+  const totalStreaming = links.reduce((s, l) => s + (l.streaming || 0), 0);
 
   const handleCopy = (id, url) => {
     navigator.clipboard.writeText(url);
@@ -71,7 +53,7 @@ export default function AffiliateDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Affiliate Marketplace</h1>
+          <h1 className="font-display text-3xl font-bold text-foreground">Affiliate Dashboard</h1>
           <p className="text-muted-foreground mt-1">Track clicks, conversions, and $STREAMING bonuses.</p>
         </div>
         <Link to="/affiliates/add">
@@ -80,50 +62,29 @@ export default function AffiliateDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {STATS.map(({ label, value, sub, icon: Icon, color, bg }) => (
-          <div key={label} className="bg-card border border-border rounded-2xl p-5">
-            <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center mb-3`}>
-              <Icon className={`w-4 h-4 ${color}`} />
+      {loading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="bg-card border border-border rounded-2xl p-5 animate-pulse"><div className="h-9 w-9 rounded-xl bg-muted mb-3"></div><div className="h-6 bg-muted rounded w-20 mb-2"></div><div className="h-4 bg-muted rounded w-16"></div></div>)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: "Total Clicks",      value: totalClicks.toLocaleString(),    sub: "All time", icon: MousePointer, color: "text-primary",  bg: "bg-primary/10" },
+            { label: "Commissions",       value: `$${totalCommissions.toFixed(2)}`,  sub: "Earned",    icon: DollarSign,  color: "text-accent",   bg: "bg-accent/10" },
+            { label: "Conversions",       value: totalConversions.toString(),      sub: "Total",     icon: TrendingUp,  color: "text-chart-3",  bg: "bg-chart-3/10" },
+            { label: "$STREAMING Bonus",  value: `${totalStreaming.toLocaleString()} $S`, sub: "Earned", icon: Zap,         color: "text-chart-4",  bg: "bg-chart-4/10" },
+          ].map(({ label, value, sub, icon: Icon, color, bg }) => (
+            <div key={label} className="bg-card border border-border rounded-2xl p-5">
+              <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center mb-3`}>
+                <Icon className={`w-4 h-4 ${color}`} />
+              </div>
+              <p className="text-2xl font-display font-bold text-foreground">{value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+              <p className="text-xs text-accent mt-1 flex items-center gap-1"><ArrowUpRight className="w-3 h-3" />{sub}</p>
             </div>
-            <p className="text-2xl font-display font-bold text-foreground">{value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-            <p className="text-xs text-accent mt-1 flex items-center gap-1"><ArrowUpRight className="w-3 h-3" />{sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Chart */}
-      <div className="bg-card border border-border rounded-2xl p-5">
-        <div className="flex items-center gap-2 mb-5">
-          <BarChart2 className="w-4 h-4 text-primary" />
-          <h3 className="font-display font-semibold text-foreground">Clicks & Conversions — Last 7 Days</h3>
+          ))}
         </div>
-        <ResponsiveContainer width="100%" height={220}>
-          <AreaChart data={CLICK_DATA}>
-            <defs>
-              <linearGradient id="gClicks" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="hsl(262, 83%, 62%)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="hsl(262, 83%, 62%)" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="gConv" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="hsl(165, 82%, 51%)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="hsl(165, 82%, 51%)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(230,18%,18%)" />
-            <XAxis dataKey="day" stroke="hsl(220,10%,50%)" fontSize={11} />
-            <YAxis stroke="hsl(220,10%,50%)" fontSize={11} />
-            <Tooltip contentStyle={CHART_STYLE.tooltip} />
-            <Area type="monotone" dataKey="clicks"      name="Clicks"      stroke="hsl(262,83%,62%)" fill="url(#gClicks)" strokeWidth={2} dot={false} />
-            <Area type="monotone" dataKey="conversions" name="Conversions" stroke="hsl(165,82%,51%)" fill="url(#gConv)"   strokeWidth={2} dot={false} />
-          </AreaChart>
-        </ResponsiveContainer>
-        <div className="flex gap-4 mt-3">
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="w-2.5 h-2.5 rounded bg-primary inline-block" /> Clicks</span>
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="w-2.5 h-2.5 rounded bg-accent inline-block" /> Conversions</span>
-        </div>
-      </div>
+      )}
 
       {/* Links Table */}
       <div className="bg-card border border-border rounded-2xl p-5">
@@ -137,61 +98,61 @@ export default function AffiliateDashboard() {
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search links..." className="pl-8 h-8 bg-secondary border-border text-sm" />
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="pb-3 font-medium pr-4">Link</th>
-                <th className="pb-3 font-medium pr-4">Category</th>
-                <th className="pb-3 font-medium pr-4">Clicks</th>
-                <th className="pb-3 font-medium pr-4">Conv.</th>
-                <th className="pb-3 font-medium pr-4">CTR</th>
-                <th className="pb-3 font-medium pr-4">Commission</th>
-                <th className="pb-3 font-medium pr-4">$STREAMING</th>
-                <th className="pb-3 font-medium pr-4">Status</th>
-                <th className="pb-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((link) => (
-                <tr key={link.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
-                  <td className="py-3 pr-4">
-                    <p className="text-sm font-medium text-foreground">{link.title}</p>
-                    <p className="text-xs text-muted-foreground truncate max-w-[140px]">{link.url}</p>
-                  </td>
-                  <td className="py-3 pr-4">
-                    <Badge className={`text-xs border ${CATEGORY_COLORS[link.category] || "bg-secondary text-muted-foreground border-border"}`}>
-                      {link.category}
-                    </Badge>
-                  </td>
-                  <td className="py-3 pr-4 text-sm text-foreground">{link.clicks.toLocaleString()}</td>
-                  <td className="py-3 pr-4 text-sm text-foreground">{link.conversions}</td>
-                  <td className="py-3 pr-4 text-sm text-foreground">{link.ctr}%</td>
-                  <td className="py-3 pr-4 text-sm font-semibold text-foreground">${link.commission.toFixed(2)}</td>
-                  <td className="py-3 pr-4">
-                    <span className="text-sm text-accent flex items-center gap-1"><Zap className="w-3 h-3" />{link.streaming} $S</span>
-                  </td>
-                  <td className="py-3 pr-4">
-                    <Badge className={`text-xs border ${STATUS_STYLES[link.status]}`}>{link.status}</Badge>
-                  </td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-1">
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" onClick={() => handleCopy(link.id, link.url)}>
-                        {copied === link.id ? <span className="text-accent text-xs">✓</span> : <Copy className="w-3 h-3" />}
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
-                        <Edit3 className="w-3 h-3" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
-                        <ExternalLink className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </td>
+        {filtered.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                  <th className="pb-3 font-medium pr-4">Link</th>
+                  <th className="pb-3 font-medium pr-4">Category</th>
+                  <th className="pb-3 font-medium pr-4">Clicks</th>
+                  <th className="pb-3 font-medium pr-4">Conv.</th>
+                  <th className="pb-3 font-medium pr-4">Commission</th>
+                  <th className="pb-3 font-medium pr-4">$STREAMING</th>
+                  <th className="pb-3 font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.map((link) => (
+                  <tr key={link.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                    <td className="py-3 pr-4">
+                      <p className="text-sm font-medium text-foreground">{link.title}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[140px]">{link.url}</p>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <Badge className={`text-xs border ${CATEGORY_COLORS[link.category] || "bg-secondary text-muted-foreground border-border"}`}>
+                        {link.category}
+                      </Badge>
+                    </td>
+                    <td className="py-3 pr-4 text-sm text-foreground">{link.clicks?.toLocaleString() || 0}</td>
+                    <td className="py-3 pr-4 text-sm text-foreground">{link.conversions || 0}</td>
+                    <td className="py-3 pr-4 text-sm font-semibold text-foreground">${link.commission?.toFixed(2) || "0"}</td>
+                    <td className="py-3 pr-4">
+                      <span className="text-sm text-accent flex items-center gap-1"><Zap className="w-3 h-3" />{link.streaming || 0} $S</span>
+                    </td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-1">
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" onClick={() => handleCopy(link.id, link.url)}>
+                          {copied === link.id ? <span className="text-accent text-xs">✓</span> : <Copy className="w-3 h-3" />}
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
+                          <Edit3 className="w-3 h-3" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
+                          <ExternalLink className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground text-center py-8">
+            No affiliate links yet. <Link to="/affiliates/add" className="text-primary hover:underline">Add your first link</Link>
+          </div>
+        )}
       </div>
     </div>
   );
