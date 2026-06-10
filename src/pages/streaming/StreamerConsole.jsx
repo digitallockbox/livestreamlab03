@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Radio, Users, Zap, Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff, Send, Gift, Wifi } from "lucide-react";
+import { Radio, Users, Zap, Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff, Send, Gift, Wifi, Loader2 } from "lucide-react";
 import StreamManager from "@/components/streaming/StreamManager";
+import { streamingApi } from "@/lib/tridentApi";
 
 const MOCK_CHAT = [
   { user: "neon_wolf", msg: "🔥 Let's goooo!", type: "chat" },
@@ -24,27 +25,53 @@ const RECENT_TIPS = [
 
 export default function StreamerConsole() {
   const location = useLocation();
+  const navigate = useNavigate();
   const streamTitle = location.state?.title || "Friday Night Beats";
+  const streamId    = location.state?.streamId ?? null;
+
   const [muted, setMuted] = useState(false);
   const [camOff, setCamOff] = useState(false);
   const [screenShare, setScreenShare] = useState(false);
   const [chatMsg, setChatMsg] = useState("");
   const [showManager, setShowManager] = useState(false);
+  const [endingStream, setEndingStream] = useState(false);
 
-  // Mock stream data (would come from backend in production)
+  // Live stats from API
+  const [liveStats, setLiveStats] = useState(null);
+  const pollRef = useRef(null);
+
+  useEffect(() => {
+    if (!streamId) return;
+    const poll = async () => {
+      try {
+        const s = await streamingApi.status(streamId);
+        setLiveStats(s);
+      } catch { /* keep last known */ }
+    };
+    poll();
+    pollRef.current = setInterval(poll, 15000);
+    return () => clearInterval(pollRef.current);
+  }, [streamId]);
+
+  const handleEndStream = async () => {
+    setEndingStream(true);
+    try {
+      if (streamId) await streamingApi.end({ stream_id: streamId });
+    } catch { /* navigate anyway */ }
+    navigate('/stream-analytics');
+  };
+
+  const viewers    = liveStats?.viewer_count  ?? 2431;
+  const tipsEarned = liveStats?.tips_earned   ?? "$127.50";
+  const uptime     = liveStats?.uptime        ?? "1:24:07";
+  const bitrate    = liveStats?.bitrate       ?? "6.5 Mbps";
+
   const streamData = {
-    title: streamTitle,
-    status: "live",
-    uptime: "1:24:07",
-    bitrate: "6.5 Mbps",
-    framerate: "60 fps",
-    droppedFrames: 0,
-    latency: "2100ms",
-    tipsEarned: "$127.50",
-    storeSales: "$43.20",
-    streamingTokens: "850",
-    streakBonus: "1.2x",
-    projectedPayout: "$234.80"
+    title: streamTitle, status: "live",
+    uptime, bitrate, framerate: "60 fps",
+    droppedFrames: 0, latency: "2100ms",
+    tipsEarned, storeSales: "$43.20",
+    streamingTokens: "850", streakBonus: "1.2x", projectedPayout: "$234.80"
   };
 
   if (showManager) {
@@ -55,7 +82,7 @@ export default function StreamerConsole() {
         </Button>
         <StreamManager 
           streamData={streamData} 
-          onEndStream={() => window.location.href = "/dashboard"}
+          onEndStream={handleEndStream}
           onSettings={() => {}}
         />
       </div>
@@ -81,11 +108,11 @@ export default function StreamerConsole() {
           </div>
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Users className="w-4 h-4" />
-            <span className="text-sm font-semibold">2,431</span>
+            <span className="text-sm font-semibold">{viewers.toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-1.5 text-accent">
             <Zap className="w-4 h-4" />
-            <span className="text-sm font-semibold">{streamData.tipsEarned}</span>
+            <span className="text-sm font-semibold">{tipsEarned}</span>
           </div>
           <Button size="sm" variant="outline" onClick={() => setShowManager(true)}>Manager</Button>
         </div>
@@ -143,8 +170,9 @@ export default function StreamerConsole() {
               className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ${screenShare ? 'bg-primary/20 border-primary/50 text-primary' : 'border-border bg-secondary text-muted-foreground hover:text-foreground'}`}>
               {screenShare ? <Monitor className="w-5 h-5" /> : <MonitorOff className="w-5 h-5" />}
             </button>
-            <Button className="bg-destructive hover:bg-destructive/90 rounded-full px-7 h-12 font-bold gap-2 shadow-lg shadow-destructive/25">
-              <MonitorOff className="w-4 h-4" /> End Stream
+            <Button onClick={handleEndStream} disabled={endingStream} className="bg-destructive hover:bg-destructive/90 rounded-full px-7 h-12 font-bold gap-2 shadow-lg shadow-destructive/25">
+              {endingStream ? <Loader2 className="w-4 h-4 animate-spin" /> : <MonitorOff className="w-4 h-4" />}
+              {endingStream ? 'Ending…' : 'End Stream'}
             </Button>
           </div>
         </div>

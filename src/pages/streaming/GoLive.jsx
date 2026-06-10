@@ -2,8 +2,10 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Radio, Upload, Zap, Settings2, Eye, Lock, Users, Copy, Check,
-  Calendar, Clock, Tag, Plus, X, UserPlus, Shield, Key, ChevronDown, ChevronRight
+  Calendar, Clock, Tag, Plus, X, UserPlus, Shield, Key, ChevronDown, ChevronRight,
+  Loader2, AlertCircle
 } from 'lucide-react';
+import { streamingApi } from '@/lib/tridentApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,6 +83,10 @@ export default function GoLive() {
   const [keyCopied, setKeyCopied]     = useState(false);
   const [urlCopied, setUrlCopied]     = useState(false);
 
+  // API state
+  const [goLiveLoading, setGoLiveLoading] = useState(false);
+  const [goLiveError, setGoLiveError]     = useState(null);
+
   const handleThumbChange = (e) => {
     const file = e.target.files[0];
     if (file) setThumbnail(URL.createObjectURL(file));
@@ -116,10 +122,28 @@ export default function GoLive() {
 
   const canGoLive = title.trim().length > 0;
 
-  const handleGoLive = () => {
-    navigate('/streaming/console', {
-      state: { title, category, description, tags, visibility, thumbnail, resolution, bitrate, tipsEnabled, tipGoal }
-    });
+  const handleGoLive = async () => {
+    setGoLiveLoading(true);
+    setGoLiveError(null);
+    try {
+      const res = await streamingApi.start({
+        title, category, description, tags, visibility,
+        resolution, bitrate, latency,
+        tips_enabled: tipsEnabled, tip_goal: tipGoal,
+        sub_only_chat: subOnlyChat, slow_mode: slowMode,
+        co_hosts: coHosts,
+        scheduled: scheduleMode,
+        schedule_date: scheduleDate,
+        schedule_time: scheduleTime,
+      });
+      navigate('/streaming/console', {
+        state: { title, category, description, tags, visibility, thumbnail, resolution, bitrate, tipsEnabled, tipGoal, streamId: res?.stream_id }
+      });
+    } catch (err) {
+      setGoLiveError(err.message);
+    } finally {
+      setGoLiveLoading(false);
+    }
   };
 
   return (
@@ -134,6 +158,12 @@ export default function GoLive() {
           <p className="text-sm text-muted-foreground">Set up your stream and start broadcasting</p>
         </div>
       </div>
+
+      {goLiveError && (
+        <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/30 rounded-xl px-4 py-3 text-sm text-destructive mb-6">
+          <AlertCircle className="w-4 h-4 shrink-0" /> {goLiveError}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ── LEFT ── */}
@@ -500,9 +530,10 @@ export default function GoLive() {
           ) : (
             <Button
               onClick={handleGoLive}
-              disabled={!canGoLive}
+              disabled={!canGoLive || goLiveLoading}
               className="w-full bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/25 gap-2 text-base py-6 font-bold rounded-xl">
-              <Radio className="w-5 h-5" /> Go Live Now
+              {goLiveLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Radio className="w-5 h-5" />}
+              {goLiveLoading ? 'Starting Stream…' : 'Go Live Now'}
             </Button>
           )}
           <Button variant="outline" onClick={() => setScheduleMode(v => !v)}
