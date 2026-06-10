@@ -7,16 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Upload, Zap, Mic2, CheckCircle2, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-async function callAudioUpload(body) {
-  const res = await fetch("https://api.tridentsystem.live/audio/upload", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-  return res.json().catch(() => ({}));
-}
+import { audioApi } from "@/lib/tridentApi";
 
 export default function UploadAudio() {
   const [audioFile, setAudioFile] = useState(null);
@@ -26,27 +17,43 @@ export default function UploadAudio() {
   const [monetize, setMonetize] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef(null);
+  const xhrRef = useRef(null);
 
-  const handlePublish = async () => {
+  const handlePublish = () => {
     if (!title.trim()) { toast.error("Please enter an episode title."); return; }
     setLoading(true);
-    try {
-      await callAudioUpload({
-        title,
-        series,
-        description,
-        monetize,
-        filename: audioFile?.name || null,
-      });
-      toast.success("Episode published successfully!");
-      setTitle(""); setSeries(""); setDescription(""); setAudioFile(null); setMonetize(false);
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
+    setUploadProgress(0);
+
+    const form = new FormData();
+    form.append("title", title);
+    form.append("series", series);
+    form.append("description", description);
+    form.append("monetize", monetize);
+    if (audioFile) form.append("file", audioFile);
+
+    const xhr = new XMLHttpRequest();
+    xhrRef.current = xhr;
+    xhr.open("POST", "https://api.tridentsystem.live/audio/upload");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
       setLoading(false);
-    }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        toast.success("Episode published successfully!");
+        setTitle(""); setSeries(""); setDescription(""); setAudioFile(null); setMonetize(false);
+        setUploadProgress(0);
+      } else {
+        toast.error(`Upload failed (${xhr.status})`);
+      }
+    };
+    xhr.onerror = () => { setLoading(false); toast.error("Network error during upload."); };
+    xhr.send(form);
   };
+
+  const cancelUpload = () => { xhrRef.current?.abort(); setLoading(false); setUploadProgress(0); };
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
@@ -108,11 +115,27 @@ export default function UploadAudio() {
           </div>
         </div>
 
+        {/* Progress Bar */}
+        {loading && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Uploading… {uploadProgress}%</span>
+              <button onClick={cancelUpload} className="text-destructive hover:underline">Cancel</button>
+            </div>
+            <div className="h-2 bg-secondary rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-3">
           <Button variant="outline" className="flex-1 border-border" disabled={loading}>Save Draft</Button>
           <Button onClick={handlePublish} disabled={loading} className="flex-1 bg-primary hover:bg-primary/90 gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            {loading ? "Publishing..." : "Publish"}
+            {loading ? `Uploading ${uploadProgress}%` : "Publish"}
           </Button>
         </div>
       </div>

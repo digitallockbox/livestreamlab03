@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Wallet, Zap, Radio, Video, ShoppingBag, Link2, TrendingUp, Plus, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Wallet, Zap, Radio, Video, ShoppingBag, Link2, TrendingUp, Plus, ChevronRight, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import StatCard from '@/components/ui/StatCard';
@@ -12,6 +13,7 @@ import AegisSecurityStatus from '@/components/dashboard/AegisSecurityStatus';
 import StreamingTokenFlow from '@/components/dashboard/StreamingTokenFlow';
 import MockDataPanel from '@/components/dashboard/MockDataPanel';
 import TokenVelocity from '@/components/dashboard/TokenVelocity';
+import { creatorApi, walletApi } from '@/lib/tridentApi';
 
 const QUICK_ACTIONS = [
   { label: 'Go Live', icon: Radio, path: '/go-live', color: 'bg-red-500/20 text-red-400' },
@@ -42,6 +44,28 @@ export default function Dashboard() {
   const { realtimeTransaction, viewerCount, engagementVelocity, systemHealth, topFans, tokenSettlements } = useMockTridentData();
   const { processingTransactions } = useMockDataHydration();
 
+  const [liveStats, setLiveStats]     = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setStatsLoading(true);
+      try {
+        const [analytics, wallet] = await Promise.all([
+          creatorApi.analytics({}),
+          walletApi.balance({}),
+        ]);
+        setLiveStats({ analytics, wallet });
+      } catch { /* use fallback values */ }
+      finally { setStatsLoading(false); }
+    })();
+  }, []);
+
+  const vaultBalance     = liveStats?.wallet?.balance         != null ? liveStats.wallet.balance.toLocaleString()       : "24,810";
+  const streamingBalance = liveStats?.wallet?.streaming_balance != null ? liveStats.wallet.streaming_balance.toLocaleString() : "48,200";
+  const monthRevenue     = liveStats?.analytics?.total_revenue  != null ? `$${Number(liveStats.analytics.total_revenue).toLocaleString()}` : "$6,340";
+  const affiliateEarned  = liveStats?.analytics?.affiliate_earned != null ? `$${Number(liveStats.analytics.affiliate_earned).toLocaleString()}` : "$1,280";
+
   return (
     <div className="p-6 md:p-8 space-y-8">
       <PageHeader title="Dashboard" subtitle="Welcome back — here's your empire at a glance.">
@@ -54,10 +78,10 @@ export default function Dashboard() {
 
       {/* Balance Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="CreatorVault Balance" value="$24,810" sub="Available to withdraw" icon={Wallet} trend="+12% this cycle" trendUp accent />
-        <StatCard title="$STREAMING Balance" value="48,200" sub="STREAMING tokens" icon={Zap} trend="+890 today" trendUp />
-        <StatCard title="This Month Revenue" value="$6,340" sub="All channels combined" icon={TrendingUp} trend="+22% vs last month" trendUp />
-        <StatCard title="Total Affiliate" value="$1,280" sub="Earned this cycle" icon={Link2} trend="+5% conversion" trendUp />
+        <StatCard title="CreatorVault Balance" value={statsLoading ? "…" : `$${vaultBalance}`} sub="Available to withdraw" icon={Wallet} trend="+12% this cycle" trendUp accent />
+        <StatCard title="$STREAMING Balance" value={statsLoading ? "…" : streamingBalance} sub="STREAMING tokens" icon={Zap} trend="+890 today" trendUp />
+        <StatCard title="This Month Revenue" value={statsLoading ? "…" : monthRevenue} sub="All channels combined" icon={TrendingUp} trend="+22% vs last month" trendUp />
+        <StatCard title="Total Affiliate" value={statsLoading ? "…" : affiliateEarned} sub="Earned this cycle" icon={Link2} trend="+5% conversion" trendUp />
       </div>
 
       {/* Pulse — Trident OS Mock Layer */}

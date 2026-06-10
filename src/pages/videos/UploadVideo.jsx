@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,6 @@ import {
   CheckCircle2, FileVideo, X, ChevronDown, Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { videoApi } from "@/lib/tridentApi";
 import { toast } from "sonner";
 
 const CATEGORIES = ["Gaming", "Music", "Education", "Tech", "Fitness", "Lifestyle", "Art & Creative", "Talk / Commentary", "Other"];
@@ -40,33 +39,49 @@ export default function UploadVideo() {
   const [videoDragging, setVideoDragging] = useState(false);
   const [thumbDragging, setThumbDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const xhrRef = useRef(null);
 
   const toggleMono = (key) => setMonetization(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const handleUploadAll = async () => {
+  const handleUploadAll = () => {
     if (!title.trim()) { toast.error("Please enter a title."); return; }
     setUploading(true);
-    try {
-      await videoApi.upload({
-        title,
-        description,
-        category,
-        visibility,
-        monetization,
-        ppv_price: ppvPrice ? parseFloat(ppvPrice) : undefined,
-        streaming_price: streamingPrice ? parseFloat(streamingPrice) : undefined,
-        filename: videoFile?.name || null,
-        thumbnail: thumbFile?.name || null,
-      });
-      toast.success("Video uploaded successfully!");
-      setTitle(""); setDescription(""); setCategory(""); setVideoFile(null); setThumbFile(null);
-      setMonetization({ ppv: false, subscription: false, streaming: false });
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
+    setUploadProgress(0);
+
+    const form = new FormData();
+    form.append("title", title);
+    form.append("description", description);
+    form.append("category", category);
+    form.append("visibility", visibility);
+    form.append("monetization", JSON.stringify(monetization));
+    if (ppvPrice) form.append("ppv_price", ppvPrice);
+    if (streamingPrice) form.append("streaming_price", streamingPrice);
+    if (videoFile) form.append("file", videoFile);
+    if (thumbFile) form.append("thumbnail", thumbFile);
+
+    const xhr = new XMLHttpRequest();
+    xhrRef.current = xhr;
+    xhr.open("POST", "https://api.tridentsystem.live/video/upload");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
       setUploading(false);
-    }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        toast.success("Video uploaded successfully!");
+        setTitle(""); setDescription(""); setCategory(""); setVideoFile(null); setThumbFile(null);
+        setMonetization({ ppv: false, subscription: false, streaming: false });
+        setUploadProgress(0);
+      } else {
+        toast.error(`Upload failed (${xhr.status})`);
+      }
+    };
+    xhr.onerror = () => { setUploading(false); toast.error("Network error during upload."); };
+    xhr.send(form);
   };
+
+  const cancelUpload = () => { xhrRef.current?.abort(); setUploading(false); setUploadProgress(0); };
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto">
@@ -214,12 +229,28 @@ export default function UploadVideo() {
             ))}
           </div>
 
+          {/* Progress Bar */}
+          {uploading && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Uploading… {uploadProgress}%</span>
+                <button onClick={cancelUpload} className="text-destructive hover:underline">Cancel</button>
+              </div>
+              <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex gap-3">
             <Button variant="outline" className="flex-1 border-border" disabled={uploading}>Save as Draft</Button>
             <Button onClick={handleUploadAll} disabled={uploading} className="flex-1 bg-primary hover:bg-primary/90 gap-2">
               {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              {uploading ? "Uploading..." : "Upload"}
+              {uploading ? `Uploading ${uploadProgress}%` : "Upload"}
             </Button>
           </div>
         </div>
