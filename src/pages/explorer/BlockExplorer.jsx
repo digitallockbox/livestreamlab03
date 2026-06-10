@@ -6,423 +6,337 @@ import { Input } from '@/components/ui/input';
 import {
   Activity, Flame, CheckCircle2, XCircle, Clock, Zap,
   Copy, ExternalLink, RefreshCw, Search, Wifi, WifiOff,
-  ArrowRightLeft, TrendingDown, Shield, Hash
+  ArrowRightLeft, TrendingDown, Shield, Hash, ChevronDown, X
 } from 'lucide-react';
 import { STREAMING_TOKEN_MINT, STREAMING_TOKEN_SYMBOL } from '@/lib/constants/tokens';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-const SOLANA_DEVNET_RPC = 'https://api.devnet.solana.com';
-const SOLSCAN_BASE      = 'https://solscan.io/tx';
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const SOLSCAN_BASE = 'https://solscan.io/tx';
 
 const shortHash = (h) => h ? `${h.slice(0, 8)}…${h.slice(-6)}` : '—';
-const shortAddr  = (a) => a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '—';
+const shortAddr  = (a) => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—';
+const timeAgo    = (ts) => {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  return `${Math.floor(s / 3600)}h ago`;
+};
 
-function randomHex(len = 64) {
-  const chars = '0123456789abcdef';
-  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * 16)]).join('');
-}
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+const randB58 = (len) => Array.from({ length: len }, () => B58[Math.floor(Math.random() * B58.length)]).join('');
 
-function randomBase58(len = 44) {
-  const alpha = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  return Array.from({ length: len }, () => alpha[Math.floor(Math.random() * alpha.length)]).join('');
-}
+const TX_TYPES   = ['transfer', 'transfer', 'transfer', 'burn', 'burn', 'validation'];
+const STATUSES   = ['confirmed', 'confirmed', 'confirmed', 'confirmed', 'pending', 'failed'];
+const BURN_ADDR  = 'burnAddr1111111111111111111111111111111111111';
 
-const TX_TYPES = ['transfer', 'transfer', 'transfer', 'burn', 'burn', 'transfer', 'validation'];
-const PROGRAMS  = ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', '11111111111111111111111111111111', STREAMING_TOKEN_MINT];
-
-function generateTx(overrides = {}) {
+let _id = 0;
+function makeTx() {
   const type   = TX_TYPES[Math.floor(Math.random() * TX_TYPES.length)];
-  const status = Math.random() > 0.08 ? 'confirmed' : Math.random() > 0.5 ? 'pending' : 'failed';
-  const amount = parseFloat((Math.random() * 50000 + 10).toFixed(2));
-  const burnAmt = parseFloat((amount * 0.015).toFixed(4));
-  const slot   = 340_000_000 + Math.floor(Math.random() * 100_000);
-  const fee    = parseFloat((Math.random() * 0.002 + 0.0001).toFixed(6));
+  const status = STATUSES[Math.floor(Math.random() * STATUSES.length)];
+  const amount = +(Math.random() * 80_000 + 50).toFixed(2);
+  const burn   = type === 'burn' ? amount : +(amount * 0.015).toFixed(4);
   return {
-    id:          randomBase58(44),
-    signature:   randomBase58(88),
-    type,
-    status,
-    amount,
-    burnAmount:  type === 'burn' ? amount : burnAmt,
-    from:        randomBase58(44),
-    to:          type === 'burn' ? 'burn111111111111111111111111111111111111111' : randomBase58(44),
-    slot,
-    fee,
-    block_time:  Date.now() - Math.floor(Math.random() * 60_000),
-    program:     PROGRAMS[Math.floor(Math.random() * PROGRAMS.length)],
-    confirmations: status === 'confirmed' ? Math.floor(Math.random() * 200 + 1) : 0,
-    ...overrides,
+    _key:     ++_id,
+    sig:      randB58(88),
+    from:     randB58(44),
+    to:       type === 'burn' ? BURN_ADDR : randB58(44),
+    type, status, amount, burn,
+    slot:     341_200_000 + Math.floor(Math.random() * 500_000),
+    fee:      +(Math.random() * 0.0025 + 0.0001).toFixed(6),
+    confs:    status === 'confirmed' ? Math.floor(Math.random() * 400 + 1) : 0,
+    ts:       Date.now() - Math.floor(Math.random() * 45_000),
+    program:  [STREAMING_TOKEN_MINT, '11111111111111111111111111111111', 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'][Math.floor(Math.random() * 3)],
   };
 }
 
-// ─── Sub-components ─────────────────────────────────────────────────────────
-function StatusBadge({ status }) {
-  const map = {
-    confirmed: { label: 'Confirmed', icon: CheckCircle2, cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
-    pending:   { label: 'Pending',   icon: Clock,        cls: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
-    failed:    { label: 'Failed',    icon: XCircle,      cls: 'bg-red-500/15 text-red-400 border-red-500/30' },
-  };
-  const cfg = map[status] ?? map.pending;
-  const Icon = cfg.icon;
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${cfg.cls}`}>
-      <Icon className="w-3 h-3" />
-      {cfg.label}
-    </span>
-  );
-}
-
-function TypeBadge({ type }) {
-  const map = {
-    transfer:   { label: 'Transfer',   icon: ArrowRightLeft, cls: 'bg-violet-500/15 text-violet-400 border-violet-500/30' },
-    burn:       { label: 'Burn',       icon: Flame,          cls: 'bg-orange-500/15 text-orange-400 border-orange-500/30' },
-    validation: { label: 'Validation', icon: Shield,         cls: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' },
-  };
-  const cfg = map[type] ?? map.transfer;
-  const Icon = cfg.icon;
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${cfg.cls}`}>
-      <Icon className="w-3 h-3" />
-      {cfg.label}
-    </span>
-  );
-}
-
+// ─── Atoms ────────────────────────────────────────────────────────────────────
 function CopyBtn({ value }) {
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText(value).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
+  const [ok, setOk] = useState(false);
+  const copy = () => { navigator.clipboard.writeText(value).catch(() => {}); setOk(true); setTimeout(() => setOk(false), 1400); };
   return (
-    <button onClick={copy} className="text-muted-foreground hover:text-accent transition-colors ml-1">
-      {copied ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+    <button onClick={(e) => { e.stopPropagation(); copy(); }} className="text-muted-foreground hover:text-accent transition-colors ml-1 flex-shrink-0">
+      {ok ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
     </button>
   );
 }
 
-function TxRow({ tx, onClick, isNew }) {
-  const age = Math.floor((Date.now() - tx.block_time) / 1000);
-  const ageStr = age < 60 ? `${age}s ago` : `${Math.floor(age / 60)}m ago`;
+const TYPE_CFG = {
+  transfer:   { label: 'Transfer',   Icon: ArrowRightLeft, bg: 'bg-violet-500/15 text-violet-400 border-violet-500/30' },
+  burn:       { label: 'Burn',       Icon: Flame,          bg: 'bg-orange-500/15 text-orange-400 border-orange-500/30' },
+  validation: { label: 'Validation', Icon: Shield,         bg: 'bg-cyan-500/15   text-cyan-400   border-cyan-500/30'   },
+};
+const STATUS_CFG = {
+  confirmed: { label: 'Confirmed', Icon: CheckCircle2, bg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+  pending:   { label: 'Pending',   Icon: Clock,        bg: 'bg-yellow-500/15  text-yellow-400  border-yellow-500/30'  },
+  failed:    { label: 'Failed',    Icon: XCircle,      bg: 'bg-red-500/15     text-red-400     border-red-500/30'     },
+};
 
+function Pill({ cfg }) {
+  const { label, Icon, bg } = cfg;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${bg}`}>
+      <Icon className="w-3 h-3" />{label}
+    </span>
+  );
+}
+
+// ─── Row ──────────────────────────────────────────────────────────────────────
+function TxRow({ tx, isNew, onSelect }) {
   return (
     <motion.tr
-      initial={isNew ? { opacity: 0, backgroundColor: 'hsl(165 82% 51% / 0.15)' } : { opacity: 1 }}
-      animate={{ opacity: 1, backgroundColor: 'transparent' }}
-      transition={{ duration: isNew ? 1.2 : 0 }}
-      className="border-b border-border/50 hover:bg-muted/30 cursor-pointer group"
-      onClick={() => onClick(tx)}
+      layout
+      initial={isNew ? { opacity: 0, backgroundColor: 'hsl(165 82% 51% / 0.12)' } : { opacity: 1 }}
+      animate={{ opacity: 1, backgroundColor: 'rgba(0,0,0,0)' }}
+      transition={{ duration: isNew ? 1.4 : 0 }}
+      className="border-b border-border/40 hover:bg-muted/25 cursor-pointer group"
+      onClick={() => onSelect(tx)}
     >
-      <td className="py-3 px-4 font-mono text-xs text-primary">
+      <td className="py-2.5 px-4 font-mono text-xs text-primary">
         <div className="flex items-center gap-1">
           <Hash className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-          <span className="group-hover:text-accent transition-colors">{shortHash(tx.signature)}</span>
-          <CopyBtn value={tx.signature} />
+          <span className="group-hover:text-accent transition-colors">{shortHash(tx.sig)}</span>
+          <CopyBtn value={tx.sig} />
         </div>
       </td>
-      <td className="py-3 px-4"><TypeBadge type={tx.type} /></td>
-      <td className="py-3 px-4"><StatusBadge status={tx.status} /></td>
-      <td className="py-3 px-4 font-mono text-sm font-semibold text-foreground">
-        {tx.amount.toLocaleString()} <span className="text-muted-foreground text-xs">$STREAM</span>
+      <td className="py-2.5 px-4"><Pill cfg={TYPE_CFG[tx.type]} /></td>
+      <td className="py-2.5 px-4"><Pill cfg={STATUS_CFG[tx.status]} /></td>
+      <td className="py-2.5 px-4 font-mono text-sm font-semibold">
+        {tx.amount.toLocaleString()}&nbsp;<span className="text-muted-foreground text-xs">$S</span>
       </td>
-      {tx.type === 'burn' ? (
-        <td className="py-3 px-4 font-mono text-sm text-orange-400 font-semibold">
-          🔥 {tx.burnAmount.toLocaleString()}
-        </td>
-      ) : (
-        <td className="py-3 px-4 font-mono text-xs text-muted-foreground">
-          {tx.confirmations > 0 ? `${tx.confirmations} confs` : '—'}
-        </td>
-      )}
-      <td className="py-3 px-4 font-mono text-xs text-muted-foreground">{tx.slot.toLocaleString()}</td>
-      <td className="py-3 px-4 text-xs text-muted-foreground">{ageStr}</td>
-      <td className="py-3 px-4">
+      <td className="py-2.5 px-4 font-mono text-xs">
+        {tx.type === 'burn'
+          ? <span className="text-orange-400 font-semibold">🔥 {tx.burn.toLocaleString()}</span>
+          : <span className="text-muted-foreground">{tx.confs > 0 ? `${tx.confs} confs` : '—'}</span>}
+      </td>
+      <td className="py-2.5 px-4 font-mono text-xs text-muted-foreground">{tx.slot.toLocaleString()}</td>
+      <td className="py-2.5 px-4 text-xs text-muted-foreground whitespace-nowrap">{timeAgo(tx.ts)}</td>
+      <td className="py-2.5 px-4">
         <a
-          href={`${SOLSCAN_BASE}/${tx.signature}?cluster=devnet`}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`${SOLSCAN_BASE}/${tx.sig}?cluster=devnet`}
+          target="_blank" rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="text-muted-foreground hover:text-accent transition-colors"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+          className="text-muted-foreground hover:text-accent"
+        ><ExternalLink className="w-3.5 h-3.5" /></a>
       </td>
     </motion.tr>
   );
 }
 
-function TxDetail({ tx, onClose }) {
+// ─── Detail Drawer ────────────────────────────────────────────────────────────
+function TxDrawer({ tx, onClose }) {
   if (!tx) return null;
-  const age = Math.floor((Date.now() - tx.block_time) / 1000);
-
-  const rows = [
-    { label: 'Signature',      value: tx.signature,  mono: true, copy: true },
-    { label: 'Type',           value: <TypeBadge type={tx.type} /> },
-    { label: 'Status',         value: <StatusBadge status={tx.status} /> },
-    { label: 'Amount',         value: `${tx.amount.toLocaleString()} $STREAMING`, mono: true },
-    ...(tx.type === 'burn' ? [{ label: 'Burned',      value: `${tx.burnAmount.toLocaleString()} $STREAMING`, mono: true }] : []),
-    { label: 'From',           value: tx.from,       mono: true, copy: true, shorten: true },
-    { label: 'To',             value: tx.to,         mono: true, copy: true, shorten: true },
-    { label: 'Slot',           value: tx.slot.toLocaleString(), mono: true },
-    { label: 'Fee (SOL)',      value: tx.fee,        mono: true },
-    { label: 'Confirmations',  value: tx.confirmations > 0 ? tx.confirmations : 'N/A', mono: true },
-    { label: 'Program',        value: tx.program,    mono: true, copy: true, shorten: true },
-    { label: 'Age',            value: age < 60 ? `${age}s` : `${Math.floor(age / 60)}m ${age % 60}s` },
+  const fields = [
+    { label: 'Signature', value: tx.sig,     mono: true, copy: true },
+    { label: 'Type',      value: <Pill cfg={TYPE_CFG[tx.type]} /> },
+    { label: 'Status',    value: <Pill cfg={STATUS_CFG[tx.status]} /> },
+    { label: 'Amount',    value: `${tx.amount.toLocaleString()} $STREAMING`, mono: true },
+    ...(tx.type === 'burn' ? [{ label: 'Burned', value: `🔥 ${tx.burn.toLocaleString()} $STREAMING`, mono: true }] : []),
+    { label: 'From',      value: tx.from,    mono: true, copy: true, shorten: true },
+    { label: 'To',        value: tx.to,      mono: true, copy: true, shorten: true },
+    { label: 'Slot',      value: tx.slot.toLocaleString(), mono: true },
+    { label: 'Fee (SOL)', value: tx.fee,     mono: true },
+    { label: 'Confs',     value: tx.confs || 'N/A', mono: true },
+    { label: 'Program',   value: tx.program, mono: true, copy: true, shorten: true },
+    { label: 'Age',       value: timeAgo(tx.ts) },
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 32 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 32 }}
-      className="fixed inset-y-0 right-0 w-full max-w-md bg-card border-l border-border shadow-2xl z-50 overflow-y-auto"
-    >
-      <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
-        <h2 className="font-display font-bold text-foreground text-lg">Transaction Detail</h2>
-        <Button size="sm" variant="ghost" onClick={onClose}>✕</Button>
-      </div>
+    <>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 z-40"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+        transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+        className="fixed inset-y-0 right-0 w-full max-w-md bg-card border-l border-border shadow-2xl z-50 flex flex-col"
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
+          <h2 className="font-display font-bold text-lg">Transaction Detail</h2>
+          <Button size="icon" variant="ghost" onClick={onClose}><X className="w-4 h-4" /></Button>
+        </div>
 
-      {/* Solscan link */}
-      <div className="px-6 pt-4">
-        <a
-          href={`${SOLSCAN_BASE}/${tx.signature}?cluster=devnet`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 text-xs text-accent hover:underline mb-4"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-          View on Solscan (devnet)
-        </a>
-      </div>
+        <div className="px-6 pt-3 pb-1">
+          <a
+            href={`${SOLSCAN_BASE}/${tx.sig}?cluster=devnet`}
+            target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
+          >
+            <ExternalLink className="w-3 h-3" /> View on Solscan (devnet)
+          </a>
+        </div>
 
-      <div className="px-6 pb-8 space-y-1">
-        {rows.map(({ label, value, mono, copy, shorten }) => (
-          <div key={label} className="flex items-start justify-between py-2.5 border-b border-border/40">
-            <span className="text-xs text-muted-foreground w-28 flex-shrink-0">{label}</span>
-            <div className="flex items-center gap-1 flex-1 justify-end">
-              {typeof value === 'string' || typeof value === 'number' ? (
-                <span className={`text-xs text-right break-all ${mono ? 'font-mono text-foreground' : 'text-foreground'}`}>
-                  {shorten ? shortAddr(String(value)) : String(value)}
-                </span>
-              ) : value}
-              {copy && typeof value === 'string' && <CopyBtn value={value} />}
+        <div className="flex-1 overflow-y-auto px-6 pb-8">
+          {fields.map(({ label, value, mono, copy, shorten }) => (
+            <div key={label} className="flex items-start justify-between py-3 border-b border-border/40">
+              <span className="text-xs text-muted-foreground w-24 flex-shrink-0 pt-0.5">{label}</span>
+              <div className="flex items-center gap-1 flex-1 justify-end">
+                {typeof value === 'string' || typeof value === 'number'
+                  ? <span className={`text-xs text-right break-all ${mono ? 'font-mono text-foreground' : 'text-foreground'}`}>
+                      {shorten ? shortAddr(String(value)) : String(value)}
+                    </span>
+                  : value}
+                {copy && typeof value === 'string' && <CopyBtn value={value} />}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </>
   );
 }
 
-// ─── Burn Ticker ────────────────────────────────────────────────────────────
-function BurnTicker({ txList }) {
-  const totalBurned = txList
-    .filter(t => t.type === 'burn' && t.status === 'confirmed')
-    .reduce((sum, t) => sum + t.burnAmount, 0);
-  const burnTxCount = txList.filter(t => t.type === 'burn').length;
-
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+function StatCard({ label, value, icon: Icon, cls }) {
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/25 rounded-xl">
-      <Flame className="w-4 h-4 text-orange-400 flex-shrink-0" />
-      <span className="text-xs text-muted-foreground">Total Burned (session):</span>
-      <span className="font-mono font-bold text-orange-400 text-sm">
-        {totalBurned.toLocaleString(undefined, { maximumFractionDigits: 2 })} $STREAM
-      </span>
-      <span className="text-xs text-muted-foreground ml-2">in {burnTxCount} events</span>
+    <div className="bg-card border border-border rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-1.5">
+        <Icon className={`w-4 h-4 ${cls}`} />
+        <span className="text-xs text-muted-foreground">{label}</span>
+      </div>
+      <p className={`font-display font-bold text-xl ${cls}`}>{value}</p>
     </div>
   );
 }
 
-// ─── Main Page ───────────────────────────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────────────────
+const INIT_TXS = Array.from({ length: 25 }, makeTx);
+
 export default function BlockExplorer() {
-  const [txList, setTxList]           = useState(() => Array.from({ length: 20 }, () => generateTx()));
-  const [newIds, setNewIds]           = useState(new Set());
-  const [selectedTx, setSelectedTx]  = useState(null);
-  const [filter, setFilter]          = useState('all');     // all | transfer | burn | validation
-  const [statusFilter, setStatusFilter] = useState('all'); // all | confirmed | pending | failed
-  const [search, setSearch]          = useState('');
-  const [live, setLive]              = useState(true);
-  const [tps, setTps]                = useState(0);
-  const [totalTx, setTotalTx]        = useState(0);
-  const intervalRef                  = useRef(null);
-  const tpsCountRef                  = useRef(0);
+  const [txs, setTxs]           = useState(INIT_TXS);
+  const [newKeys, setNewKeys]   = useState(new Set());
+  const [selected, setSelected] = useState(null);
+  const [live, setLive]         = useState(true);
+  const [tps, setTps]           = useState(0);
+  const [typeF, setTypeF]       = useState('all');
+  const [statusF, setStatusF]   = useState('all');
+  const [search, setSearch]     = useState('');
+  const tpsRef                  = useRef(0);
+  const timerRef                = useRef(null);
 
-  const addTx = useCallback(() => {
-    const count = Math.random() > 0.6 ? 2 : 1;
-    const fresh = Array.from({ length: count }, () => generateTx());
-    tpsCountRef.current += count;
-    setNewIds(prev => {
-      const next = new Set(fresh.map(t => t.id));
-      return next;
-    });
-    setTxList(prev => [...fresh, ...prev].slice(0, 200));
-    setTotalTx(prev => prev + count);
+  // TPS ticker
+  useEffect(() => {
+    const id = setInterval(() => { setTps(tpsRef.current); tpsRef.current = 0; }, 1000);
+    return () => clearInterval(id);
   }, []);
 
-  // TPS counter resets every second
-  useEffect(() => {
-    const tpsTick = setInterval(() => {
-      setTps(tpsCountRef.current);
-      tpsCountRef.current = 0;
-    }, 1000);
-    return () => clearInterval(tpsTick);
+  // Live feed
+  const inject = useCallback((n = 1) => {
+    const fresh = Array.from({ length: n }, makeTx);
+    tpsRef.current += n;
+    setNewKeys(new Set(fresh.map(t => t._key)));
+    setTxs(prev => [...fresh, ...prev].slice(0, 300));
   }, []);
 
   useEffect(() => {
-    if (live) {
-      intervalRef.current = setInterval(addTx, 1800);
-    } else {
-      clearInterval(intervalRef.current);
-    }
-    return () => clearInterval(intervalRef.current);
-  }, [live, addTx]);
+    if (live) { timerRef.current = setInterval(() => inject(Math.random() > 0.55 ? 2 : 1), 1700); }
+    else       { clearInterval(timerRef.current); }
+    return () => clearInterval(timerRef.current);
+  }, [live, inject]);
 
-  const filteredTx = txList.filter(tx => {
-    if (filter !== 'all' && tx.type !== filter) return false;
-    if (statusFilter !== 'all' && tx.status !== statusFilter) return false;
+  // Derived stats
+  const confirmed    = txs.filter(t => t.status === 'confirmed').length;
+  const pending      = txs.filter(t => t.status === 'pending').length;
+  const failed       = txs.filter(t => t.status === 'failed').length;
+  const burnEvents   = txs.filter(t => t.type === 'burn').length;
+  const totalBurned  = txs.filter(t => t.type === 'burn' && t.status === 'confirmed')
+                          .reduce((s, t) => s + t.burn, 0);
+
+  const filtered = txs.filter(t => {
+    if (typeF   !== 'all' && t.type   !== typeF)   return false;
+    if (statusF !== 'all' && t.status !== statusF) return false;
     if (search) {
       const q = search.toLowerCase();
-      if (!tx.signature.toLowerCase().includes(q) &&
-          !tx.from.toLowerCase().includes(q) &&
-          !tx.to.toLowerCase().includes(q)) return false;
+      return t.sig.toLowerCase().includes(q) || t.from.toLowerCase().includes(q) || t.to.toLowerCase().includes(q);
     }
     return true;
   });
 
-  const confirmedCount = txList.filter(t => t.status === 'confirmed').length;
-  const pendingCount   = txList.filter(t => t.status === 'pending').length;
-  const failedCount    = txList.filter(t => t.status === 'failed').length;
-  const burnCount      = txList.filter(t => t.type === 'burn').length;
-  const totalBurnedAll = txList
-    .filter(t => t.type === 'burn' && t.status === 'confirmed')
-    .reduce((s, t) => s + t.burnAmount, 0);
-
-  const TYPE_FILTERS = ['all', 'transfer', 'burn', 'validation'];
-  const STATUS_FILTERS = ['all', 'confirmed', 'pending', 'failed'];
+  const FilterBar = ({ options, active, onChange }) => (
+    <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+      {options.map(o => (
+        <button key={o}
+          onClick={() => onChange(o)}
+          className={`px-3 py-1 rounded-md text-xs font-medium capitalize transition-all ${active === o ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >{o}</button>
+      ))}
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <div className="border-b border-border bg-card/60 backdrop-blur-sm sticky top-0 z-30">
-        <div className="max-w-screen-2xl mx-auto px-6 py-4 flex flex-col md:flex-row items-start md:items-center gap-3 justify-between">
+    <div className="min-h-screen bg-background">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-30 border-b border-border bg-card/70 backdrop-blur-sm">
+        <div className="max-w-screen-2xl mx-auto px-4 md:px-6 py-4 flex flex-wrap gap-3 items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-violet-500/15 border border-violet-500/30">
+            <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
               <Activity className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-foreground text-xl leading-tight">
-                Trident Block Explorer
-              </h1>
+              <h1 className="font-display font-bold text-xl leading-tight">Trident Block Explorer</h1>
               <p className="text-xs text-muted-foreground">
                 $STREAMING settlements · Solana Devnet ·{' '}
-                <span className="font-mono text-violet-400">{STREAMING_TOKEN_MINT.slice(0, 10)}…</span>
+                <span className="font-mono text-violet-400">{STREAMING_TOKEN_MINT.slice(0, 12)}…</span>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Live toggle */}
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-mono font-semibold text-primary">
+              <Zap className="w-3 h-3" />{tps} TPS
+            </div>
             <button
               onClick={() => setLive(v => !v)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                live
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                  : 'bg-muted border-border text-muted-foreground'
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                live ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' : 'bg-muted border-border text-muted-foreground'
               }`}
             >
               {live ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
               {live ? 'Live' : 'Paused'}
             </button>
-
-            {/* TPS */}
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/25 text-xs font-mono font-semibold text-primary">
-              <Zap className="w-3 h-3" />
-              {tps} TPS
-            </div>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => { const t = generateTx(); setTxList(p => [t, ...p].slice(0, 200)); setNewIds(new Set([t.id])); setTotalTx(p => p + 1); }}
-            >
-              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-              Inject Tx
+            <Button size="sm" variant="outline" onClick={() => inject(1)}>
+              <RefreshCw className="w-3.5 h-3.5 mr-1" />Inject Tx
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-screen-2xl mx-auto px-4 md:px-6 py-6 space-y-6">
+      <div className="max-w-screen-2xl mx-auto px-4 md:px-6 py-6 space-y-5">
         {/* Stat cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { label: 'Total Seen',   value: totalTx.toLocaleString(),          icon: Hash,           cls: 'text-foreground' },
-            { label: 'Confirmed',    value: confirmedCount,                     icon: CheckCircle2,   cls: 'text-emerald-400' },
-            { label: 'Pending',      value: pendingCount,                       icon: Clock,          cls: 'text-yellow-400' },
-            { label: 'Failed',       value: failedCount,                        icon: XCircle,        cls: 'text-red-400' },
-            { label: 'Burn Events',  value: burnCount,                          icon: Flame,          cls: 'text-orange-400' },
-            { label: 'Total Burned', value: `${totalBurnedAll.toFixed(0)} $S`,  icon: TrendingDown,   cls: 'text-orange-400' },
-          ].map(({ label, value, icon: Icon, cls }) => (
-            <div key={label} className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Icon className={`w-4 h-4 ${cls}`} />
-                <span className="text-xs text-muted-foreground">{label}</span>
-              </div>
-              <p className={`font-display font-bold text-lg ${cls}`}>{value}</p>
-            </div>
-          ))}
+          <StatCard label="Total Tracked" value={txs.length.toLocaleString()} icon={Hash}        cls="text-foreground" />
+          <StatCard label="Confirmed"     value={confirmed}                   icon={CheckCircle2} cls="text-emerald-400" />
+          <StatCard label="Pending"       value={pending}                     icon={Clock}        cls="text-yellow-400" />
+          <StatCard label="Failed"        value={failed}                      icon={XCircle}      cls="text-red-400" />
+          <StatCard label="Burn Events"   value={burnEvents}                  icon={Flame}        cls="text-orange-400" />
+          <StatCard label="Total Burned"  value={`${totalBurned.toFixed(0)} $S`} icon={TrendingDown} cls="text-orange-400" />
         </div>
 
         {/* Burn ticker */}
-        <BurnTicker txList={txList} />
-
-        {/* Filters + Search */}
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          {/* Type filter */}
-          <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
-            {TYPE_FILTERS.map(f => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1 rounded-md text-xs font-medium capitalize transition-all ${
-                  filter === f ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-
-          {/* Status filter */}
-          <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
-            {STATUS_FILTERS.map(f => (
-              <button
-                key={f}
-                onClick={() => setStatusFilter(f)}
-                className={`px-3 py-1 rounded-md text-xs font-medium capitalize transition-all ${
-                  statusFilter === f ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-
-          {/* Search */}
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search hash / address…"
-              className="pl-8 text-xs h-8"
-            />
-          </div>
-
-          <span className="text-xs text-muted-foreground ml-auto">
-            {filteredTx.length} / {txList.length} transactions
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-orange-500/10 border border-orange-500/25 rounded-xl">
+          <Flame className="w-4 h-4 text-orange-400 flex-shrink-0 animate-pulse" />
+          <span className="text-xs text-muted-foreground">Session Burn Total:</span>
+          <span className="font-mono font-bold text-orange-400">
+            {totalBurned.toLocaleString(undefined, { maximumFractionDigits: 2 })} $STREAMING
           </span>
+          <span className="text-xs text-muted-foreground">across {burnEvents} burn events</span>
+          <div className="ml-auto hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="font-mono text-violet-400">Mint:</span>
+            <span className="font-mono">{STREAMING_TOKEN_MINT.slice(0, 16)}…</span>
+            <CopyBtn value={STREAMING_TOKEN_MINT} />
+          </div>
+        </div>
+
+        {/* Filters + search */}
+        <div className="flex flex-wrap gap-3 items-center">
+          <FilterBar options={['all','transfer','burn','validation']} active={typeF}   onChange={setTypeF} />
+          <FilterBar options={['all','confirmed','pending','failed']} active={statusF} onChange={setStatusF} />
+          <div className="relative max-w-xs flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search hash / address…" className="pl-8 h-8 text-xs" />
+          </div>
+          <span className="ml-auto text-xs text-muted-foreground">{filtered.length} of {txs.length} txs</span>
         </div>
 
         {/* Table */}
@@ -430,8 +344,8 @@ export default function BlockExplorer() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted/40">
-                  {['Tx Hash', 'Type', 'Status', 'Amount', 'Burn / Confs', 'Slot', 'Age', ''].map(h => (
+                <tr className="border-b border-border bg-muted/30">
+                  {['Tx Hash','Type','Status','Amount','Burn / Confs','Slot','Age',''].map(h => (
                     <th key={h} className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
@@ -440,47 +354,29 @@ export default function BlockExplorer() {
               </thead>
               <tbody>
                 <AnimatePresence initial={false}>
-                  {filteredTx.slice(0, 100).map(tx => (
-                    <TxRow
-                      key={tx.id}
-                      tx={tx}
-                      onClick={setSelectedTx}
-                      isNew={newIds.has(tx.id)}
-                    />
+                  {filtered.slice(0, 150).map(tx => (
+                    <TxRow key={tx._key} tx={tx} isNew={newKeys.has(tx._key)} onSelect={setSelected} />
                   ))}
                 </AnimatePresence>
               </tbody>
             </table>
-            {filteredTx.length === 0 && (
-              <div className="py-16 text-center text-muted-foreground text-sm">
-                No transactions match your filters.
-              </div>
+            {filtered.length === 0 && (
+              <p className="py-16 text-center text-sm text-muted-foreground">No transactions match your filters.</p>
             )}
           </div>
         </div>
 
-        {/* Footer */}
         <p className="text-center text-xs text-muted-foreground pb-4">
-          Streaming settlements tracked on{' '}
+          Settlements tracked on{' '}
           <a href={`https://solscan.io/token/${STREAMING_TOKEN_MINT}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
             Solana Devnet
-          </a>{' '}
-          · Mint: <span className="font-mono">{STREAMING_TOKEN_MINT}</span>
+          </a>
+          {' '}· Mint: <span className="font-mono">{STREAMING_TOKEN_MINT}</span>
         </p>
       </div>
 
-      {/* Detail panel */}
       <AnimatePresence>
-        {selectedTx && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40"
-              onClick={() => setSelectedTx(null)}
-            />
-            <TxDetail tx={selectedTx} onClose={() => setSelectedTx(null)} />
-          </>
-        )}
+        {selected && <TxDrawer tx={selected} onClose={() => setSelected(null)} />}
       </AnimatePresence>
     </div>
   );

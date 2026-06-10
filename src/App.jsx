@@ -205,6 +205,7 @@ const AuthenticatedApp = () => {
         <Route path="/settings/connected" element={<ConnectedAccounts />} />
         <Route path="/api-docs" element={<ApiDocs />} />
         <Route path="/explorer" element={<BlockExplorer />} />
+
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
