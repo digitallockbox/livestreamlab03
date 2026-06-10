@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { base44 } from '@/api/base44Client';
 import {
-  Activity, Flame, CheckCircle2, XCircle, Clock, Zap,
-  Copy, ExternalLink, RefreshCw, Search, Wifi, WifiOff,
-  ArrowRightLeft, TrendingDown, Shield, Hash, ChevronDown, X
+  Activity, CheckCircle2, RefreshCw, Search, Wifi, WifiOff,
+  Hash, X, Users, Copy, ExternalLink, ArrowRightLeft, Flame, Shield, Clock, XCircle
 } from 'lucide-react';
 import { STREAMING_TOKEN_MINT, STREAMING_TOKEN_SYMBOL } from '@/lib/constants/tokens';
 
@@ -16,38 +16,11 @@ const SOLSCAN_BASE = 'https://solscan.io/tx';
 const shortHash = (h) => h ? `${h.slice(0, 8)}…${h.slice(-6)}` : '—';
 const shortAddr  = (a) => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—';
 const timeAgo    = (ts) => {
-  const s = Math.floor((Date.now() - ts) / 1000);
+  const s = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
   if (s < 60) return `${s}s ago`;
   if (s < 3600) return `${Math.floor(s / 60)}m ago`;
   return `${Math.floor(s / 3600)}h ago`;
 };
-
-const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-const randB58 = (len) => Array.from({ length: len }, () => B58[Math.floor(Math.random() * B58.length)]).join('');
-
-const TX_TYPES   = ['transfer', 'transfer', 'transfer', 'burn', 'burn', 'validation'];
-const STATUSES   = ['confirmed', 'confirmed', 'confirmed', 'confirmed', 'pending', 'failed'];
-const BURN_ADDR  = 'burnAddr1111111111111111111111111111111111111';
-
-let _id = 0;
-function makeTx() {
-  const type   = TX_TYPES[Math.floor(Math.random() * TX_TYPES.length)];
-  const status = STATUSES[Math.floor(Math.random() * STATUSES.length)];
-  const amount = +(Math.random() * 80_000 + 50).toFixed(2);
-  const burn   = type === 'burn' ? amount : +(amount * 0.015).toFixed(4);
-  return {
-    _key:     ++_id,
-    sig:      randB58(88),
-    from:     randB58(44),
-    to:       type === 'burn' ? BURN_ADDR : randB58(44),
-    type, status, amount, burn,
-    slot:     341_200_000 + Math.floor(Math.random() * 500_000),
-    fee:      +(Math.random() * 0.0025 + 0.0001).toFixed(6),
-    confs:    status === 'confirmed' ? Math.floor(Math.random() * 400 + 1) : 0,
-    ts:       Date.now() - Math.floor(Math.random() * 45_000),
-    program:  [STREAMING_TOKEN_MINT, '11111111111111111111111111111111', 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'][Math.floor(Math.random() * 3)],
-  };
-}
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
 function CopyBtn({ value }) {
@@ -201,68 +174,52 @@ function StatCard({ label, value, icon: Icon, cls }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-const INIT_TXS = Array.from({ length: 25 }, makeTx);
-
 export default function BlockExplorer() {
-  const [txs, setTxs]           = useState(INIT_TXS);
-  const [newKeys, setNewKeys]   = useState(new Set());
-  const [selected, setSelected] = useState(null);
-  const [live, setLive]         = useState(true);
-  const [tps, setTps]           = useState(0);
-  const [typeF, setTypeF]       = useState('all');
-  const [statusF, setStatusF]   = useState('all');
-  const [search, setSearch]     = useState('');
-  const tpsRef                  = useRef(0);
-  const timerRef                = useRef(null);
+  const [chainStats, setChainStats] = useState(null);
+  const [blocks, setBlocks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [live, setLive] = useState(true);
+  const timerRef = useRef(null);
 
-  // TPS ticker
-  useEffect(() => {
-    const id = setInterval(() => { setTps(tpsRef.current); tpsRef.current = 0; }, 1000);
-    return () => clearInterval(id);
+  // Fetch real chain data
+  const fetchChainData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [statsRes, blocksRes] = await Promise.all([
+        base44.functions.invoke('explorerApi', { path: '/explorer/stats' }),
+        base44.functions.invoke('explorerApi', { path: '/explorer/blocks' }),
+      ]);
+
+      if (statsRes.data?.success) {
+        setChainStats(statsRes.data.stats);
+      }
+      if (blocksRes.data?.success) {
+        setBlocks(blocksRes.data.blocks);
+      }
+    } catch (error) {
+      console.error('Failed to fetch chain data:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Live feed
-  const inject = useCallback((n = 1) => {
-    const fresh = Array.from({ length: n }, makeTx);
-    tpsRef.current += n;
-    setNewKeys(new Set(fresh.map(t => t._key)));
-    setTxs(prev => [...fresh, ...prev].slice(0, 300));
-  }, []);
-
   useEffect(() => {
-    if (live) { timerRef.current = setInterval(() => inject(Math.random() > 0.55 ? 2 : 1), 1700); }
-    else       { clearInterval(timerRef.current); }
-    return () => clearInterval(timerRef.current);
-  }, [live, inject]);
+    fetchChainData();
+    if (live) {
+      timerRef.current = setInterval(fetchChainData, 5000); // Refresh every 5 seconds
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [live, fetchChainData]);
 
   // Derived stats
-  const confirmed    = txs.filter(t => t.status === 'confirmed').length;
-  const pending      = txs.filter(t => t.status === 'pending').length;
-  const failed       = txs.filter(t => t.status === 'failed').length;
-  const burnEvents   = txs.filter(t => t.type === 'burn').length;
-  const totalBurned  = txs.filter(t => t.type === 'burn' && t.status === 'confirmed')
-                          .reduce((s, t) => s + t.burn, 0);
+  const confirmed = blocks.length;
+  const totalTransactions = chainStats?.totalTransactions || 0;
+  const totalAddresses = chainStats?.totalAddresses || 0;
+  const latestHeight = chainStats?.latestHeight || 0;
 
-  const filtered = txs.filter(t => {
-    if (typeF   !== 'all' && t.type   !== typeF)   return false;
-    if (statusF !== 'all' && t.status !== statusF) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return t.sig.toLowerCase().includes(q) || t.from.toLowerCase().includes(q) || t.to.toLowerCase().includes(q);
-    }
-    return true;
-  });
 
-  const FilterBar = ({ options, active, onChange }) => (
-    <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
-      {options.map(o => (
-        <button key={o}
-          onClick={() => onChange(o)}
-          className={`px-3 py-1 rounded-md text-xs font-medium capitalize transition-all ${active === o ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-        >{o}</button>
-      ))}
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -276,16 +233,12 @@ export default function BlockExplorer() {
             <div>
               <h1 className="font-display font-bold text-xl leading-tight">Trident Block Explorer</h1>
               <p className="text-xs text-muted-foreground">
-                $STREAMING settlements · Solana Devnet ·{' '}
-                <span className="font-mono text-violet-400">{STREAMING_TOKEN_MINT.slice(0, 12)}…</span>
+                Real-time chain data · Block height {latestHeight}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-mono font-semibold text-primary">
-              <Zap className="w-3 h-3" />{tps} TPS
-            </div>
             <button
               onClick={() => setLive(v => !v)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
@@ -295,8 +248,9 @@ export default function BlockExplorer() {
               {live ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
               {live ? 'Live' : 'Paused'}
             </button>
-            <Button size="sm" variant="outline" onClick={() => inject(1)}>
-              <RefreshCw className="w-3.5 h-3.5 mr-1" />Inject Tx
+            <Button size="sm" variant="outline" onClick={fetchChainData} disabled={loading}>
+              <RefreshCw className={`w-3.5 h-3.5 mr-1 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
             </Button>
           </div>
         </div>
@@ -304,48 +258,31 @@ export default function BlockExplorer() {
 
       <div className="max-w-screen-2xl mx-auto px-4 md:px-6 py-6 space-y-5">
         {/* Stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <StatCard label="Total Tracked" value={txs.length.toLocaleString()} icon={Hash}        cls="text-foreground" />
-          <StatCard label="Confirmed"     value={confirmed}                   icon={CheckCircle2} cls="text-emerald-400" />
-          <StatCard label="Pending"       value={pending}                     icon={Clock}        cls="text-yellow-400" />
-          <StatCard label="Failed"        value={failed}                      icon={XCircle}      cls="text-red-400" />
-          <StatCard label="Burn Events"   value={burnEvents}                  icon={Flame}        cls="text-orange-400" />
-          <StatCard label="Total Burned"  value={`${totalBurned.toFixed(0)} $S`} icon={TrendingDown} cls="text-orange-400" />
-        </div>
-
-        {/* Burn ticker */}
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-orange-500/10 border border-orange-500/25 rounded-xl">
-          <Flame className="w-4 h-4 text-orange-400 flex-shrink-0 animate-pulse" />
-          <span className="text-xs text-muted-foreground">Session Burn Total:</span>
-          <span className="font-mono font-bold text-orange-400">
-            {totalBurned.toLocaleString(undefined, { maximumFractionDigits: 2 })} $STREAMING
-          </span>
-          <span className="text-xs text-muted-foreground">across {burnEvents} burn events</span>
-          <div className="ml-auto hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="font-mono text-violet-400">Mint:</span>
-            <span className="font-mono">{STREAMING_TOKEN_MINT.slice(0, 16)}…</span>
-            <CopyBtn value={STREAMING_TOKEN_MINT} />
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-muted-foreground ml-3">Loading chain data...</p>
           </div>
-        </div>
-
-        {/* Filters + search */}
-        <div className="flex flex-wrap gap-3 items-center">
-          <FilterBar options={['all','transfer','burn','validation']} active={typeF}   onChange={setTypeF} />
-          <FilterBar options={['all','confirmed','pending','failed']} active={statusF} onChange={setStatusF} />
-          <div className="relative max-w-xs flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search hash / address…" className="pl-8 h-8 text-xs" />
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatCard label="Latest Block" value={latestHeight.toLocaleString()} icon={Hash} cls="text-foreground" />
+            <StatCard label="Total Transactions" value={totalTransactions.toLocaleString()} icon={Activity} cls="text-primary" />
+            <StatCard label="Total Addresses" value={totalAddresses.toLocaleString()} icon={Users} cls="text-accent" />
+            <StatCard label="Blocks Tracked" value={confirmed.toLocaleString()} icon={CheckCircle2} cls="text-emerald-400" />
           </div>
-          <span className="ml-auto text-xs text-muted-foreground">{filtered.length} of {txs.length} txs</span>
-        </div>
+        )}
 
-        {/* Table */}
+        {/* Latest Blocks */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="p-4 border-b border-border">
+            <h2 className="font-display font-semibold text-lg">Latest Blocks</h2>
+            <p className="text-xs text-muted-foreground">Most recent blocks on the Trident network</p>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  {['Tx Hash','Type','Status','Amount','Burn / Confs','Slot','Age',''].map(h => (
+                  {['Height', 'Hash', 'Timestamp', 'Transactions'].map(h => (
                     <th key={h} className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
@@ -353,31 +290,35 @@ export default function BlockExplorer() {
                 </tr>
               </thead>
               <tbody>
-                <AnimatePresence initial={false}>
-                  {filtered.slice(0, 150).map(tx => (
-                    <TxRow key={tx._key} tx={tx} isNew={newKeys.has(tx._key)} onSelect={setSelected} />
-                  ))}
-                </AnimatePresence>
+                {blocks.map((block, idx) => (
+                  <tr key={block.hash} className="border-b border-border/40 hover:bg-muted/25 transition-colors">
+                    <td className="py-3 px-4 font-mono font-semibold text-primary">{block.height.toLocaleString()}</td>
+                    <td className="py-3 px-4 font-mono text-xs">
+                      <div className="flex items-center gap-1">
+                        <span className="text-foreground">{shortHash(block.hash)}</span>
+                        <CopyBtn value={block.hash} />
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground">{timeAgo(block.timestamp)}</td>
+                    <td className="py-3 px-4 font-mono text-sm">{block.txCount}</td>
+                  </tr>
+                ))}
+                {blocks.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-16 text-center text-sm text-muted-foreground">
+                      No blocks available
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
-            {filtered.length === 0 && (
-              <p className="py-16 text-center text-sm text-muted-foreground">No transactions match your filters.</p>
-            )}
           </div>
         </div>
 
         <p className="text-center text-xs text-muted-foreground pb-4">
-          Settlements tracked on{' '}
-          <a href={`https://solscan.io/token/${STREAMING_TOKEN_MINT}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-            Solana Devnet
-          </a>
-          {' '}· Mint: <span className="font-mono">{STREAMING_TOKEN_MINT}</span>
+          Trident Block Explorer · Powered by Trident Ledger
         </p>
       </div>
-
-      <AnimatePresence>
-        {selected && <TxDrawer tx={selected} onClose={() => setSelected(null)} />}
-      </AnimatePresence>
     </div>
   );
 }
