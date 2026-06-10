@@ -111,3 +111,22 @@ export const engineApi = {
   status: () => call('/engine/status'),
   logs: (body) => call('/kernel/logs', body),
 };
+
+// ─── Coin Ledger ($STREAMING) ─────────────────────────────────────────────
+export const coinApi = {
+  balance:      ()     => call('/coin/balance', {}, 'GET'),
+  transactions: ()     => call('/coin/transactions', {}, 'GET'),
+  supply:       ()     => call('/coin/supply', {}, 'GET'),
+  earn:         (body) => call('/coin/earn', body),
+  spend:        (body) => call('/coin/spend', body),
+  transfer:     (body) => call('/coin/transfer', body),
+};
+
+// ─── Phantom Wallet ───────────────────────────────────────────────────────
+export const phantomApi = {
+  challenge: ()     => call('/wallet/phantom/challenge', {}),
+  verify:    (body) => call('/wallet/phantom/verify', body),
+  link:      (body) => call('/wallet/phantom/link', body),
+  status:    ()     => call('/wallet/phantom/status', {}, 'GET'),
+  unlink:    ()     => call('/wallet/phantom/unlink', {}),
+};

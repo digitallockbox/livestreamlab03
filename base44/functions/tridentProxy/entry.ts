@@ -6,7 +6,7 @@
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-const TRIDENT_BASE = "https://api.trident.live/api";
+const TRIDENT_BASE = "https://api.tridentsystem.live";
 
 Deno.serve(async (req) => {
   try {
