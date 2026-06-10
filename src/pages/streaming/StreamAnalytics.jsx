@@ -51,7 +51,14 @@ export default function StreamAnalytics() {
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-7">
-        {STATS.map(s => (
+        {[
+          { label: "Peak Viewers", value: stats.peak_viewers?.toLocaleString() || "0", icon: Users, color: "text-primary", bg: "bg-primary/10" },
+          { label: "Total Revenue", value: `$${stats.revenue?.toFixed(2) || "0"}`, icon: DollarSign, color: "text-accent", bg: "bg-accent/10" },
+          { label: "$STREAMING Tips", value: `${stats.streaming_tips?.toLocaleString() || "0"} $STR`, icon: Zap, color: "text-chart-3", bg: "bg-chart-3/10" },
+          { label: "Avg. Watch Time", value: `${stats.avg_watch_time || "0"} min`, icon: Clock, color: "text-chart-4", bg: "bg-chart-4/10" },
+          { label: "Engagement Rate", value: `${stats.engagement_rate || "0"}%`, icon: TrendingUp, color: "text-chart-5", bg: "bg-chart-5/10" },
+          { label: "Chat Messages", value: stats.chat_messages?.toLocaleString() || "0", icon: MessageSquare, color: "text-primary", bg: "bg-primary/10" },
+        ].map(s => (
           <div key={s.label} className="bg-card border border-border rounded-2xl p-4">
             <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center mb-3`}>
               <s.icon className={`w-4 h-4 ${s.color}`} />
