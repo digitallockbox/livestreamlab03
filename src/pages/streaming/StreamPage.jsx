@@ -1,159 +1,289 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Radio, Users, Heart, Gift, Zap, Send, Bell } from "lucide-react";
-import TipModal from "@/components/streaming/TipModal";
-import GiftModal from "@/components/streaming/GiftModal";
-
-const MOCK_CHAT = [
-  { user: "neon_wolf", msg: "🔥 insane stream!", type: "chat" },
-  { user: "pixelqueen", msg: "tipped 250 $STREAMING!", type: "tip" },
-  { user: "darkbyte_", msg: "First time here, love the vibes", type: "chat" },
-  { user: "cyber_rex", msg: "gifted a ⚡ Lightning Bolt!", type: "gift" },
-  { user: "viewer_99", msg: "What DAW are you using?", type: "chat" },
-  { user: "shadow99", msg: "tipped 100 $STREAMING!", type: "tip" },
-  { user: "luna_stream", msg: "This track is insane 🎵", type: "chat" },
-  { user: "beta_user", msg: "Came from Twitter, glad I did", type: "chat" },
-];
-
-const RECOMMENDED = [
-  { title: "Late Night Code", creator: "neonbyte_", viewers: 843, category: "Tech" },
-  { title: "Chill Lofi Mix", creator: "lo_queen", viewers: 1204, category: "Music" },
-  { title: "Strategy Masters", creator: "tactix_r", viewers: 562, category: "Gaming" },
-];
+import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Users, Heart, Send, Share2, Gift, MessageSquare,
+  Play, Eye, Calendar, Zap, Volume2, VolumeX,
+  Maximize, Settings, PlayCircle, Clock, TrendingUp
+} from 'lucide-react';
+import { publicApi } from '@/lib/tridentApi';
+import StreamChat from '@/components/streaming/StreamChat';
+import CreatorCard from '@/components/streaming/CreatorCard';
+import RecommendedStreams from '@/components/streaming/RecommendedStreams';
+import TipModal from '@/components/streaming/TipModal';
 
 export default function StreamPage() {
-  const [tipOpen, setTipOpen] = useState(false);
-  const [giftOpen, setGiftOpen] = useState(false);
-  const [followed, setFollowed] = useState(false);
-  const [chatMsg, setChatMsg] = useState("");
+  const { id } = useParams();
+  const [stream, setStream] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [muted, setMuted] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [showTipModal, setShowTipModal] = useState(false);
+  const videoRef = useRef(null);
+
+  // Load stream data
+  useEffect(() => {
+    const loadStream = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await publicApi.getStream({ id });
+        setStream(data);
+      } catch (err) {
+        setError(err.message || 'Failed to load stream');
+        console.error('Stream load error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) loadStream();
+  }, [id]);
+
+  // Update viewer count periodically
+  useEffect(() => {
+    if (!stream) return;
+    const interval = setInterval(async () => {
+      try {
+        const updated = await publicApi.getStream({ id });
+        setStream(prev => ({ ...prev, viewer_count: updated.viewer_count }));
+      } catch (err) {
+        console.error('Viewer count update failed:', err);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [id, stream]);
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !muted;
+      setMuted(!muted);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (videoRef.current) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+        setFullscreen(false);
+      } else {
+        videoRef.current.requestFullscreen().catch(err => console.error('Fullscreen failed:', err));
+        setFullscreen(true);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-border border-t-primary rounded-full animate-spin" />
+          <p className="text-muted-foreground">Loading stream...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !stream) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive mb-4">{error || 'Stream not found'}</p>
+          <a href="/" className="text-primary hover:underline">← Back to home</a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-4 lg:p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-
-          {/* Left — player + info */}
-          <div className="lg:col-span-3 space-y-4">
-            {/* Player */}
-            <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-border">
-              <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=1200&q=80')] bg-cover bg-center opacity-20" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-20 h-20 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center mx-auto mb-3">
-                    <Radio className="w-9 h-9 text-primary/60" />
-                  </div>
-                  <p className="text-white/60 text-sm">Live Stream Player</p>
-                </div>
-              </div>
-              {/* Live badge overlay */}
-              <div className="absolute top-4 left-4 flex items-center gap-2">
-                <Badge className="bg-destructive text-white border-0 gap-1.5 px-3 py-1 text-xs font-bold shadow-lg">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
-                </Badge>
-                <div className="bg-black/70 backdrop-blur rounded-lg px-2.5 py-1 flex items-center gap-1.5 text-xs text-white">
-                  <Users className="w-3 h-3" /> 2,431
-                </div>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 lg:py-6">
+        {/* Video Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mb-6 lg:mb-8"
+        >
+          <div className="relative bg-black rounded-2xl overflow-hidden aspect-video lg:aspect-auto lg:h-[500px] group">
+            {/* Live indicator */}
+            <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500 text-white text-xs font-semibold">
+                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                LIVE
               </div>
             </div>
 
-            {/* Stream info row */}
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-lg font-bold text-white flex-shrink-0">S</div>
-                <div>
-                  <h1 className="font-display text-xl font-bold text-foreground">Friday Night Beats — Vol. 12</h1>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-sm text-muted-foreground font-medium">ShadowCreator</span>
-                    <span className="text-muted-foreground/40">·</span>
-                    <Badge variant="outline" className="text-xs border-border text-muted-foreground">Music</Badge>
-                    <span className="text-muted-foreground/40">·</span>
-                    <span className="text-xs text-muted-foreground">Started 1h 24m ago</span>
-                  </div>
+            {/* Viewer count */}
+            <div className="absolute top-4 right-4 z-20">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white text-xs font-semibold">
+                <Eye className="w-3.5 h-3.5" />
+                {stream.viewer_count?.toLocaleString() || 0}
+              </div>
+            </div>
+
+            {/* Video player */}
+            <video
+              ref={videoRef}
+              src={stream.playback_url}
+              className="w-full h-full object-cover"
+              controls
+              autoPlay
+              playsInline
+              onFullscreenChange={() => setFullscreen(!!document.fullscreenElement)}
+            />
+
+            {/* Overlay controls */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button size="icon" variant="ghost" onClick={toggleMute} className="text-white hover:bg-white/20">
+                    {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  </Button>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Button variant="outline" onClick={() => setFollowed(!followed)}
-                  className={`gap-2 rounded-xl border-border ${followed ? 'text-destructive border-destructive/40 bg-destructive/5' : ''}`}>
-                  <Heart className={`w-4 h-4 ${followed ? 'fill-destructive text-destructive' : ''}`} />
-                  {followed ? 'Following' : 'Follow'}
-                </Button>
-                <Button variant="outline" onClick={() => setTipOpen(true)} className="gap-2 rounded-xl border-accent/30 text-accent hover:bg-accent/10">
-                  <Zap className="w-4 h-4" /> Tip
-                </Button>
-                <Button variant="outline" onClick={() => setGiftOpen(true)} className="gap-2 rounded-xl border-chart-3/30 text-chart-3 hover:bg-chart-3/10">
-                  <Gift className="w-4 h-4" /> Gift
-                </Button>
-                <Button variant="outline" className="gap-2 rounded-xl border-border">
-                  <Bell className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="bg-card border border-border rounded-2xl p-4">
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Late night beats, deep focus, and live creation. Join the session — drop requests in chat, tip to get your track featured, gift for a shoutout. Powered by <span className="text-accent font-semibold">$STREAMING</span>.
-              </p>
-            </div>
-
-            {/* Recommended */}
-            <div>
-              <h3 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">Recommended Streams</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {RECOMMENDED.map((s) => (
-                  <div key={s.title} className="bg-card border border-border rounded-xl p-3 hover:border-primary/30 transition-colors cursor-pointer group">
-                    <div className="aspect-video bg-gradient-to-br from-primary/10 to-accent/5 rounded-lg mb-2 flex items-center justify-center">
-                      <Radio className="w-6 h-6 text-primary/30" />
-                    </div>
-                    <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">{s.title}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-muted-foreground">{s.creator}</span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1"><Users className="w-3 h-3" />{s.viewers.toLocaleString()}</span>
-                    </div>
-                  </div>
-                ))}
+                <div className="flex items-center gap-2">
+                  <Button size="icon" variant="ghost" onClick={toggleFullscreen} className="text-white hover:bg-white/20">
+                    <Maximize className="w-4 h-4" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="text-white hover:bg-white/20">
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
+        </motion.div>
 
-          {/* Right — chat */}
-          <div className="bg-card border border-border rounded-2xl flex flex-col" style={{ height: '680px' }}>
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-              <h3 className="font-display font-semibold text-sm">Live Chat</h3>
-              <span className="text-xs text-muted-foreground">2,431 watching</span>
-            </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {MOCK_CHAT.map((c, i) => (
-                <div key={i} className={`text-xs rounded-lg px-2.5 py-1.5 ${c.type === 'tip' ? 'bg-accent/10 border border-accent/20' : c.type === 'gift' ? 'bg-chart-3/10 border border-chart-3/20' : ''}`}>
-                  <span className={`font-semibold ${c.type === 'tip' ? 'text-accent' : c.type === 'gift' ? 'text-chart-3' : 'text-primary'}`}>@{c.user}</span>
-                  <span className="text-foreground ml-1">{c.msg}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Stream info */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="space-y-4"
+            >
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <h1 className="font-display font-bold text-2xl md:text-3xl leading-tight mb-2">
+                      {stream.title}
+                    </h1>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className="bg-primary/20 text-primary border-primary/30 capitalize">
+                        {stream.category}
+                      </Badge>
+                      {stream.status === 'live' && (
+                        <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                          <PlayCircle className="w-3 h-3 mr-1" /> Live
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => setShowTipModal(true)}
+                      className="bg-primary hover:bg-primary/90 gap-1.5"
+                    >
+                      <Gift className="w-4 h-4" />
+                      Tip <span className="hidden sm:inline">Creator</span>
+                    </Button>
+                    <Button variant="outline" size="icon">
+                      <Heart className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="icon">
+                      <Share2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-              ))}
-            </div>
-            <div className="p-3 border-t border-border flex-shrink-0">
-              <div className="flex gap-2">
-                <Input value={chatMsg} onChange={e => setChatMsg(e.target.value)} placeholder="Say something..." className="bg-secondary border-border text-xs h-8" />
-                <Button size="icon" className="bg-primary hover:bg-primary/90 h-8 w-8 shrink-0">
-                  <Send className="w-3.5 h-3.5" />
-                </Button>
+
+                {stream.description && (
+                  <p className="text-foreground/80 leading-relaxed">
+                    {stream.description}
+                  </p>
+                )}
               </div>
-              <div className="flex gap-2 mt-2">
-                <Button size="sm" onClick={() => setTipOpen(true)} className="flex-1 bg-accent/15 hover:bg-accent/25 text-accent border border-accent/20 gap-1.5 text-xs h-7">
-                  <Zap className="w-3 h-3" /> Tip
-                </Button>
-                <Button size="sm" onClick={() => setGiftOpen(true)} className="flex-1 bg-chart-3/15 hover:bg-chart-3/25 text-chart-3 border border-chart-3/20 gap-1.5 text-xs h-7">
-                  <Gift className="w-3 h-3" /> Gift
-                </Button>
+
+              {/* Stream stats */}
+              <div className="flex flex-wrap gap-4 pt-2">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <TrendingUp className="w-4 h-4 text-chart-2" />
+                  <span className="text-sm">{stream.peak_viewers?.toLocaleString() || 0} peak viewers</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="w-4 h-4 text-chart-4" />
+                  <span className="text-sm">Streaming {stream.duration_minutes || 0} mins</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Zap className="w-4 h-4 text-chart-1" />
+                  <span className="text-sm">${stream.tips_earned?.toLocaleString() || 0} earned</span>
+                </div>
               </div>
-            </div>
+            </motion.div>
+
+            {/* Creator info */}
+            <CreatorCard creator={stream.creator} />
+
+            {/* Description & tabs */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="border-t border-border pt-6"
+            >
+              <h2 className="font-display font-bold text-lg mb-4">About This Stream</h2>
+              <p className="text-foreground/70 whitespace-pre-wrap">
+                {stream.description || 'No description available'}
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Chat */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.15 }}
+              className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col h-[500px]"
+            >
+              <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold">Live Chat</h3>
+              </div>
+              <StreamChat streamId={id} />
+            </motion.div>
+
+            {/* Recommended streams */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <RecommendedStreams />
+            </motion.div>
           </div>
         </div>
       </div>
 
-      <TipModal open={tipOpen} onClose={() => setTipOpen(false)} />
-      <GiftModal open={giftOpen} onClose={() => setGiftOpen(false)} />
+      {/* Tip Modal */}
+      {showTipModal && (
+        <TipModal
+          creator={stream.creator}
+          onClose={() => setShowTipModal(false)}
+          onSuccess={() => {
+            setShowTipModal(false);
+            // Optionally refresh stream data to show updated earnings
+          }}
+        />
+      )}
     </div>
   );
 }

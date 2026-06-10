@@ -37,6 +37,11 @@ export const publicApi = {
   creator: (id) => call('/public/creator', { id }),
   video: (id) => call('/public/video', { id }),
   livestream: (id) => call('/public/livestream', { id }),
+  // Stream viewer page
+  getStream: (body) => call('/public/stream', body),
+  getStreamChat: (body) => call('/public/stream/chat', body),
+  sendStreamChat: (body) => call('/public/stream/chat/send', body),
+  getRecommendedStreams: (body) => call('/public/streams/recommended', body),
 };
 
 // ─── Creator ──────────────────────────────────────────────────────────────
