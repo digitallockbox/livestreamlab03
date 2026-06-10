@@ -4,6 +4,8 @@ import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { CreatorAuthProvider } from '@/lib/CreatorAuthContext';
+import { AdminAuthProvider } from '@/lib/AdminAuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 // Layout
@@ -142,7 +144,7 @@ const AuthenticatedApp = () => {
         <Route path="/dashboard" element={<Dashboard />} />
 
         {/* Creator Routes (Protected) */}
-        <Route element={<CreatorProtectedRoute />}>
+        <Route element={<CreatorAuthProvider><CreatorProtectedRoute /></CreatorAuthProvider>}>
           {/* Vault */}
           <Route path="/vault" element={<VaultOverview />} />
           <Route path="/vault/transactions" element={<VaultTransactions />} />
@@ -193,7 +195,7 @@ const AuthenticatedApp = () => {
         </Route>
 
         {/* Admin & Founder Routes (Protected) */}
-        <Route element={<AdminProtectedRoute />}>
+        <Route element={<AdminAuthProvider><AdminProtectedRoute /></AdminAuthProvider>}>
           <Route path="/admin" element={<AdminConsole />} />
           <Route path="/trident/admin" element={<TridentAdmin />} />
           <Route path="/founder" element={<FounderDashboard />} />
