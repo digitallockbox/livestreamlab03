@@ -1,68 +1,68 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send } from 'lucide-react';
-import { publicApi } from '@/lib/tridentApi';
-import { toast } from 'sonner';
+import { Send, Wifi, WifiOff } from 'lucide-react';
+
+const WS_BASE = 'wss://api.tridentsystem.live/chat/stream';
 
 export default function StreamChat({ streamId }) {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
-  const scrollRef = useRef(null);
+  const [messages, setMessages]   = useState([]);
+  const [input, setInput]         = useState('');
+  const [connected, setConnected] = useState(false);
+  const socketRef                 = useRef(null);
+  const scrollRef                 = useRef(null);
 
-  // Load initial messages
+  // WebSocket lifecycle
   useEffect(() => {
-    const loadMessages = async () => {
+    if (!streamId) return;
+
+    const ws = new WebSocket(`${WS_BASE}/${streamId}`);
+    socketRef.current = ws;
+
+    ws.onopen = () => setConnected(true);
+
+    ws.onmessage = (event) => {
       try {
-        const data = await publicApi.getStreamChat({ streamId });
-        setMessages(data?.messages || []);
+        const msg = JSON.parse(event.data);
+        setMessages(prev => [...prev.slice(-199), msg]); // keep last 200
       } catch (err) {
-        console.error('Failed to load chat:', err);
+        console.error('Chat parse error:', err);
       }
     };
 
-    loadMessages();
+    ws.onclose  = () => setConnected(false);
+    ws.onerror  = () => setConnected(false);
 
-    // Poll for new messages every 2s
-    const interval = setInterval(loadMessages, 2000);
-    return () => clearInterval(interval);
+    return () => ws.close();
   }, [streamId]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll on new messages
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = async (e) => {
+  const handleSend = (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
 
-    setSending(true);
-    try {
-      await publicApi.sendStreamChat({
-        streamId,
-        message: input.trim()
-      });
-      setInput('');
-      // Reload messages
-      const data = await publicApi.getStreamChat({ streamId });
-      setMessages(data?.messages || []);
-    } catch (err) {
-      toast.error('Failed to send message');
-      console.error('Send message error:', err);
-    } finally {
-      setSending(false);
-    }
+    socketRef.current.send(JSON.stringify({ streamId, text: input.trim() }));
+    setInput('');
   };
 
   return (
     <div className="flex flex-col h-full">
+      {/* Connection status */}
+      <div className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium border-b border-border ${
+        connected ? 'bg-emerald-500/10 text-emerald-400' : 'bg-muted text-muted-foreground'
+      }`}>
+        {connected
+          ? <><Wifi className="w-3 h-3" /> Connected</>
+          : <><WifiOff className="w-3 h-3" /> Connecting…</>
+        }
+      </div>
+
       {/* Messages */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto space-y-2 p-4 bg-background/50"
-      >
+      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-2 p-4 bg-background/50">
         {messages.length === 0 ? (
           <p className="text-center text-muted-foreground text-sm py-8">
             No messages yet. Start the conversation!
@@ -83,14 +83,14 @@ export default function StreamChat({ streamId }) {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Say something..."
-            disabled={sending}
+            placeholder={connected ? 'Say something…' : 'Waiting for connection…'}
+            disabled={!connected}
             className="h-8 text-xs"
           />
           <Button
             type="submit"
             size="icon"
-            disabled={sending || !input.trim()}
+            disabled={!connected || !input.trim()}
             className="h-8 w-8 flex-shrink-0"
           >
             <Send className="w-3.5 h-3.5" />
