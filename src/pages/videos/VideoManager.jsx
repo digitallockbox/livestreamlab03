@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Video, Save, X } from "lucide-react";
+import { Video, Save, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { contentApi } from "@/lib/creatorApi";
 import VODUploadPipeline from "@/components/videos/VODUploadPipeline";
 import VideoMetadataEditor from "@/components/videos/VideoMetadataEditor";
 import VODMonetization from "@/components/videos/VODMonetization";
@@ -9,12 +12,53 @@ import VideoChapters from "@/components/videos/VideoChapters";
 
 export default function VideoManager() {
   const [activeTab, setActiveTab] = useState("upload");
+  const [loading, setLoading] = useState(false);
+  const [videoData, setVideoData] = useState(null);
+  const [searchParams] = useSearchParams();
+  const videoId = searchParams.get("id");
+  const navigate = useNavigate();
+
   const tabs = [
     { id: "upload", label: "Upload & Pipeline", icon: Video },
     { id: "metadata", label: "Metadata" },
     { id: "monetization", label: "Monetization" },
     { id: "chapters", label: "Chapters" },
   ];
+
+  useEffect(() => {
+    if (videoId) {
+      loadVideo(videoId);
+    }
+  }, [videoId]);
+
+  const loadVideo = async (id) => {
+    try {
+      setLoading(true);
+      const data = await contentApi.getVideo(id);
+      setVideoData(data);
+    } catch (err) {
+      toast.error(`Failed to load video: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      if (videoId && videoData) {
+        await contentApi.updateVideo({ id: videoId, ...videoData });
+        toast.success("Video updated successfully!");
+      } else {
+        toast.info("No video to update");
+      }
+      navigate('/videos');
+    } catch (err) {
+      toast.error(`Save failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto">
@@ -46,24 +90,31 @@ export default function VideoManager() {
       </div>
 
       {/* Content */}
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="bg-card border border-border rounded-2xl p-6"
-      >
-        {activeTab === "upload" && <VODUploadPipeline />}
-        {activeTab === "metadata" && <VideoMetadataEditor />}
-        {activeTab === "monetization" && <VODMonetization />}
-        {activeTab === "chapters" && <VideoChapters />}
-      </motion.div>
+      {loading && !videoData ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+      ) : (
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="bg-card border border-border rounded-2xl p-6"
+        >
+          {activeTab === "upload" && <VODUploadPipeline />}
+          {activeTab === "metadata" && <VideoMetadataEditor video={videoData} />}
+          {activeTab === "monetization" && <VODMonetization video={videoData} />}
+          {activeTab === "chapters" && <VideoChapters video={videoData} />}
+        </motion.div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3 mt-6 justify-end">
-        <Button variant="outline">Cancel</Button>
-        <Button className="bg-primary hover:bg-primary/90 gap-2">
-          <Save className="w-4 h-4" /> Save Changes
+        <Button variant="outline" onClick={() => navigate('/videos')}>Cancel</Button>
+        <Button onClick={handleSave} disabled={loading} className="bg-primary hover:bg-primary/90 gap-2">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {loading ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </div>

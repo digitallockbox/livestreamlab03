@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Zap, Lock, ShoppingBag, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
-export default function VODMonetization() {
+export default function VODMonetization({ video }) {
   const [monetization, setMonetization] = useState({
     type: "free",
     adEnabled: true,
@@ -12,6 +13,18 @@ export default function VODMonetization() {
     purchasePrice: 9.99,
     tokenGateAmount: 1000,
   });
+
+  useEffect(() => {
+    if (video) {
+      setMonetization({
+        type: video.monetization_type || "free",
+        adEnabled: video.ad_enabled ?? true,
+        rentalPrice: video.rental_price || 2.99,
+        purchasePrice: video.purchase_price || 9.99,
+        tokenGateAmount: video.token_gate_amount || 1000,
+      });
+    }
+  }, [video]);
 
   const types = [
     { id: "free", label: "Free (AVOD)", desc: "Ads only", icon: BarChart3, color: "text-muted-foreground" },

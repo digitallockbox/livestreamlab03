@@ -1,18 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FileText, Tag, Layers } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
-export default function VideoMetadataEditor({ video = {} }) {
+export default function VideoMetadataEditor({ video }) {
   const [metadata, setMetadata] = useState({
-    title: video?.title || "",
-    description: video?.description || "",
-    tags: video?.tags || [],
-    category: video?.category || "creative",
-    chapters: video?.chapters || [],
+    title: "",
+    description: "",
+    tags: [],
+    category: "creative",
+    chapters: [],
   });
 
   const [newTag, setNewTag] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (video) {
+      setMetadata({
+        title: video.title || "",
+        description: video.description || "",
+        tags: video.tags || [],
+        category: video.category || "creative",
+        chapters: video.chapters || [],
+      });
+    }
+  }, [video]);
 
   const addTag = () => {
     if (newTag && !metadata.tags.includes(newTag)) {

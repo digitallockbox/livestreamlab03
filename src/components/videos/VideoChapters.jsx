@@ -1,14 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Layers, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
-export default function VideoChapters({ videoDuration = 3600 }) {
-  const [chapters, setChapters] = useState([
-    { id: 1, title: "Introduction", timestamp: "0:00" },
-    { id: 2, title: "Main Content", timestamp: "2:15" },
-    { id: 3, title: "Conclusion", timestamp: "58:30" },
-  ]);
+export default function VideoChapters({ video }) {
+  const [chapters, setChapters] = useState([]);
+  const [videoDuration, setVideoDuration] = useState(3600);
+
+  useEffect(() => {
+    if (video) {
+      setChapters(video.chapters || []);
+      setVideoDuration(video.duration_seconds || 3600);
+    }
+  }, [video]);
 
   const formatTime = (seconds) => {
     const hrs = Math.floor(seconds / 3600);
@@ -45,30 +50,34 @@ export default function VideoChapters({ videoDuration = 3600 }) {
       </div>
 
       <div className="space-y-2">
-        {chapters.map(chapter => (
-          <div key={chapter.id} className="flex items-center gap-2 p-3 bg-secondary rounded-lg">
-            <Input
-              type="text"
-              value={chapter.title}
-              onChange={(e) => updateChapter(chapter.id, "title", e.target.value)}
-              placeholder="Chapter title"
-              className="bg-card border-border text-sm flex-1"
-            />
-            <Input
-              type="text"
-              value={chapter.timestamp}
-              onChange={(e) => updateChapter(chapter.id, "timestamp", e.target.value)}
-              placeholder="0:00"
-              className="bg-card border-border text-sm w-20 font-mono"
-            />
-            <button
-              onClick={() => deleteChapter(chapter.id)}
-              className="text-muted-foreground hover:text-destructive transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
+        {chapters.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">No chapters added yet</p>
+        ) : (
+          chapters.map(chapter => (
+            <div key={chapter.id} className="flex items-center gap-2 p-3 bg-secondary rounded-lg">
+              <Input
+                type="text"
+                value={chapter.title}
+                onChange={(e) => updateChapter(chapter.id, "title", e.target.value)}
+                placeholder="Chapter title"
+                className="bg-card border-border text-sm flex-1"
+              />
+              <Input
+                type="text"
+                value={chapter.timestamp}
+                onChange={(e) => updateChapter(chapter.id, "timestamp", e.target.value)}
+                placeholder="0:00"
+                className="bg-card border-border text-sm w-20 font-mono"
+              />
+              <button
+                onClick={() => deleteChapter(chapter.id)}
+                className="text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
