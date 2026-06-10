@@ -141,6 +141,15 @@ export const phantomApi = {
   unlink:    ()     => call('/wallet/phantom/unlink', {}),
 };
 
+// ─── Block Explorer ───────────────────────────────────────────────────────
+export const explorerApi = {
+  blocks:      ()     => call('/explorer/blocks', {}, 'GET'),
+  block:       (id)   => call('/explorer/block/' + id, {}, 'GET'),
+  address:     (addr) => call('/explorer/address/' + addr, {}, 'GET'),
+  stats:       ()     => call('/explorer/stats', {}, 'GET'),
+  transaction: (hash) => call('/explorer/transaction/' + hash, {}, 'GET'),
+};
+
 // ─── Founder OS (privileged) ──────────────────────────────────────────────
 export const founderApi = {
   // Engine

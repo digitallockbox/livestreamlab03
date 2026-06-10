@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
+import { explorerApi } from '@/lib/tridentApi';
 import {
   Activity, CheckCircle2, RefreshCw, Search, Wifi, WifiOff,
   Hash, X, Users, Copy, ExternalLink, ArrowRightLeft, Flame, Shield, Clock, XCircle
@@ -186,8 +187,8 @@ export default function BlockExplorer() {
     try {
       setLoading(true);
       const [statsRes, blocksRes] = await Promise.all([
-        base44.functions.invoke('explorerApi', { path: '/explorer/stats' }),
-        base44.functions.invoke('explorerApi', { path: '/explorer/blocks' }),
+        base44.functions.invoke('tridentProxy', { method: 'GET', path: '/explorer/stats' }),
+        base44.functions.invoke('tridentProxy', { method: 'GET', path: '/explorer/blocks' }),
       ]);
 
       if (statsRes.data?.success) {
