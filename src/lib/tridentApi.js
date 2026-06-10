@@ -130,3 +130,21 @@ export const phantomApi = {
   status:    ()     => call('/wallet/phantom/status', {}, 'GET'),
   unlink:    ()     => call('/wallet/phantom/unlink', {}),
 };
+
+// ─── Founder OS (privileged) ──────────────────────────────────────────────
+export const founderApi = {
+  // Engine
+  engineStatus:  ()     => call('/founder/engine/status', {}, 'GET'),
+  engineRestart: ()     => call('/founder/engine/restart', {}),
+  engineMode:    (mode) => call('/founder/engine/mode', { mode }),
+  // Ledger
+  ledger:        ()     => call('/founder/ledger', {}, 'GET'),
+  // Payouts / Settlements
+  payoutsList:   ()     => call('/founder/payouts', {}, 'GET'),
+  payoutsRun:    (body) => call('/founder/payouts/run', body),
+  // Domains / Routing
+  domains:       ()     => call('/founder/domains', {}, 'GET'),
+  // Overwatch / War Room
+  overwatch:     ()     => call('/founder/overwatch', {}, 'GET'),
+  warroom:       ()     => call('/founder/warroom', {}, 'GET'),
+};

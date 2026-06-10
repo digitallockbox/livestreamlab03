@@ -1,9 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Cpu, Play, Square, RefreshCw, Terminal, Zap, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { engineApi } from '@/lib/tridentApi';
+import { base44 } from '@/api/base44Client';
+import { founderApi } from '@/lib/tridentApi';
+
+// Route all engine calls through the secure tridentProxy backend function
+const proxy = {
+  run:     (body) => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/engine/run', body }).then(r => r.data),
+  status:  ()     => base44.functions.invoke('tridentProxy', { method: 'GET',  path: '/founder/engine/status' }).then(r => r.data),
+  restart: ()     => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/founder/engine/restart' }).then(r => r.data),
+  mode:    (mode) => base44.functions.invoke('tridentProxy', { method: 'POST', path: '/founder/engine/mode', body: { mode } }).then(r => r.data),
+};
 
 const ENGINES = [
   { id: 'settlement', name: 'Settlement Engine', desc: 'Processes $STREAMING token settlements on Solana', status: 'running', uptime: '99.98%', cycles: '4,821' },
@@ -18,6 +27,23 @@ export default function Engine() {
   const [engines, setEngines] = useState(ENGINES);
   const [running, setRunning] = useState({});
   const [logs, setLogs] = useState([]);
+  const [simMode, setSimMode] = useState('SIM');
+  const [simLoading, setSimLoading] = useState(false);
+  const [liveStatus, setLiveStatus] = useState(null);
+
+  useEffect(() => {
+    proxy.status()
+      .then(data => {
+        setLiveStatus(data);
+        const ts = new Date().toLocaleTimeString();
+        setLogs(l => [{ msg: `[${ts}] ✓ Live engine status loaded`, type: 'success' }, ...l]);
+        if (data?.mode) setSimMode(data.mode);
+      })
+      .catch(err => {
+        const ts = new Date().toLocaleTimeString();
+        setLogs(l => [{ msg: `[${ts}] ⚠ Could not reach live status: ${err.message}`, type: 'error' }, ...l]);
+      });
+  }, []);
 
   const runEngine = async (engine) => {
     setRunning(r => ({ ...r, [engine.id]: true }));
@@ -25,7 +51,7 @@ export default function Engine() {
     setLogs(l => [{ msg: `[${timestamp}] Running engine: ${engine.name}...`, type: 'info' }, ...l]);
 
     try {
-      await engineApi.run({ engine_id: engine.id });
+      await proxy.run({ engine_id: engine.id });
       setLogs(l => [{ msg: `[${timestamp}] ✓ ${engine.name} completed successfully`, type: 'success' }, ...l]);
       setEngines(e => e.map(en => en.id === engine.id ? { ...en, status: 'running' } : en));
     } catch (err) {
@@ -33,6 +59,31 @@ export default function Engine() {
     }
 
     setRunning(r => ({ ...r, [engine.id]: false }));
+  };
+
+  const toggleSimMode = async () => {
+    const next = simMode === 'SIM' ? 'REAL' : 'SIM';
+    setSimLoading(true);
+    const ts = new Date().toLocaleTimeString();
+    try {
+      await proxy.mode(next);
+      setSimMode(next);
+      setLogs(l => [{ msg: `[${ts}] ✓ Engine mode set to ${next}`, type: 'success' }, ...l]);
+    } catch (err) {
+      setLogs(l => [{ msg: `[${ts}] ✗ Mode switch failed: ${err.message}`, type: 'error' }, ...l]);
+    }
+    setSimLoading(false);
+  };
+
+  const restartAll = async () => {
+    const ts = new Date().toLocaleTimeString();
+    setLogs(l => [{ msg: `[${ts}] Restarting all engines...`, type: 'info' }, ...l]);
+    try {
+      await proxy.restart();
+      setLogs(l => [{ msg: `[${ts}] ✓ Engine restart initiated`, type: 'success' }, ...l]);
+    } catch (err) {
+      setLogs(l => [{ msg: `[${ts}] ✗ Restart failed: ${err.message}`, type: 'error' }, ...l]);
+    }
   };
 
   const statusBadge = (s) => {
@@ -55,9 +106,16 @@ export default function Engine() {
             <h1 className="font-display text-2xl font-bold text-foreground">Engine Control</h1>
             <p className="text-muted-foreground text-sm mt-0.5">Run and monitor Trident OS engines.</p>
           </div>
-          <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={() => window.location.reload()}>
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh Status
-          </Button>
+          <div className="flex items-center gap-2">
+            <Badge className={`text-xs gap-1.5 cursor-pointer ${simMode === 'REAL' ? 'bg-red-400/10 text-red-400 border-red-400/30' : 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30'}`}
+              onClick={toggleSimMode}>
+              {simLoading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+              {simMode === 'REAL' ? 'LIVE MODE' : 'SIM MODE'} — click to toggle
+            </Badge>
+            <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={restartAll}>
+              <RefreshCw className="w-3.5 h-3.5" /> Restart All
+            </Button>
+          </div>
         </motion.div>
 
         {/* Engines Grid */}

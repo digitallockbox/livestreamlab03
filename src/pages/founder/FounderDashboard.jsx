@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import {
   DollarSign, Users, TrendingUp, Zap, Globe, BarChart3,
@@ -56,8 +57,18 @@ const TOKEN_ALLOCATION = [
 
 const TABS = ['Executive Summary', 'Growth Metrics', 'Token Economy', 'Roadmap'];
 
+const proxyGet = (path) =>
+  base44.functions.invoke('tridentProxy', { method: 'GET', path }).then(r => r.data);
+
 export default function FounderDashboard() {
   const [activeTab, setActiveTab] = useState('Executive Summary');
+  const [ledger, setLedger] = useState(null);
+  const [engineStatus, setEngineStatus] = useState(null);
+
+  useEffect(() => {
+    proxyGet('/founder/ledger').then(setLedger).catch(() => {});
+    proxyGet('/founder/engine/status').then(setEngineStatus).catch(() => {});
+  }, []);
 
   return (
     <div className="p-6 md:p-8 space-y-6">
@@ -203,6 +214,63 @@ export default function FounderDashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Live Control Plane */}
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Ledger */}
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-display font-semibold text-sm text-foreground flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-yellow-400" /> Live Coin Ledger
+                </h3>
+                <Badge className="bg-accent/10 text-accent border-accent/20 text-xs">
+                  {ledger ? 'Live' : 'Loading…'}
+                </Badge>
+              </div>
+              {ledger ? (
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="text-center">
+                    <p className="font-display text-lg font-bold text-foreground">{(ledger.totalsupply / 1e6).toFixed(1)}M</p>
+                    <p className="text-xs text-muted-foreground">Total Supply</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-display text-lg font-bold text-accent">{ledger.wallet_count?.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Wallets</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-display text-lg font-bold text-primary">{ledger.recent_transactions?.length ?? 0}</p>
+                    <p className="text-xs text-muted-foreground">Recent Txs</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground animate-pulse">Fetching live data…</div>
+              )}
+            </div>
+
+            {/* Engine Status */}
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-display font-semibold text-sm text-foreground flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-primary" /> Engine Status
+                </h3>
+                <Badge className={`text-xs ${engineStatus?.mode === 'REAL' ? 'bg-red-400/10 text-red-400 border-red-400/20' : 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20'}`}>
+                  {engineStatus?.mode ?? '…'} MODE
+                </Badge>
+              </div>
+              {engineStatus ? (
+                <div className="space-y-1.5">
+                  {(engineStatus.engines ?? []).slice(0, 4).map(e => (
+                    <div key={e.id} className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">{e.name}</span>
+                      <span className={e.status === 'running' ? 'text-accent font-semibold' : e.status === 'standby' ? 'text-yellow-400' : 'text-muted-foreground'}>{e.status}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground animate-pulse">Fetching engine status…</div>
+              )}
             </div>
           </div>
 
