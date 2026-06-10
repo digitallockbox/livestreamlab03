@@ -1,19 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Wallet, Zap, Radio, Video, ShoppingBag, Link2, TrendingUp, Plus, ChevronRight, RefreshCw } from 'lucide-react';
+import { Wallet, Zap, Radio, Video, ShoppingBag, Link2, TrendingUp, RefreshCw, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import StatCard from '@/components/ui/StatCard';
 import PageHeader from '@/components/ui/PageHeader';
-import { useMockTridentData } from '@/hooks/useMockTridentData';
-import { useMockDataHydration } from '@/hooks/useMockDataHydration';
-import RevenuePumping from '@/components/dashboard/RevenuePumping';
-import OversightMomentum from '@/components/dashboard/OversightMomentum';
-import AegisSecurityStatus from '@/components/dashboard/AegisSecurityStatus';
-import StreamingTokenFlow from '@/components/dashboard/StreamingTokenFlow';
-import MockDataPanel from '@/components/dashboard/MockDataPanel';
-import TokenVelocity from '@/components/dashboard/TokenVelocity';
-import { creatorApi, walletApi } from '@/lib/tridentApi';
+import { creatorDashboardApi, creatorWalletApi } from '@/lib/creatorApi';
 
 const QUICK_ACTIONS = [
   { label: 'Go Live', icon: Radio, path: '/go-live', color: 'bg-red-500/20 text-red-400' },
@@ -22,49 +14,34 @@ const QUICK_ACTIONS = [
   { label: 'Add Affiliate', icon: Link2, path: '/affiliates/add', color: 'bg-yellow-500/20 text-yellow-400' },
 ];
 
-const RECENT_STREAMS = [
-  { title: 'Late Night Q&A', viewers: 1240, tips: 320, date: '2h ago', status: 'ended' },
-  { title: 'Gaming Marathon', viewers: 3500, tips: 890, date: '1d ago', status: 'ended' },
-  { title: 'Product Drop Reveal', viewers: 800, tips: 210, date: '3d ago', status: 'ended' },
-];
-
-const RECENT_UPLOADS = [
-  { title: 'How I Built My Empire', views: 12400, revenue: 540, type: 'video' },
-  { title: 'Episode 42 — Sovereignty', views: 3200, revenue: 120, type: 'podcast' },
-  { title: 'Mindset Masterclass', views: 8900, revenue: 890, type: 'video' },
-];
-
-const STORE_SALES = [
-  { product: 'Creator Starter Kit', sales: 34, revenue: 1020 },
-  { product: 'Premium Preset Pack', sales: 18, revenue: 540 },
-  { product: 'Stream Overlay Bundle', sales: 27, revenue: 810 },
-];
-
 export default function Dashboard() {
-  const { realtimeTransaction, viewerCount, engagementVelocity, systemHealth, topFans, tokenSettlements } = useMockTridentData();
-  const { processingTransactions } = useMockDataHydration();
-
-  const [liveStats, setLiveStats]     = useState(null);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      setStatsLoading(true);
+      setLoading(true);
       try {
-        const [analytics, wallet] = await Promise.all([
-          creatorApi.analytics({}),
-          walletApi.balance({}),
+        const [overview, wallet, streams, videos, products] = await Promise.all([
+          creatorDashboardApi.overview(),
+          creatorWalletApi.balance(),
+          creatorDashboardApi.analytics({ type: 'streams', limit: 3 }),
+          creatorDashboardApi.analytics({ type: 'videos', limit: 3 }),
+          creatorDashboardApi.analytics({ type: 'products', limit: 3 }),
         ]);
-        setLiveStats({ analytics, wallet });
-      } catch { /* use fallback values */ }
-      finally { setStatsLoading(false); }
+        setDashboardData({ overview, wallet, streams, videos, products });
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
-  const vaultBalance     = liveStats?.wallet?.balance         != null ? liveStats.wallet.balance.toLocaleString()       : "24,810";
-  const streamingBalance = liveStats?.wallet?.streaming_balance != null ? liveStats.wallet.streaming_balance.toLocaleString() : "48,200";
-  const monthRevenue     = liveStats?.analytics?.total_revenue  != null ? `$${Number(liveStats.analytics.total_revenue).toLocaleString()}` : "$6,340";
-  const affiliateEarned  = liveStats?.analytics?.affiliate_earned != null ? `$${Number(liveStats.analytics.affiliate_earned).toLocaleString()}` : "$1,280";
+  const vaultBalance = dashboardData?.wallet?.balance ?? 0;
+  const streamingBalance = dashboardData?.wallet?.streaming_balance ?? 0;
+  const monthRevenue = dashboardData?.overview?.month_revenue ?? 0;
+  const affiliateEarned = dashboardData?.overview?.affiliate_earned ?? 0;
 
   return (
     <div className="p-6 md:p-8 space-y-8">
@@ -78,38 +55,10 @@ export default function Dashboard() {
 
       {/* Balance Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="CreatorVault Balance" value={statsLoading ? "…" : `$${vaultBalance}`} sub="Available to withdraw" icon={Wallet} trend="+12% this cycle" trendUp accent />
-        <StatCard title="$STREAMING Balance" value={statsLoading ? "…" : streamingBalance} sub="STREAMING tokens" icon={Zap} trend="+890 today" trendUp />
-        <StatCard title="This Month Revenue" value={statsLoading ? "…" : monthRevenue} sub="All channels combined" icon={TrendingUp} trend="+22% vs last month" trendUp />
-        <StatCard title="Total Affiliate" value={statsLoading ? "…" : affiliateEarned} sub="Earned this cycle" icon={Link2} trend="+5% conversion" trendUp />
-      </div>
-
-      {/* Pulse — Trident OS Mock Layer */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div>
-          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Revenue Pumping (AutoSplit)</h2>
-          <RevenuePumping transaction={realtimeTransaction} />
-        </div>
-        <div>
-          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Aegis Security Status</h2>
-          <AegisSecurityStatus systemHealth={systemHealth} />
-        </div>
-      </div>
-
-      <div>
-        <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Overwatch Momentum</h2>
-        <OversightMomentum viewerCount={viewerCount} engagementVelocity={engagementVelocity} topFans={topFans} />
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div>
-          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">$STREAMING Token Flow</h2>
-          <StreamingTokenFlow tokenSettlements={tokenSettlements} />
-        </div>
-        <div>
-          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Token Velocity</h2>
-          <TokenVelocity tokenSettlements={tokenSettlements} realtimeTransaction={realtimeTransaction} />
-        </div>
+        <StatCard title="CreatorVault Balance" value={loading ? "…" : `$${vaultBalance.toLocaleString()}`} sub="Available to withdraw" icon={Wallet} trend="+12% this cycle" trendUp accent />
+        <StatCard title="$STREAMING Balance" value={loading ? "…" : streamingBalance.toLocaleString()} sub="STREAMING tokens" icon={Zap} trend="+890 today" trendUp />
+        <StatCard title="This Month Revenue" value={loading ? "…" : `$${monthRevenue.toLocaleString()}`} sub="All channels combined" icon={TrendingUp} trend="+22% vs last month" trendUp />
+        <StatCard title="Total Affiliate" value={loading ? "…" : `$${affiliateEarned.toLocaleString()}`} sub="Earned this cycle" icon={Link2} trend="+5% conversion" trendUp />
       </div>
 
       {/* Quick Actions */}
@@ -138,17 +87,23 @@ export default function Dashboard() {
             <Link to="/stream-analytics"><Button variant="ghost" size="sm" className="text-primary text-xs">View All</Button></Link>
           </div>
           <div className="space-y-3">
-            {RECENT_STREAMS.map(({ title, viewers, tips, date }) => (
-              <div key={title} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                <div>
-                  <p className="text-sm font-medium">{title}</p>
-                  <p className="text-xs text-muted-foreground">{viewers.toLocaleString()} viewers · {date}</p>
+            {loading ? (
+              <div className="text-sm text-muted-foreground">Loading...</div>
+            ) : dashboardData?.streams?.length > 0 ? (
+              dashboardData.streams.map((stream) => (
+                <div key={stream.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium">{stream.title}</p>
+                    <p className="text-xs text-muted-foreground">{stream.viewers.toLocaleString()} viewers · {new Date(stream.ended_at).toLocaleDateString()}</p>
+                  </div>
+                  <Badge className="bg-accent/15 text-accent border-accent/30 text-xs">
+                    <Zap className="w-2.5 h-2.5 mr-1" />${stream.tips_earned?.toLocaleString() ?? 0}
+                  </Badge>
                 </div>
-                <Badge className="bg-accent/15 text-accent border-accent/30 text-xs">
-                  <Zap className="w-2.5 h-2.5 mr-1" />${tips}
-                </Badge>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-sm text-muted-foreground">No recent streams</div>
+            )}
           </div>
         </div>
 
@@ -159,15 +114,21 @@ export default function Dashboard() {
             <Link to="/videos"><Button variant="ghost" size="sm" className="text-primary text-xs">View All</Button></Link>
           </div>
           <div className="space-y-3">
-            {RECENT_UPLOADS.map(({ title, views, revenue, type }) => (
-              <div key={title} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                <div>
-                  <p className="text-sm font-medium">{title}</p>
-                  <p className="text-xs text-muted-foreground">{views.toLocaleString()} views · {type}</p>
+            {loading ? (
+              <div className="text-sm text-muted-foreground">Loading...</div>
+            ) : dashboardData?.videos?.length > 0 ? (
+              dashboardData.videos.map((video) => (
+                <div key={video.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium">{video.title}</p>
+                    <p className="text-xs text-muted-foreground">{video.views.toLocaleString()} views · {video.type}</p>
+                  </div>
+                  <span className="text-sm font-semibold text-accent">${video.revenue?.toLocaleString() ?? 0}</span>
                 </div>
-                <span className="text-sm font-semibold text-accent">${revenue}</span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-sm text-muted-foreground">No recent uploads</div>
+            )}
           </div>
         </div>
 
@@ -178,15 +139,21 @@ export default function Dashboard() {
             <Link to="/store"><Button variant="ghost" size="sm" className="text-primary text-xs">View All</Button></Link>
           </div>
           <div className="space-y-3">
-            {STORE_SALES.map(({ product, sales, revenue }) => (
-              <div key={product} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                <div>
-                  <p className="text-sm font-medium">{product}</p>
-                  <p className="text-xs text-muted-foreground">{sales} sales</p>
+            {loading ? (
+              <div className="text-sm text-muted-foreground">Loading...</div>
+            ) : dashboardData?.products?.length > 0 ? (
+              dashboardData.products.map((product) => (
+                <div key={product.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium">{product.name}</p>
+                    <p className="text-xs text-muted-foreground">{product.sales_count} sales</p>
+                  </div>
+                  <span className="text-sm font-semibold text-accent">${product.revenue?.toLocaleString() ?? 0}</span>
                 </div>
-                <span className="text-sm font-semibold text-accent">${revenue}</span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-sm text-muted-foreground">No recent sales</div>
+            )}
           </div>
         </div>
       </div>
@@ -206,29 +173,24 @@ export default function Dashboard() {
               <th className="pb-3 font-medium">Status</th>
             </tr></thead>
             <tbody className="divide-y divide-border/50">
-              {[
-                { cycle: 'March 2026', amount: '$4,200', streaming: '12,400', status: 'Completed' },
-                { cycle: 'February 2026', amount: '$3,840', streaming: '9,800', status: 'Completed' },
-                { cycle: 'January 2026', amount: '$3,100', streaming: '8,200', status: 'Completed' },
-              ].map(({ cycle, amount, streaming, status }) => (
-                <tr key={cycle}>
-                  <td className="py-3 pr-4 font-medium">{cycle}</td>
-                  <td className="py-3 pr-4 text-accent">{amount}</td>
-                  <td className="py-3 pr-4 text-primary">{streaming}</td>
-                  <td className="py-3"><Badge className="bg-accent/15 text-accent border-accent/30">{status}</Badge></td>
-                </tr>
-              ))}
+              {loading ? (
+                <tr><td colSpan={4} className="py-4 text-center text-muted-foreground">Loading...</td></tr>
+              ) : dashboardData?.overview?.payouts?.length > 0 ? (
+                dashboardData.overview.payouts.map((payout) => (
+                  <tr key={payout.id}>
+                    <td className="py-3 pr-4 font-medium">{payout.cycle}</td>
+                    <td className="py-3 pr-4 text-accent">${payout.amount?.toLocaleString() ?? 0}</td>
+                    <td className="py-3 pr-4 text-primary">{payout.streaming_amount?.toLocaleString() ?? 0}</td>
+                    <td className="py-3"><Badge className="bg-accent/15 text-accent border-accent/30">{payout.status}</Badge></td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan={4} className="py-4 text-center text-muted-foreground">No payouts yet</td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
-
-      {/* Mock Transaction Monitor — Live Moke Layer Visibility */}
-      {processingTransactions.length > 0 && (
-        <div className="rounded-xl border border-accent/20 bg-accent/5 p-6">
-          <MockDataPanel transactions={processingTransactions} />
-        </div>
-      )}
     </div>
   );
 }
