@@ -5,7 +5,7 @@ import { Send, Wifi, WifiOff } from 'lucide-react';
 
 const WS_BASE = 'wss://api.tridentsystem.live/chat/stream';
 
-export default function StreamChat({ streamId }) {
+export default function StreamChat({ streamId, onViewerCount }) {
   const [messages, setMessages]   = useState([]);
   const [input, setInput]         = useState('');
   const [connected, setConnected] = useState(false);
@@ -24,7 +24,11 @@ export default function StreamChat({ streamId }) {
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
-        setMessages(prev => [...prev.slice(-199), msg]); // keep last 200
+        if (msg.type === 'viewerCount') {
+          onViewerCount?.(msg.count);
+        } else {
+          setMessages(prev => [...prev.slice(-199), msg]);
+        }
       } catch (err) {
         console.error('Chat parse error:', err);
       }

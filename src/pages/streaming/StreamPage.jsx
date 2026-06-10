@@ -23,6 +23,7 @@ export default function StreamPage() {
   const [muted, setMuted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
+  const [liveViewerCount, setLiveViewerCount] = useState(null);
   const videoRef = useRef(null);
 
   // Load stream data
@@ -122,7 +123,7 @@ export default function StreamPage() {
             <div className="absolute top-4 right-4 z-20">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white text-xs font-semibold">
                 <Eye className="w-3.5 h-3.5" />
-                {stream.viewer_count?.toLocaleString() || 0}
+                {(liveViewerCount ?? stream.viewer_count)?.toLocaleString() || 0}
               </div>
             </div>
 
@@ -258,7 +259,7 @@ export default function StreamPage() {
                 <MessageSquare className="w-4 h-4 text-primary" />
                 <h3 className="font-semibold">Live Chat</h3>
               </div>
-              <StreamChat streamId={id} />
+              <StreamChat streamId={id} onViewerCount={setLiveViewerCount} />
             </motion.div>
 
             {/* Recommended streams */}

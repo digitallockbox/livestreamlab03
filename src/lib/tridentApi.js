@@ -42,6 +42,7 @@ export const publicApi = {
   getStreamChat: (body) => call('/public/stream/chat', body),
   sendStreamChat: (body) => call('/public/stream/chat/send', body),
   getRecommendedStreams: (body) => call('/public/streams/recommended', body),
+  sendTip: (body) => call('/wallet/streaming/transfer', body),
 };
 
 // ─── Creator ──────────────────────────────────────────────────────────────

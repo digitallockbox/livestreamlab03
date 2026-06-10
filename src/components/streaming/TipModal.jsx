@@ -1,69 +1,94 @@
-import React, { useState } from "react";
-import { Zap, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Zap, X, CheckCircle2 } from 'lucide-react';
+import { publicApi } from '@/lib/tridentApi';
 
-const PRESET_AMOUNTS = [50, 100, 250, 500, 1000];
+const PRESET_AMOUNTS = [5, 10, 25, 50, 100];
 
-export default function TipModal({ open, onClose }) {
-  const [selected, setSelected] = useState(100);
-  const [custom, setCustom] = useState("");
-  const [sent, setSent] = useState(false);
+export default function TipModal({ creator, onClose, onSuccess }) {
+  const [amount, setAmount]   = useState('');
+  const [loading, setLoading] = useState(false);
+  const [done, setDone]       = useState(false);
+  const [error, setError]     = useState(null);
 
-  if (!open) return null;
-
-  const handleSend = () => {
-    setSent(true);
-    setTimeout(() => { setSent(false); onClose(); }, 1500);
+  const handleTip = async () => {
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      setError('Enter a valid amount');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await publicApi.sendTip({ toCreatorId: creator?.id, amount: Number(amount) });
+      setDone(true);
+      setTimeout(() => { onSuccess?.(); onClose(); }, 1800);
+    } catch (err) {
+      setError(err.message || 'Tip failed. Try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card border border-border rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="bg-card border border-border rounded-2xl w-full max-w-sm p-6 relative shadow-2xl">
+        {/* Close */}
         <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
           <X className="w-4 h-4" />
         </button>
 
-        {sent ? (
-          <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-4 animate-bounce">
-              <Zap className="w-8 h-8 text-accent" />
-            </div>
-            <p className="font-display font-bold text-lg text-foreground">Tip Sent!</p>
-            <p className="text-sm text-muted-foreground mt-1">{custom || selected} $STREAMING sent to ShadowCreator</p>
+        {done ? (
+          <div className="flex flex-col items-center gap-3 py-4">
+            <CheckCircle2 className="w-12 h-12 text-emerald-400" />
+            <p className="font-semibold text-lg">Tip Sent!</p>
+            <p className="text-muted-foreground text-sm">
+              {amount} $STREAMING sent to {creator?.name || 'creator'}
+            </p>
           </div>
         ) : (
           <>
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-accent" />
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Zap className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-display font-bold text-foreground">Send $STREAMING Tip</h3>
-                <p className="text-xs text-muted-foreground">100% goes to ShadowCreator</p>
+                <h3 className="font-semibold">Send Tip</h3>
+                <p className="text-xs text-muted-foreground">to {creator?.name || 'creator'}</p>
               </div>
             </div>
 
             {/* Preset amounts */}
-            <div className="grid grid-cols-5 gap-2 mb-4">
-              {PRESET_AMOUNTS.map(a => (
-                <button key={a} onClick={() => { setSelected(a); setCustom(""); }}
-                  className={`py-2 rounded-xl text-sm font-bold transition-all ${selected === a && !custom ? 'bg-accent/20 border border-accent/50 text-accent' : 'bg-secondary border border-border text-muted-foreground hover:border-accent/30 hover:text-accent'}`}>
-                  {a}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {PRESET_AMOUNTS.map(p => (
+                <button
+                  key={p}
+                  onClick={() => setAmount(String(p))}
+                  className={`px-3 py-1 rounded-lg text-sm border transition-colors ${
+                    amount === String(p)
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'border-border text-muted-foreground hover:border-primary hover:text-foreground'
+                  }`}
+                >
+                  {p}
                 </button>
               ))}
             </div>
 
-            {/* Custom amount */}
-            <div className="mb-5">
-              <Input value={custom} onChange={e => { setCustom(e.target.value); setSelected(null); }}
-                placeholder="Custom amount..." className="bg-secondary border-border text-center font-semibold" />
-              <p className="text-xs text-muted-foreground text-center mt-1">$STREAMING tokens</p>
-            </div>
+            <Input
+              type="number"
+              min="1"
+              value={amount}
+              onChange={e => { setAmount(e.target.value); setError(null); }}
+              placeholder="Custom amount in $STREAMING"
+              className="mb-2"
+            />
 
-            <Button onClick={handleSend} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold gap-2 shadow-lg shadow-accent/20">
-              <Zap className="w-4 h-4" /> Send {custom || selected} $STREAMING
+            {error && <p className="text-destructive text-xs mb-3">{error}</p>}
+
+            <Button onClick={handleTip} disabled={loading} className="w-full gap-2">
+              <Zap className="w-4 h-4" />
+              {loading ? 'Sending…' : `Tip ${amount ? amount + ' ' : ''}$STREAMING`}
             </Button>
           </>
         )}
