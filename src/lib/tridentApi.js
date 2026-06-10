@@ -32,9 +32,11 @@ export const authApi = {
 // ─── Public ───────────────────────────────────────────────────────────────
 export const publicApi = {
   home: () => call('/public/home'),
+  user: (username) => call('/public/user', { username }),
   explore: (filters) => call('/public/explore', filters),
   creator: (id) => call('/public/creator', { id }),
   video: (id) => call('/public/video', { id }),
+  livestream: (id) => call('/public/livestream', { id }),
 };
 
 // ─── Creator ──────────────────────────────────────────────────────────────

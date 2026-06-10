@@ -68,6 +68,7 @@ import KernelLogs from '@/pages/founder/KernelLogs';
 import Earnings from '@/pages/Earnings';
 import AutoSplits from '@/pages/AutoSplits';
 import Explore from '@/pages/Explore';
+import UserProfile from '@/pages/public/UserProfile';
 
 // Wallet
 import StreamingWalletPage from '@/pages/wallet/StreamingWalletPage';
@@ -118,6 +119,7 @@ const AuthenticatedApp = () => {
       {/* Public */}
       <Route path="/" element={<Landing />} />
       <Route path="/explore" element={<Explore />} />
+      <Route path="/user/:username" element={<UserProfile />} />
       <Route path="/login" element={<TridentLogin />} />
       <Route path="/onboarding" element={<CreatorOnboarding />} />
       <Route path="/stream/:id" element={<StreamPage />} />
