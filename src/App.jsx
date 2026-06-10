@@ -98,76 +98,99 @@ const AuthenticatedApp = () => {
       <Route path="/" element={<Landing />} />
       <Route path="/explore" element={<Explore />} />
       <Route path="/user/:username" element={<UserProfile />} />
-      <Route path="/login" element={<TridentLogin />} />
+      <Route path="/auth/login" element={<TridentLogin />} />
+      <Route path="/auth/register" element={<TridentLogin />} />
       <Route path="/onboarding" element={<CreatorOnboarding />} />
       <Route path="/stream/:id" element={<StreamPage />} />
       <Route path="/store/product/:id" element={<ProductPage />} />
       <Route path="/checkout" element={<Checkout />} />
 
-      {/* App (with layout) */}
+      {/* Creator App (with layout) */}
       <Route element={<AppLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
+        {/* Dashboard */}
+        <Route path="/creator/dashboard" element={<Dashboard />} />
+
+        {/* Streams */}
+        <Route path="/creator/streams" element={<StreamerConsole />} />
+        <Route path="/creator/streams/:id" element={<StreamPage />} />
+        <Route path="/creator/streams/go-live" element={<GoLive />} />
+        <Route path="/creator/streams/analytics" element={<StreamAnalytics />} />
+
+        {/* Videos */}
+        <Route path="/creator/videos" element={<VideoLibrary />} />
+        <Route path="/creator/videos/upload" element={<UploadVideo />} />
+        <Route path="/creator/videos/:id" element={<VideoPlayer />} />
+        <Route path="/creator/videos/manager" element={<VideoManager />} />
+        <Route path="/creator/videos/analytics" element={<VideoAnalytics />} />
+
+        {/* Audio */}
+        <Route path="/creator/audio" element={<PodcastLibrary />} />
+        <Route path="/creator/audio/upload" element={<UploadAudio />} />
+        <Route path="/creator/audio/:id" element={<PodcastEpisodePage />} />
+        <Route path="/creator/audio/manager" element={<PodcastManager />} />
+        <Route path="/creator/audio/analytics" element={<PodcastAnalytics />} />
+
+        {/* Store */}
+        <Route path="/creator/store" element={<StoreDashboard />} />
+        <Route path="/creator/store/products" element={<ProductList />} />
+        <Route path="/creator/store/add" element={<AddProduct />} />
+        <Route path="/creator/store/orders" element={<StoreDashboard />} />
+
+        {/* Affiliates */}
+        <Route path="/creator/affiliates" element={<AffiliateDashboard />} />
+        <Route path="/creator/affiliates/add" element={<AddAffiliateLink />} />
+        <Route path="/creator/affiliates/links" element={<AffiliateLinkList />} />
+        <Route path="/creator/affiliates/manager" element={<AffiliateManager />} />
 
         {/* Vault */}
+        <Route path="/creator/vault" element={<VaultOverview />} />
+        <Route path="/creator/vault/transactions" element={<VaultTransactions />} />
+        <Route path="/creator/vault/payouts" element={<PayoutHistory />} />
+        <Route path="/creator/vault/team" element={<TeamSplits />} />
+
+        {/* Analytics */}
+        <Route path="/creator/analytics" element={<AnalyticsOverview />} />
+
+        {/* Settings */}
+        <Route path="/creator/settings" element={<ProfileSettings />} />
+        <Route path="/creator/settings/profile" element={<ProfileSettings />} />
+        <Route path="/creator/settings/security" element={<SecuritySettings />} />
+        <Route path="/creator/settings/branding" element={<BrandingSettings />} />
+        <Route path="/creator/settings/notifications" element={<NotificationSettings />} />
+        <Route path="/creator/settings/connected" element={<ConnectedAccounts />} />
+
+        {/* Legacy redirects */}
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/vault" element={<VaultOverview />} />
         <Route path="/vault/transactions" element={<VaultTransactions />} />
         <Route path="/vault/payouts" element={<PayoutHistory />} />
         <Route path="/vault/team" element={<TeamSplits />} />
-
-        {/* Streaming */}
         <Route path="/go-live" element={<GoLive />} />
-        <Route path="/streaming/go-live" element={<GoLive />} />
         <Route path="/streaming/console" element={<StreamerConsole />} />
         <Route path="/stream-analytics" element={<StreamAnalytics />} />
-        <Route path="/streaming/analytics" element={<StreamAnalytics />} />
-
-        {/* Videos */}
         <Route path="/upload-video" element={<UploadVideo />} />
         <Route path="/videos" element={<VideoLibrary />} />
         <Route path="/videos/:id" element={<VideoPlayer />} />
         <Route path="/video-analytics" element={<VideoAnalytics />} />
         <Route path="/videos/manager" element={<VideoManager />} />
-
-        {/* Podcasts */}
         <Route path="/upload-audio" element={<UploadAudio />} />
         <Route path="/podcasts" element={<PodcastLibrary />} />
         <Route path="/podcasts/:id" element={<PodcastEpisodePage />} />
         <Route path="/podcast-analytics" element={<PodcastAnalytics />} />
         <Route path="/podcasts/manager" element={<PodcastManager />} />
-
-        {/* Store */}
         <Route path="/store" element={<StoreDashboard />} />
         <Route path="/store/add" element={<AddProduct />} />
         <Route path="/store/products" element={<ProductList />} />
-
-        {/* Affiliates */}
         <Route path="/affiliates" element={<AffiliateDashboard />} />
         <Route path="/affiliates/add" element={<AddAffiliateLink />} />
         <Route path="/affiliates/links" element={<AffiliateLinkList />} />
         <Route path="/affiliates/manager" element={<AffiliateManager />} />
-
-        {/* Analytics */}
         <Route path="/analytics" element={<AnalyticsOverview />} />
-        <Route path="/analytics/creator" element={<AnalyticsOverview />} />
-        <Route path="/analytics/audience" element={<AnalyticsOverview />} />
-        <Route path="/analytics/revenue" element={<AnalyticsOverview />} />
-
-        {/* Creator */}
-        <Route path="/earnings" element={<Earnings />} />
-        <Route path="/autosplits" element={<AutoSplits />} />
-
-        {/* Wallet */}
-        <Route path="/wallet/streaming-token" element={<StreamingWalletPage />} />
-
-
-
-        {/* Settings */}
         <Route path="/settings/profile" element={<ProfileSettings />} />
         <Route path="/settings/branding" element={<BrandingSettings />} />
         <Route path="/settings/security" element={<SecuritySettings />} />
         <Route path="/settings/notifications" element={<NotificationSettings />} />
         <Route path="/settings/connected" element={<ConnectedAccounts />} />
-
       </Route>
 
       <Route path="*" element={<PageNotFound />} />

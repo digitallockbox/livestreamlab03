@@ -1,10 +1,10 @@
 /**
- * Trident System API Client
- * All calls proxy to https://api.tridentsystem.live
- * Frontend → tridentApi → api.tridentsystem.live → engines
+ * LiveStreamLab.live API Client
+ * All calls proxy to https://api.livestreamlab.live
+ * Frontend → tridentApi → api.livestreamlab.live → creator APIs
  */
 
-const BASE_URL = 'https://api.tridentsystem.live';
+const BASE_URL = 'https://api.livestreamlab.live';
 
 async function call(path, body = {}, method = 'POST', includeCredentials = false) {
   const res = await fetch(`${BASE_URL}${path}`, {
