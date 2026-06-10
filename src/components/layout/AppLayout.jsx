@@ -22,6 +22,7 @@ const NAV = [
   { section: 'Admin & Founder', items: [
     { label: 'Block Explorer', icon: Activity, path: '/explorer' },
     { label: 'Email OS', icon: Mail, path: '/email-os' },
+    { label: 'Domain Registry', icon: Globe, path: '/domains' },
     { label: 'Admin Console', icon: ShieldCheck, path: '/admin' },
     { label: 'Founder Console', icon: Crown, path: '/founder' },
     { label: 'Trident Admin', icon: Cpu, path: '/trident/admin' },

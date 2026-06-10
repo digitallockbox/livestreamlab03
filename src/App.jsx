@@ -90,6 +90,9 @@ import BlockExplorer from '@/pages/explorer/BlockExplorer';
 // Email OS
 import EmailOS from '@/pages/emailos/EmailOS';
 
+// Domain Registry
+import DomainRegistry from '@/pages/domains/DomainRegistry';
+
 // Viewer
 import ViewerProfilePage from '@/pages/viewer/ViewerProfile';
 
@@ -209,6 +212,7 @@ const AuthenticatedApp = () => {
         <Route path="/api-docs" element={<ApiDocs />} />
         <Route path="/explorer" element={<BlockExplorer />} />
         <Route path="/email-os" element={<EmailOS />} />
+        <Route path="/domains" element={<DomainRegistry />} />
 
       </Route>
 
