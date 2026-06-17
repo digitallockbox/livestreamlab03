@@ -1,0 +1,5 @@
+import { getMetrics } from "./gateway/metricsAggregator";
+
+app.get("/metrics", (req, res) => {
+  res.json(getMetrics());
+});
