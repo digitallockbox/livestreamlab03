@@ -6,17 +6,25 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "audit": "npm audit --audit-level=low",
+    "audit:frontends": "npm --prefix creator-frontend audit --audit-level=low && npm --prefix operator-frontend audit --audit-level=low",
+    "lint:frontends": "npm --prefix creator-frontend run lint && npm --prefix operator-frontend run lint",
+    "build:frontends": "npm --prefix creator-frontend run build && npm --prefix operator-frontend run build",
+    "scan:all": "npm run audit && npm run build && npm run audit:frontends && npm run lint:frontends && npm run build:frontends"
   },
   "dependencies": {
-    "next": "14.2.3",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "next": "^16.2.9",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0"
+    "@types/node": "^20.17.57",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
   }
 }

@@ -8,7 +8,13 @@ export async function restartEngine(engine, instanceUrl) {
   broadcastLog(engine, `[${traceId}] RESTART COMMAND → ${instanceUrl}`);
 
   try {
-    const res = await fetch(`${instanceUrl}/admin/restart`, { method: "POST" });
+    const res = await fetch(`${instanceUrl}/admin/restart`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ reason: "manual-restart", traceId })
+    });
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 

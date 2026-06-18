@@ -24,7 +24,13 @@ export async function markFailureAndMaybeRecover(engine, restartUrl) {
 
   r.restarting = true;
   try {
-    await fetch(restartUrl, { method: "POST" });
+    await fetch(restartUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ reason: "auto-recovery" })
+    });
   } finally {
     r.restarting = false;
     r.unhealthySince = Date.now(); // reset cooldown window

@@ -1,6 +1,6 @@
-import { createTraceId, attachTrace } from "./trace";
-import { markFailureAndMaybeRecover, markSuccess } from "./autoRecovery";
-import { broadcastLog } from "./logServer";
+import { createTraceId, attachTrace } from "./trace.js";
+import { markFailureAndMaybeRecover, markSuccess } from "./autoRecovery.js";
+import { broadcastLog } from "./logServer.js";
 
 async function callEngine(engine, path, options = {}, incomingTraceId = null) {
   const instances = ENGINES[engine];

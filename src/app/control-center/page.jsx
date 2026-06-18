@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   getSystemHealth,
   getEngineHealth,
@@ -11,9 +12,11 @@ import {
   activateEngine,
   getBootLogs,
 } from "@/services/engine-bridge";
-import { requireFounderSession } from "@/middleware/founderAuth";
+import { signOut, useFounderAuth } from "@/lib/auth";
 
 export default function ControlCenterPage() {
+  const router = useRouter();
+  const { loading, allowed, error } = useFounderAuth();
   const [backendOffline, setBackendOffline] = useState(false);
   const [systemHealth, setSystemHealth] = useState(null);
   const [engineHealth, setEngineHealth] = useState(null);
@@ -23,46 +26,75 @@ export default function ControlCenterPage() {
   const [creators, setCreators] = useState([]);
   const [bootLogs, setBootLogs] = useState([]);
   const [activating, setActivating] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   useEffect(() => {
-    requireFounderSession();
+    if (!loading && !allowed) {
+      router.replace("/auth/login");
+      return;
+    }
 
     const loadAll = async () => {
-      const sys = await getSystemHealth();
-      const eng = await getEngineHealth();
-      const ov = await getOverviewAnalytics();
-      const sa = await getStreamAnalytics();
-      const ca = await getContentAnalytics();
-      const cr = await getCreators();
-      const logs = await getBootLogs();
+      try {
+        setApiError("");
+        const sys = await getSystemHealth();
+        const eng = await getEngineHealth();
+        const ov = await getOverviewAnalytics();
+        const sa = await getStreamAnalytics();
+        const ca = await getContentAnalytics();
+        const cr = await getCreators();
+        const logs = await getBootLogs();
 
-      setBackendOffline(!sys);
-      setSystemHealth(sys);
-      setEngineHealth(eng);
-      setOverview(ov);
-      setStreamAnalytics(sa);
-      setContentAnalytics(ca);
-      setCreators(cr || []);
-      setBootLogs(logs || []);
+        setBackendOffline(!sys);
+        setSystemHealth(sys);
+        setEngineHealth(eng);
+        setOverview(ov);
+        setStreamAnalytics(sa);
+        setContentAnalytics(ca);
+        setCreators(cr || []);
+        setBootLogs(logs || []);
+      } catch (err) {
+        setApiError(err?.message || "Failed to load control center data");
+      }
     };
 
-    loadAll();
+    if (allowed) {
+      loadAll();
 
-    const interval = setInterval(loadAll, 15000);
-    return () => clearInterval(interval);
-  }, []);
+      const interval = setInterval(loadAll, 15000);
+      return () => clearInterval(interval);
+    }
+  }, [allowed, loading, router]);
 
   const handleActivateEngine = async () => {
-    setActivating(true);
-    await activateEngine();
-    const logs = await getBootLogs();
-    setBootLogs(logs || []);
-    setActivating(false);
+    try {
+      setActivating(true);
+      await activateEngine();
+      const logs = await getBootLogs();
+      setBootLogs(logs || []);
+    } catch (err) {
+      setApiError(err?.message || "Engine activation failed");
+    } finally {
+      setActivating(false);
+    }
   };
 
-  const allEnginesOnline =
-    engineHealth &&
-    Object.values(engineHealth).every((status) => status === "online");
+  const handleLogout = async () => {
+    await signOut();
+  };
+
+  const allEnginesOnline = useMemo(
+    () => engineHealth && Object.values(engineHealth).every((status) => status === "online"),
+    [engineHealth]
+  );
+
+  if (loading) {
+    return <div className="min-h-screen bg-black text-slate-100 p-6">Loading founder session…</div>;
+  }
+
+  if (!allowed) {
+    return <div className="min-h-screen bg-black text-slate-100 p-6">Redirecting to login…</div>;
+  }
 
   return (
     <div className="min-h-screen bg-black text-slate-100 p-6 space-y-6 font-mono">
@@ -92,8 +124,20 @@ export default function ControlCenterPage() {
           >
             {activating ? "ACTIVATING…" : "ACTIVATE ENGINE"}
           </button>
+          <button
+            onClick={handleLogout}
+            className="text-[10px] px-3 py-1 rounded-md border border-slate-500/40 bg-slate-500/10 text-slate-200"
+          >
+            LOGOUT
+          </button>
         </div>
       </header>
+
+      {(error || apiError) && (
+        <div className="rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
+          {error || apiError}
+        </div>
+      )}
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Section title="SYSTEM HEALTH" data={systemHealth} />

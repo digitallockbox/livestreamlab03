@@ -3,10 +3,15 @@
  * Ensures only authenticated founders can access protected routes
  */
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://api.livestreamlab.live";
+
 export async function requireFounderSession() {
   try {
     // Check if user has valid founder session
-    const response = await fetch("https://api.livestreamlab.live/auth/verify", {
+    const response = await fetch(`${API_BASE_URL}/auth/verify`, {
       credentials: "include"
     });
 
@@ -36,7 +41,7 @@ export async function requireFounderSession() {
  */
 export async function isFounder() {
   try {
-    const response = await fetch("https://api.livestreamlab.live/auth/verify", {
+    const response = await fetch(`${API_BASE_URL}/auth/verify`, {
       credentials: "include"
     });
 
@@ -55,7 +60,7 @@ export async function isFounder() {
  */
 export async function getFounderSession() {
   try {
-    const response = await fetch("https://api.livestreamlab.live/auth/verify", {
+    const response = await fetch(`${API_BASE_URL}/auth/verify`, {
       credentials: "include"
     });
 
