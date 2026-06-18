@@ -28,5 +28,14 @@ export async function getDB() {
     );
   `);
 
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS access_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      token TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    );
+  `);
+
   return db;
 }

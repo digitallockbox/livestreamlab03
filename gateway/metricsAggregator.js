@@ -1,16 +1,24 @@
+// In-memory metrics store. Designed for single-threaded Node.js use.
+// Each latency ring tracks the last LATENCY_WINDOW samples without O(n) shifts.
+const LATENCY_WINDOW = 100;
+
 const metrics = {
   requests: {},
   errors: {},
+  // Circular buffer per engine: { buf, head, count }
   latencies: {},
   failovers: {},
   cacheMisses: {},
+  // 'closed' = healthy (circuit complete), 'open' = failing, 'half_open' = recovering
   breakerStates: {}
 };
 
 function ensureEngine(engine) {
   if (!metrics.requests[engine]) metrics.requests[engine] = 0;
   if (!metrics.errors[engine]) metrics.errors[engine] = 0;
-  if (!metrics.latencies[engine]) metrics.latencies[engine] = [];
+  if (!metrics.latencies[engine]) {
+    metrics.latencies[engine] = { buf: new Array(LATENCY_WINDOW).fill(0), head: 0, count: 0 };
+  }
   if (!metrics.failovers[engine]) metrics.failovers[engine] = 0;
   if (!metrics.cacheMisses[engine]) metrics.cacheMisses[engine] = 0;
   if (!metrics.breakerStates[engine]) metrics.breakerStates[engine] = "closed";
@@ -28,11 +36,10 @@ export function recordError(engine) {
 
 export function recordLatency(engine, ms) {
   ensureEngine(engine);
-  metrics.latencies[engine].push(ms);
-  // Keep last 100 samples
-  if (metrics.latencies[engine].length > 100) {
-    metrics.latencies[engine].shift();
-  }
+  const ring = metrics.latencies[engine];
+  ring.buf[ring.head] = ms;
+  ring.head = (ring.head + 1) % LATENCY_WINDOW;
+  if (ring.count < LATENCY_WINDOW) ring.count++;
 }
 
 export function recordFailover(engine) {
@@ -60,11 +67,13 @@ export function getMetrics() {
 
   for (const engine of engines) {
     ensureEngine(engine);
-    const lats = metrics.latencies[engine];
-    const avgLatency =
-      lats.length > 0
-        ? Math.round(lats.reduce((a, b) => a + b, 0) / lats.length)
-        : null;
+    const ring = metrics.latencies[engine];
+    let avgLatency = null;
+    if (ring.count > 0) {
+      let sum = 0;
+      for (let i = 0; i < ring.count; i++) sum += ring.buf[i];
+      avgLatency = Math.round(sum / ring.count);
+    }
 
     result[engine] = {
       requests: metrics.requests[engine],

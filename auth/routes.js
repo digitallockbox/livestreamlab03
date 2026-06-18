@@ -11,6 +11,16 @@ function generateToken() {
   return crypto.randomBytes(32).toString("hex");
 }
 
+async function issueAccessToken(db, userId) {
+  const token = generateToken();
+  const expiresAt = new Date(Date.now() + ACCESS_TOKEN_TTL_MS).toISOString();
+  await db.run(
+    "INSERT INTO access_tokens (user_id, token, expires_at) VALUES (?, ?, ?)",
+    [userId, token, expiresAt]
+  );
+  return token;
+}
+
 // POST /auth/signup
 router.post("/signup", async (req, res) => {
   const { email, username } = req.body || {};
@@ -33,7 +43,7 @@ router.post("/signup", async (req, res) => {
       [userId, "email", email, username || null, email, now]
     );
 
-    const accessToken = generateToken();
+    const accessToken = await issueAccessToken(db, userId);
     const refreshToken = generateToken();
 
     await db.run(
@@ -68,7 +78,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "user_not_found" });
     }
 
-    const accessToken = generateToken();
+    const accessToken = await issueAccessToken(db, user.id);
     const refreshToken = generateToken();
     const now = new Date().toISOString();
 
@@ -101,22 +111,21 @@ router.get("/verify", async (req, res) => {
 
   try {
     const db = await getDB();
-    // Use the refresh token store to find the associated user; in production
-    // this would verify a signed JWT. Here we treat the access token as an
-    // opaque identifier looked up from a short-lived token table, but since
-    // the current schema only has refresh_tokens we fall back to the cookie.
-    const refreshToken = req.cookies?.refresh_token;
-    if (!refreshToken) {
-      return res.status(401).json({ error: "session_expired" });
-    }
-
     const row = await db.get(
-      "SELECT rt.user_id, u.email, u.name FROM refresh_tokens rt JOIN users u ON u.id = rt.user_id WHERE rt.token = ?",
-      [refreshToken]
+      `SELECT at.user_id, at.expires_at, u.email, u.name
+       FROM access_tokens at
+       JOIN users u ON u.id = at.user_id
+       WHERE at.token = ?`,
+      [token]
     );
 
     if (!row) {
-      return res.status(401).json({ error: "invalid_session" });
+      return res.status(401).json({ error: "invalid_token" });
+    }
+
+    if (new Date(row.expires_at).getTime() < Date.now()) {
+      await db.run("DELETE FROM access_tokens WHERE token = ?", [token]);
+      return res.status(401).json({ error: "token_expired" });
     }
 
     const founderEmail = process.env.FOUNDER_EMAIL;
@@ -152,9 +161,8 @@ router.post("/refresh", async (req, res) => {
       return res.status(401).json({ error: "refresh_token_expired" });
     }
 
-    // Rotate refresh token
+    // Rotate refresh token and issue new access token
     const newRefreshToken = generateToken();
-    const newAccessToken = generateToken();
     const now = new Date().toISOString();
 
     await db.run("DELETE FROM refresh_tokens WHERE id = ?", [row.id]);
@@ -162,6 +170,8 @@ router.post("/refresh", async (req, res) => {
       "INSERT INTO refresh_tokens (user_id, token, created_at) VALUES (?, ?, ?)",
       [row.user_id, newRefreshToken, now]
     );
+
+    const newAccessToken = await issueAccessToken(db, row.user_id);
 
     res.cookie("refresh_token", newRefreshToken, {
       httpOnly: true,
@@ -179,11 +189,22 @@ router.post("/refresh", async (req, res) => {
 // POST /auth/logout
 router.post("/logout", async (req, res) => {
   const refreshToken = req.cookies?.refresh_token;
+  const authHeader = req.headers.authorization || "";
+  const accessToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
-  if (refreshToken) {
+  if (refreshToken || accessToken) {
     try {
       const db = await getDB();
-      await db.run("DELETE FROM refresh_tokens WHERE token = ?", [refreshToken]);
+      if (refreshToken) {
+        const row = await db.get("SELECT user_id FROM refresh_tokens WHERE token = ?", [refreshToken]);
+        if (row) {
+          // Revoke all tokens for this user on logout
+          await db.run("DELETE FROM refresh_tokens WHERE user_id = ?", [row.user_id]);
+          await db.run("DELETE FROM access_tokens WHERE user_id = ?", [row.user_id]);
+        }
+      } else if (accessToken) {
+        await db.run("DELETE FROM access_tokens WHERE token = ?", [accessToken]);
+      }
     } catch {
       // best-effort cleanup
     }

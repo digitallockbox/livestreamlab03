@@ -5,6 +5,7 @@ import express from "express";
 import fetch from "node-fetch";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,6 +17,7 @@ const ENGINE_STREAM_URL = process.env.ENGINE_STREAM_URL;
 import authRoutes from "./auth/routes.js";
 
 app.use(helmet());
+app.use(cookieParser());
 app.use(express.json());
 app.use(
   rateLimit({
