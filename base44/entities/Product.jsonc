@@ -44,6 +44,35 @@
     },
     "category": {
       "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "own",
+        "amazon",
+        "custom"
+      ],
+      "default": "own",
+      "description": "Product origin: own digital product, Amazon affiliate, or custom external link"
+    },
+    "external_url": {
+      "type": "string",
+      "description": "Affiliate or external URL for amazon & custom products"
+    },
+    "asin": {
+      "type": "string",
+      "description": "Amazon ASIN for affiliate products"
+    },
+    "rating": {
+      "type": "number",
+      "default": 0
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
     }
   },
   "required": [

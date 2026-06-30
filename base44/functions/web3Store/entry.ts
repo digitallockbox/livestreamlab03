@@ -1,9 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-// web3Store — Creator store: own published products + Amazon affiliate catalog (Rainforest API).
+// web3Store — Unified commerce engine for the Creator OS Store.
 // Actions:
-//   list  -> { creatorWallet?, searchTerm? } => { products: [...] }  (own + amazon, affiliate tag baked into amazon urls)
-//   click -> { title?, url?, source?, asin? } => { ok: true }        (records an affiliate click-through)
+//   list        -> { creatorWallet }                       => { products: [...] }   (creator's saved inventory)
+//   searchAmazon-> { searchTerm }                          => { results: [...] }     (Rainforest search, not saved)
+//   addAmazon   -> { creatorWallet, asin }                  => { success, product }   (fetch full details, save with affiliate tag)
+//   addCustom   -> { creatorWallet, title, price, url, description, image_url } => { success, product }
+//   click       -> { title?, url?, source?, asin? }        => { ok: true }           (affiliate click tracking)
 
 Deno.serve(async (req) => {
   try {
@@ -15,56 +18,116 @@ Deno.serve(async (req) => {
     const action = body.action || 'list';
 
     const RAINFOREST_API_KEY = Deno.env.get("RAINFOREST_API_KEY");
-    const AFF_TAG = Deno.env.get("AMAZON_AFFILIATE_TAG") || "";
+    const AFF_TAG = Deno.env.get("AMAZON_AFFILIATE_TAG") || "livestreaml0d-20";
 
+    const affiliateUrl = (asin) => `https://www.amazon.com/dp/${asin}?tag=${encodeURIComponent(AFF_TAG)}`;
+    const extractAsin = (input) => {
+      const m = String(input || "").match(/([A-Z0-9]{10})/);
+      return m ? m[1] : String(input || "").trim().substring(0, 10);
+    };
+    const parsePrice = (raw) => parseFloat(String(raw || "").replace(/[^0-9.]/g, "")) || 0;
+
+    // ---- LIST: creator's saved inventory ----
     if (action === 'list') {
-      // 1) Creator's own published products
-      let ownProducts = [];
+      let products = [];
       if (body.creatorWallet) {
         try {
-          ownProducts = await base44.asServiceRole.entities.Product.filter({
-            creator_wallet: body.creatorWallet,
-            status: "published",
-          });
+          products = await base44.asServiceRole.entities.Product.filter(
+            { creator_wallet: body.creatorWallet },
+            "-created_date",
+            100
+          );
         } catch (e) {
           console.warn("Product filter failed:", e?.message || e);
         }
       }
+      return Response.json({ products: products || [] });
+    }
 
-      // 2) Amazon affiliate products via Rainforest search
-      let amazonProducts = [];
-      if (RAINFOREST_API_KEY) {
+    // ---- SEARCH AMAZON (Rainforest) ----
+    if (action === 'searchAmazon') {
+      let results = [];
+      if (RAINFOREST_API_KEY && body.searchTerm) {
         try {
-          const searchTerm = body.searchTerm || "streaming equipment";
-          const apiUrl = `https://api.rainforestapi.com/request?api_key=${encodeURIComponent(RAINFOREST_API_KEY)}&type=search&amazon_domain=amazon.com&search_term=${encodeURIComponent(searchTerm)}`;
+          const apiUrl = `https://api.rainforestapi.com/request?api_key=${encodeURIComponent(RAINFOREST_API_KEY)}&type=search&amazon_domain=amazon.com&search_term=${encodeURIComponent(body.searchTerm)}`;
           const res = await fetch(apiUrl, { method: "GET" });
           const json = await res.json();
-          amazonProducts = (json.search_results || []).slice(0, 12).map((item) => ({
-            id: `amazon-${item.asin}`,
-            source: "amazon",
+          results = (json.search_results || []).slice(0, 12).map((item) => ({
             asin: item.asin,
             title: item.title || "Amazon product",
             price: (item.price && (item.price.raw || item.price.value)) || "",
             image_url: item.image || "",
-            url: `https://www.amazon.com/dp/${item.asin}?tag=${encodeURIComponent(AFF_TAG)}`,
+            url: affiliateUrl(item.asin),
           }));
         } catch (e) {
           console.warn("Rainforest search failed:", e?.message || e);
         }
       }
-
-      const products = [
-        ...ownProducts.map((p) => ({ ...p, source: "own" })),
-        ...amazonProducts,
-      ];
-
-      return Response.json({ products });
+      return Response.json({ results });
     }
 
-    if (action === 'click') {
-      const linkUrl = body.url || (body.asin ? `https://www.amazon.com/dp/${body.asin}?tag=${encodeURIComponent(AFF_TAG)}` : "");
-      if (!linkUrl) return Response.json({ error: "Missing url" }, { status: 400 });
+    // ---- ADD AMAZON (full product lookup, save with affiliate tag) ----
+    if (action === 'addAmazon') {
+      if (!body.creatorWallet) return Response.json({ error: "Missing creatorWallet" }, { status: 400 });
+      const asinClean = extractAsin(body.asin);
+      if (!asinClean) return Response.json({ error: "Missing ASIN" }, { status: 400 });
 
+      let title = `Amazon ${asinClean}`, price = "", description = "", image_url = "", rating = 0, features = [];
+      if (RAINFOREST_API_KEY) {
+        try {
+          const apiUrl = `https://api.rainforestapi.com/request?api_key=${encodeURIComponent(RAINFOREST_API_KEY)}&type=product&amazon_domain=amazon.com&asin=${encodeURIComponent(asinClean)}`;
+          const res = await fetch(apiUrl, { method: "GET" });
+          const json = await res.json();
+          const p = json.product || {};
+          title = p.title || title;
+          price = (p.buybox_winner?.price?.raw) || (p.buybox_winner?.price?.value != null ? String(p.buybox_winner.price.value) : "") || "";
+          description = p.description || p.aplus_description || "";
+          image_url = p.main_image || "";
+          rating = Number(p.rating || 0);
+          features = Array.isArray(p.feature_bullets) ? p.feature_bullets.slice(0, 8) : [];
+        } catch (e) {
+          console.warn("Rainforest product lookup failed:", e?.message || e);
+        }
+      }
+
+      const product = await base44.asServiceRole.entities.Product.create({
+        creator_wallet: body.creatorWallet,
+        name: title,
+        description,
+        price: parsePrice(price),
+        image_url,
+        status: "published",
+        category: body.category || "amazon",
+        source: "amazon",
+        external_url: affiliateUrl(asinClean),
+        asin: asinClean,
+        rating,
+        features,
+      });
+      return Response.json({ success: true, product });
+    }
+
+    // ---- ADD CUSTOM ----
+    if (action === 'addCustom') {
+      if (!body.creatorWallet || !body.title) return Response.json({ error: "Missing required fields" }, { status: 400 });
+      const product = await base44.asServiceRole.entities.Product.create({
+        creator_wallet: body.creatorWallet,
+        name: body.title,
+        description: body.description || "",
+        price: parsePrice(body.price),
+        image_url: body.image_url || "",
+        external_url: body.url || "",
+        status: "published",
+        category: body.category || "custom",
+        source: "custom",
+      });
+      return Response.json({ success: true, product });
+    }
+
+    // ---- CLICK: affiliate click tracking ----
+    if (action === 'click') {
+      const linkUrl = body.url || (body.asin ? affiliateUrl(body.asin) : "");
+      if (!linkUrl) return Response.json({ error: "Missing url" }, { status: 400 });
       try {
         const existing = await base44.asServiceRole.entities.AffiliateLink.filter({ url: linkUrl });
         if (existing && existing.length > 0) {

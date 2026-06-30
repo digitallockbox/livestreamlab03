@@ -110,7 +110,10 @@ export const domainsAPI = {
 };
 
 export const storeAPI = {
-  list: (creatorWallet, searchTerm) => invoke("web3Store", { action: "list", creatorWallet, searchTerm }),
+  list: (creatorWallet) => invoke("web3Store", { action: "list", creatorWallet }),
+  searchAmazon: (searchTerm) => invoke("web3Store", { action: "searchAmazon", searchTerm }),
+  addAmazon: (creatorWallet, asin) => invoke("web3Store", { action: "addAmazon", creatorWallet, asin }),
+  addCustom: (creatorWallet, data) => invoke("web3Store", { action: "addCustom", creatorWallet, ...data }),
   click: (payload) => invoke("web3Store", { action: "click", ...payload }),
 };
 
