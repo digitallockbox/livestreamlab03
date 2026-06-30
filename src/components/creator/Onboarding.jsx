@@ -11,6 +11,16 @@ export default function Onboarding() {
   const [bound, setBound] = useState(false);
   const [activated, setActivated] = useState(null);
 
+  // Guard: this screen only renders once identity is verified, but defend
+  // against a transient state where wallet/chain are not yet resolved.
+  if (!walletAddress || !chain) {
+    return (
+      <Page title="Activate your Creator identity" subtitle="Bind your Freename domain to finish onboarding">
+        <Card className="max-w-md text-sm text-muted-foreground">Connecting your wallet…</Card>
+      </Page>
+    );
+  }
+
   const bind = async () => {
     const name = domain.trim().toLowerCase();
     if (!name) { setError("Enter a domain name"); return; }

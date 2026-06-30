@@ -18,6 +18,7 @@ import SharedLayout from "@/components/creator/SharedLayout";
 import MultiWalletLogin from "@/components/creator/MultiWalletLogin";
 import Onboarding from "@/components/creator/Onboarding";
 import CreatorIdentityHeader from "@/components/creator/CreatorIdentityHeader";
+import ErrorBoundary from "@/components/creator/ErrorBoundary";
 import { IdentityProvider, useIdentity } from "@/lib/web3/identity";
 import {
   Page, Card, Spinner, Input, useViewerWallet,
@@ -941,7 +942,9 @@ export default function LiveStreamLabApp() {
   return (
     <PhantomIdentityProvider>
       <IdentityProvider>
-        <MainApp />
+        <ErrorBoundary>
+          <MainApp />
+        </ErrorBoundary>
       </IdentityProvider>
     </PhantomIdentityProvider>
   );
