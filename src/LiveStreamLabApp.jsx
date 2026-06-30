@@ -32,6 +32,7 @@ import Home from "@/components/creator/pages/Home";
 import GoLive from "@/components/creator/pages/GoLive";
 import Wallet from "@/components/creator/pages/Wallet";
 import Domains from "@/components/creator/pages/Domains";
+import Streams from "@/components/creator/pages/Streams";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -469,41 +470,7 @@ const EconomyDashboard = () => {
 
 
 
-// All Streams — list live + past
-const AllStreams = () => {
-  const viewerWallet = useViewerWallet();
-  const [live, setLive] = useState([]);
-  const [past, setPast] = useState([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    Promise.all([streamsAPI.live(), streamsAPI.past(viewerWallet)])
-      .then(([l, p]) => { setLive(l.streams || []); setPast(p.streams || []); })
-      .finally(() => setLoading(false));
-  }, [viewerWallet]);
-  if (loading) return <Spinner />;
-  return (
-    <Page title="All Streams" subtitle="Live now and past sessions">
-      <Card>
-        <h3 className="font-display font-semibold mb-3">Live Now</h3>
-        {live.length === 0 ? <p className="text-sm text-muted-foreground">No live streams.</p> : live.map((s) => (
-          <Link key={s.id} to={`/streams/${s.id}/analytics`} className="block py-2 border-b border-border/50 last:border-0 hover:bg-muted/40 px-2 rounded">
-            <p className="font-medium">{s.title}</p>
-            <p className="text-xs text-muted-foreground font-mono">{(s.creator_wallet || "").slice(0, 8)}… · {s.viewer_count} watching</p>
-          </Link>
-        ))}
-      </Card>
-      <Card>
-        <h3 className="font-display font-semibold mb-3">Past Streams</h3>
-        {past.length === 0 ? <p className="text-sm text-muted-foreground">No past streams.</p> : past.map((s) => (
-          <Link key={s.id} to={`/streams/${s.id}/analytics`} className="block py-2 border-b border-border/50 last:border-0 hover:bg-muted/40 px-2 rounded">
-            <p className="font-medium">{s.title}</p>
-            <p className="text-xs text-muted-foreground">{s.duration_minutes} min · {s.viewer_count} viewers</p>
-          </Link>
-        ))}
-      </Card>
-    </Page>
-  );
-};
+// Streams page now lives in its own responsive component: @/components/creator/pages/Streams
 
 // Stream Analytics — per-stream metrics (watch time, boosts, subs, STREAMING earned)
 const StreamAnalytics = () => {
@@ -910,7 +877,7 @@ function MainApp() {
         <Route path="/domains" element={<Domains />} />
         <Route path="/go-live" element={<GoLive />} />
         <Route path="/watch" element={<WatchToEarn />} />
-        <Route path="/streams" element={<AllStreams />} />
+        <Route path="/streams" element={<Streams />} />
         <Route path="/streams/:id/analytics" element={<StreamAnalytics />} />
         <Route path="/videos" element={<VideoLibrary />} />
         <Route path="/videos/upload" element={<UploadVideo />} />
