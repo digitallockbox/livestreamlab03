@@ -98,9 +98,8 @@ async function mintOnFreename(zoneName, walletAddress, chain) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+    // Wallet-only creators have no Base44 user session; authenticate write actions via
+    // on-chain wallet signature verification (verifyOwnership) instead of auth.me().
     const body = await req.json().catch(() => ({}));
     const action = body.action || 'list';
 

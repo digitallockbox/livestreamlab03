@@ -16,6 +16,7 @@ import ConnectedAccounts from "@/pages/settings/ConnectedAccounts";
 import SupabaseExplorer from "@/pages/SupabaseExplorer";
 import SharedLayout from "@/components/creator/SharedLayout";
 import MultiWalletLogin from "@/components/creator/MultiWalletLogin";
+import Onboarding from "@/components/creator/Onboarding";
 import { IdentityProvider, useIdentity } from "@/lib/web3/identity";
 import {
   Page, Card, Spinner, Input, useViewerWallet,
@@ -892,6 +893,8 @@ function MainApp() {
   // Identity gate: a wallet must be connected AND cryptographically verified before any engine loads.
   if (!walletAddress) return <MultiWalletLogin />;
   if (!session) return <VerifyWallet />;
+  const onboardingComplete = (() => { try { return !!localStorage.getItem(`onboarding_complete_${walletAddress}`); } catch { return false; } })();
+  if (!onboardingComplete) return <Onboarding />;
   return (
     <BrowserRouter>
       <Routes>
