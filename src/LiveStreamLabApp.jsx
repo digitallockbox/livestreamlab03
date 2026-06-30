@@ -28,6 +28,7 @@ import {
 import Home from "@/components/creator/pages/Home";
 import GoLive from "@/components/creator/pages/GoLive";
 import Wallet from "@/components/creator/pages/Wallet";
+import Domains from "@/components/creator/pages/Domains";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -906,6 +907,7 @@ function MainApp() {
         <Route path="/marketplace/products" element={<MarketplaceProducts />} />
         <Route path="/marketplace/sales" element={<MarketplaceSales />} />
         <Route path="/wallet" element={<Wallet />} />
+        <Route path="/domains" element={<Domains />} />
         <Route path="/go-live" element={<GoLive />} />
         <Route path="/watch" element={<WatchToEarn />} />
         <Route path="/streams" element={<AllStreams />} />

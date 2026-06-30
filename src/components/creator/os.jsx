@@ -103,6 +103,11 @@ export const videoAPI = {
   analytics: (creatorWallet) => invoke("web3Videos", { action: "analytics", creatorWallet }),
 };
 
+export const domainsAPI = {
+  purchase: (payload) => invoke("freenamePurchase", { action: "purchase", ...payload }),
+  list: (wallet) => invoke("freenamePurchase", { action: "list", wallet }),
+};
+
 // ======================================================
 //  SHARED UI HELPERS
 // ======================================================
