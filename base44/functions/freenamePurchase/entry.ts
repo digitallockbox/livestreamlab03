@@ -175,6 +175,26 @@ Deno.serve(async (req) => {
       return Response.json({ domains, count: domains.length });
     }
 
+    if (action === 'get') {
+      const wallet = (body.wallet || '').trim();
+      if (!wallet) return Response.json({ domain: null, onboarding_completed: false });
+      const profiles = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: wallet });
+      const prof = profiles[0];
+      let domain = prof?.bound_domain || null;
+      let domainChain = null;
+      if (!domain) {
+        const domains = await base44.asServiceRole.entities.Domain.filter({ wallet }, '-created_date', 50);
+        const bound = domains.find((d) => d.status === 'minted' || d.status === 'purchased') || domains[0];
+        domain = bound?.domain || null;
+        domainChain = bound?.chain || null;
+      }
+      return Response.json({
+        domain,
+        chain: domainChain,
+        onboarding_completed: !!prof?.onboarding_completed,
+      });
+    }
+
     return Response.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

@@ -106,6 +106,7 @@ export const videoAPI = {
 export const domainsAPI = {
   purchase: (payload) => invoke("freenamePurchase", { action: "purchase", ...payload }),
   list: (wallet) => invoke("freenamePurchase", { action: "list", wallet }),
+  get: (wallet) => invoke("freenamePurchase", { action: "get", wallet }),
 };
 
 // ======================================================
