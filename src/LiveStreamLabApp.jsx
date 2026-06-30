@@ -687,7 +687,10 @@ const GoLive = () => {
             <p><span className="text-muted-foreground">Stream ID:</span> {stream.id}</p>
             <p><span className="text-muted-foreground">RTMP URL:</span> {stream.rtmpUrl}</p>
             <p><span className="text-muted-foreground">Stream Key:</span> <span className="font-mono">{stream.streamKey}</span></p>
-            <Link to="/streams" className="text-primary hover:underline">View all streams →</Link>
+            <div className="flex gap-4 pt-1">
+              <Link to={`/streams/${stream.id}/analytics`} className="text-primary hover:underline">Stream Analytics →</Link>
+              <Link to="/streams" className="text-primary hover:underline">All Streams →</Link>
+            </div>
           </div>
         )}
       </Card>
