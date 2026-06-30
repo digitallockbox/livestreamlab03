@@ -56,6 +56,15 @@
         "type": "string"
       },
       "default": []
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Creator has completed the guided onboarding (wallet + identity + domain)"
+    },
+    "bound_domain": {
+      "type": "string",
+      "description": "Freename domain bound during onboarding (e.g. yourname.livestreamlab)"
     }
   },
   "required": [

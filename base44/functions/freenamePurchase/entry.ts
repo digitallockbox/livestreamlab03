@@ -95,6 +95,19 @@ async function mintOnFreename(zoneName, walletAddress, chain) {
   return { ok: true, order_id: zone.uuid || '', tx_hash: zone.tokenId || zone.uuid || '', zone };
 }
 
+// Activate the creator profile: mark onboarding complete and bind the domain.
+async function activateProfile(base44, wallet, domain) {
+  const list = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: wallet });
+  if (list[0]) {
+    return base44.asServiceRole.entities.Web3Profile.update(list[0].id, { onboarding_completed: true, bound_domain: domain });
+  }
+  const short = wallet.slice(0, 6) + '...' + wallet.slice(-4);
+  return base44.asServiceRole.entities.Web3Profile.create({
+    wallet_address: wallet, display_name: short, onboarding_completed: true, bound_domain: domain,
+    verified: false, verification_level: 'none', badge_tier: 'bronze', followers: 0, following: 0, social_graph: [],
+  });
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -123,9 +136,11 @@ Deno.serve(async (req) => {
 
       const hasCreds = !!(fnEnv('USERNAME') && fnEnv('PASSWORD'));
       if (!hasCreds) {
+        const profile = await activateProfile(base44, wallet, domain);
         return Response.json({
           domain: record,
           minted: false,
+          profile,
           message: 'Domain recorded locally. Freename credentials are not configured yet — minting will run once they are added.',
         });
       }
@@ -141,7 +156,8 @@ Deno.serve(async (req) => {
           freename_order_id: mint.order_id,
           tx_hash: mint.tx_hash,
         });
-        return Response.json({ domain: updated, minted: true, freename: mint.zone });
+        const profile = await activateProfile(base44, wallet, domain);
+        return Response.json({ domain: updated, minted: true, freename: mint.zone, profile });
       } catch (e) {
         await base44.asServiceRole.entities.Domain.update(record.id, { status: 'failed' });
         return Response.json({ error: e.message, domain: record }, { status: 502 });

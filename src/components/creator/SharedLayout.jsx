@@ -2,6 +2,7 @@ import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { Home, Radio, Eye, Video, ShoppingBag, Wallet, CreditCard, BarChart3, Newspaper, MessageSquare, Settings as SettingsIcon, Globe } from "lucide-react";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
+import { useIdentity } from "@/lib/web3/identity";
 
 const NAV = [
   { to: "/", label: "Home", icon: Home },
@@ -20,6 +21,8 @@ const NAV = [
 
 export default function SharedLayout() {
   const { wallet, balance, connected } = useStreamingIdentity();
+  const { session } = useIdentity();
+  const domain = session?.bound_domain;
   const loc = useLocation();
   return (
     <div className="min-h-screen bg-background">
@@ -42,6 +45,9 @@ export default function SharedLayout() {
             })}
           </nav>
           <div className="flex items-center gap-2 shrink-0">
+            {domain && (
+              <span className="hidden lg:inline text-xs text-primary font-medium max-w-[140px] truncate">{domain}</span>
+            )}
             {connected && wallet && (
               <span className="hidden md:inline text-xs text-muted-foreground font-mono">{wallet.slice(0, 6)}…{wallet.slice(-4)}</span>
             )}

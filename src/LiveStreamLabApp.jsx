@@ -893,8 +893,7 @@ function MainApp() {
   // Identity gate: a wallet must be connected AND cryptographically verified before any engine loads.
   if (!walletAddress) return <MultiWalletLogin />;
   if (!session) return <VerifyWallet />;
-  const onboardingComplete = (() => { try { return !!localStorage.getItem(`onboarding_complete_${walletAddress}`); } catch { return false; } })();
-  if (!onboardingComplete) return <Onboarding />;
+  if (!session.onboarding_completed) return <Onboarding />;
   return (
     <BrowserRouter>
       <Routes>
