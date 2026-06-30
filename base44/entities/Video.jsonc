@@ -2,6 +2,10 @@
   "name": "Video",
   "type": "object",
   "properties": {
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet of the creator who owns this video"
+    },
     "title": {
       "type": "string"
     },

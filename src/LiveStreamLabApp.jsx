@@ -105,6 +105,14 @@ const transfersAPI = {
   list: (wallet) => invoke("web3Transfers", { action: "list", wallet }),
 };
 
+const videoAPI = {
+  list: (creatorWallet) => invoke("web3Videos", { action: "list", creatorWallet }),
+  create: (creatorWallet, data) => invoke("web3Videos", { action: "create", creatorWallet, ...data }),
+  update: (id, data) => invoke("web3Videos", { action: "update", id, ...data }),
+  remove: (id) => invoke("web3Videos", { action: "delete", id }),
+  analytics: (creatorWallet) => invoke("web3Videos", { action: "analytics", creatorWallet }),
+};
+
 // ======================================================
 //  SHARED UI HELPERS
 // ======================================================
@@ -894,6 +902,7 @@ const Home = () => {
     { to: "/wallet", label: "Wallet", desc: "Send / receive" },
     { to: "/profile", label: "Profile", desc: "Identity & badges" },
     { to: "/marketplace", label: "Marketplace", desc: "Sell products" },
+    { to: "/videos", label: "Videos", desc: "Library & uploads" },
     { to: "/boost", label: "Boosts", desc: "Support creators" },
     { to: "/subscriptions", label: "Subscriptions", desc: "Subscribe to creators" },
     { to: "/feed", label: "Feed", desc: "Posts & updates" },
@@ -923,6 +932,130 @@ const Home = () => {
       <Card className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">Live now</p>
         <Link to="/watch" className="text-sm text-primary hover:underline">{liveCount} streams · Watch &amp; earn →</Link>
+      </Card>
+    </Page>
+  );
+};
+
+// Videos — Library
+const VideoLibrary = () => {
+  const wallet = useViewerWallet();
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { if (wallet) videoAPI.list(wallet).then((r) => setVideos(r.videos || [])).finally(() => setLoading(false)); }, [wallet]);
+  return (
+    <Page title="Video Library" subtitle="Your published and draft videos">
+      <div className="flex gap-2">
+        <Link to="/videos/upload" className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">Upload</Link>
+        <Link to="/videos/manager" className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground text-sm">Manager</Link>
+        <Link to="/videos/analytics" className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground text-sm">Analytics</Link>
+      </div>
+      {loading ? <Spinner /> : videos.length === 0 ? <Card><p className="text-sm text-muted-foreground">No videos yet. Upload your first.</p></Card> : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {videos.map((v) => (
+            <Card key={v.id}>
+              {v.thumbnail_url && <img src={v.thumbnail_url} alt="" className="rounded-lg mb-3 w-full h-32 object-cover" />}
+              <h3 className="font-display font-semibold">{v.title}</h3>
+              <p className="text-xs text-muted-foreground mt-1">{v.views || 0} views · {v.streaming_unlocks || 0} unlocks</p>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize mt-2 inline-block">{v.status}</span>
+            </Card>
+          ))}
+        </div>
+      )}
+    </Page>
+  );
+};
+
+// Videos — Upload
+const UploadVideo = () => {
+  const wallet = useViewerWallet();
+  const [form, setForm] = useState({ title: "", description: "", video_url: "", thumbnail_url: "", is_premium: false, unlock_price: 0 });
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(null);
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value }));
+  const submit = async () => {
+    if (!wallet || !form.title.trim()) return;
+    setBusy(true);
+    try {
+      const res = await videoAPI.create(wallet, form);
+      setDone(res.video);
+      setForm({ title: "", description: "", video_url: "", thumbnail_url: "", is_premium: false, unlock_price: 0 });
+    } finally { setBusy(false); }
+  };
+  return (
+    <Page title="Upload Video" subtitle="Publish a new video to your channel">
+      <Card className="space-y-3 max-w-lg">
+        <Input value={form.title} onChange={set("title")} placeholder="Title" />
+        <textarea value={form.description} onChange={set("description")} placeholder="Description" className="w-full rounded-md border border-input bg-muted px-3 py-2 h-24" />
+        <Input value={form.video_url} onChange={set("video_url")} placeholder="Video URL" />
+        <Input value={form.thumbnail_url} onChange={set("thumbnail_url")} placeholder="Thumbnail URL" />
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.is_premium} onChange={set("is_premium")} /> Premium (unlock with $STREAMING)</label>
+        {form.is_premium && <Input value={form.unlock_price} onChange={set("unlock_price")} placeholder="Unlock price ($STREAMING)" type="number" />}
+        <button onClick={submit} disabled={busy || !form.title.trim()} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">{busy ? "Publishing…" : "Publish"}</button>
+        {done && <p className="text-xs text-accent">✓ Published: {done.title}</p>}
+      </Card>
+    </Page>
+  );
+};
+
+// Videos — Manager
+const VideoManager = () => {
+  const wallet = useViewerWallet();
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const load = () => { if (wallet) videoAPI.list(wallet).then((r) => setVideos(r.videos || [])).finally(() => setLoading(false)); };
+  useEffect(load, [wallet]);
+  const toggleStatus = async (v) => {
+    await videoAPI.update(v.id, { status: v.status === "published" ? "draft" : "published" });
+    load();
+  };
+  const remove = async (v) => { await videoAPI.remove(v.id); load(); };
+  return (
+    <Page title="Video Manager" subtitle="Edit status and remove videos">
+      {loading ? <Spinner /> : videos.length === 0 ? <Card><p className="text-sm text-muted-foreground">No videos to manage.</p></Card> : (
+        <Card className="space-y-2">
+          {videos.map((v) => (
+            <div key={v.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+              <div>
+                <p className="font-medium text-sm">{v.title}</p>
+                <p className="text-xs text-muted-foreground capitalize">{v.status} · {v.views || 0} views</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => toggleStatus(v)} className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-xs">{v.status === "published" ? "Unpublish" : "Publish"}</button>
+                <button onClick={() => remove(v)} className="px-3 py-1.5 rounded-md bg-destructive/15 text-destructive text-xs">Delete</button>
+              </div>
+            </div>
+          ))}
+        </Card>
+      )}
+    </Page>
+  );
+};
+
+// Videos — Analytics
+const VideoAnalytics = () => {
+  const wallet = useViewerWallet();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { if (wallet) videoAPI.analytics(wallet).then(setData).finally(() => setLoading(false)); }, [wallet]);
+  if (loading) return <Page title="Video Analytics"><Spinner /></Page>;
+  const t = data?.totals || {};
+  return (
+    <Page title="Video Analytics" subtitle="Aggregate performance across your videos">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Card><p className="text-xs text-muted-foreground">Videos</p><p className="text-xl font-display font-bold">{data?.count || 0}</p></Card>
+        <Card><p className="text-xs text-muted-foreground">Views</p><p className="text-xl font-display font-bold">{t.views || 0}</p></Card>
+        <Card><p className="text-xs text-muted-foreground">Watch hours</p><p className="text-xl font-display font-bold">{t.watch_time_hours || 0}</p></Card>
+        <Card><p className="text-xs text-muted-foreground">$STREAMING unlocks</p><p className="text-xl font-display font-bold text-accent">{t.streaming_unlocks || 0}</p></Card>
+      </div>
+      <Card>
+        <h3 className="font-display font-semibold mb-3">Revenue: ${Number(t.revenue || 0).toFixed(2)}</h3>
+        {(data?.videos || []).length === 0 ? <p className="text-sm text-muted-foreground">No videos yet.</p> : data.videos.map((v) => (
+          <div key={v.id} className="flex justify-between py-1.5 border-b border-border/50 last:border-0 text-sm">
+            <span>{v.title}</span>
+            <span className="text-muted-foreground">{v.views || 0} views · {v.streaming_unlocks || 0} unlocks</span>
+          </div>
+        ))}
       </Card>
     </Page>
   );
@@ -975,6 +1108,10 @@ function MainApp() {
         <Route path="/watch" element={<WatchToEarn />} />
         <Route path="/streams" element={<AllStreams />} />
         <Route path="/streams/:id/analytics" element={<StreamAnalytics />} />
+        <Route path="/videos" element={<VideoLibrary />} />
+        <Route path="/videos/upload" element={<UploadVideo />} />
+        <Route path="/videos/manager" element={<VideoManager />} />
+        <Route path="/videos/analytics" element={<VideoAnalytics />} />
         <Route path="/stream" element={<StreamView />} />
         <Route path="/boost" element={<StreamBoost />} />
         <Route path="/subscriptions" element={<Subscriptions />} />
