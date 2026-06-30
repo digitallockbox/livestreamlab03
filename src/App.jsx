@@ -67,6 +67,10 @@ import UserProfile from '@/pages/public/UserProfile';
 // Wallet
 import StreamingWalletPage from '@/pages/wallet/StreamingWalletPage';
 
+// Top Up
+import TopUp from '@/pages/topup/TopUp';
+import TopUpSuccess from '@/pages/topup/TopUpSuccess';
+
 // Web3 Creator
 import Web3Layout from '@/components/web3/Web3Layout';
 import Web3Login from '@/pages/web3/Web3Login';
@@ -129,6 +133,9 @@ const AuthenticatedApp = () => {
       <Route path="/stream/:id" element={<StreamPage />} />
       <Route path="/store/product/:id" element={<ProductPage />} />
       <Route path="/checkout" element={<Checkout />} />
+      <Route path="/topup" element={<TopUp />} />
+      <Route path="/topup/success" element={<TopUpSuccess />} />
+      <Route path="/wallet" element={<StreamingWalletPage />} />
       <Route path="/system/health" element={<SystemHealth />} />
 
       {/* Creator App (with layout) */}

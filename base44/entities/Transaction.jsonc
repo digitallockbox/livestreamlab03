@@ -13,7 +13,8 @@
         "podcast",
         "payout",
         "subscription",
-        "transfer"
+        "transfer",
+        "topup"
       ]
     },
     "amount": {
@@ -46,6 +47,10 @@
     "recipient_wallet": {
       "type": "string",
       "description": "Wallet receiving a transfer"
+    },
+    "checkout_id": {
+      "type": "string",
+      "description": "Wix checkout session id, used to match the order-approved webhook to a pending topup"
     }
   },
   "required": [

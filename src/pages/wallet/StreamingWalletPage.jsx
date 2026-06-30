@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { STREAMING_TOKEN_MINT, STREAMING_TOKEN_USD_RATE } from '@/lib/constants/tokens';
 import { motion } from 'framer-motion';
 import {
   Zap, ArrowDownLeft, ArrowUpRight, ArrowLeftRight,
-  Wallet, RefreshCw, Copy, CheckCircle2,
+  Wallet, RefreshCw, Copy, CheckCircle2, Plus,
   TrendingUp, TrendingDown, Clock, Shield, Loader2, AlertCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -134,10 +135,17 @@ export default function StreamingWalletPage() {
             </div>
             <h1 className="font-display text-2xl font-bold text-foreground">Your Wallet</h1>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchWallet} disabled={loading} className="gap-2 text-xs">
-            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link to="/topup">
+              <Button size="sm" className="gap-2 text-xs bg-primary hover:bg-primary/90">
+                <Plus className="w-3.5 h-3.5" /> Top Up
+              </Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={fetchWallet} disabled={loading} className="gap-2 text-xs">
+              {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              Refresh
+            </Button>
+          </div>
         </motion.div>
 
         {/* Error Banner */}
