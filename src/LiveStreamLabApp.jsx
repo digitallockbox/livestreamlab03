@@ -28,7 +28,7 @@ import {
   Web3NameBadge, VerificationBadge, CreatorBadge, PassportBadge, SocialGraph,
   FollowButton, BoostButton, SubscribeButton,
 } from "@/components/creator/os";
-import Home from "@/components/creator/pages/Home";
+import Dashboard from "@/components/creator/pages/Dashboard";
 import GoLive from "@/components/creator/pages/GoLive";
 import Wallet from "@/components/creator/pages/Wallet";
 import Domains from "@/components/creator/pages/Domains";
@@ -623,7 +623,7 @@ function MainApp() {
     <BrowserRouter>
       <Routes>
         <Route element={<SharedLayout />}>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Dashboard />} />
         <Route path="/login" element={<Web3Login />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/verify" element={<Web3Verify />} />
