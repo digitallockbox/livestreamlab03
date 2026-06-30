@@ -5,7 +5,7 @@ import { useIdentity } from "@/lib/web3/identity";
 // Multi-wallet entry screen. Phantom (Solana) is the fully-supported path;
 // MetaMask (EVM) connects the account for display.
 export default function MultiWalletLogin() {
-  const { connect, publicKey } = useWallet();
+  const { connect, select, wallets, publicKey } = useWallet();
   const { evmAddress, setEvmAddress, setChain } = useIdentity();
   const [busy, setBusy] = useState(null); // "phantom" | "metamask" | null
   const [error, setError] = useState("");
@@ -15,6 +15,8 @@ export default function MultiWalletLogin() {
     setBusy("phantom");
     setError("");
     try {
+      const phantom = wallets.find((w) => w.adapter.name === "Phantom");
+      if (phantom) select(phantom.adapter.name);
       await connect();
       setChain("solana");
     } catch (err) {
