@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
+import { useIdentity } from "@/lib/web3/identity";
 import { Page, Card, Input, useViewerWallet } from "@/components/creator/os";
 
 export default function GoLive() {
   const viewerWallet = useViewerWallet();
-  const { signedInvoke } = useStreamingIdentity();
+  const { signedInvoke } = useIdentity();
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("gaming");
   const [stream, setStream] = useState(null);

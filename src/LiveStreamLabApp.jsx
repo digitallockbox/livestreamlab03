@@ -183,7 +183,7 @@ const MarketplaceDashboard = () => {
 
 const AddMarketplaceProduct = () => {
   const wallet = useViewerWallet();
-  const { signedInvoke } = useStreamingIdentity();
+  const { signedInvoke } = useIdentity();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", description: "", price: "", streamingPrice: "", category: "" });
   const [saving, setSaving] = useState(false);
@@ -285,7 +285,7 @@ const StreamView = () => {
 // Boost Page
 const StreamBoost = () => {
   const viewerWallet = useViewerWallet();
-  const { signedInvoke } = useStreamingIdentity();
+  const { signedInvoke } = useIdentity();
   const [toWallet, setToWallet] = useState("");
   const [amount, setAmount] = useState(10);
   const [boosts, setBoosts] = useState({ boosts: [], total: 0, count: 0 });
@@ -314,7 +314,7 @@ const StreamBoost = () => {
 // Subscriptions
 const Subscriptions = () => {
   const viewerWallet = useViewerWallet();
-  const { signedInvoke } = useStreamingIdentity();
+  const { signedInvoke } = useIdentity();
   const [toWallet, setToWallet] = useState("");
   const [tier, setTier] = useState("basic");
   const [subs, setSubs] = useState({ subscribers: [], count: 0, mrr: 0 });
@@ -654,7 +654,7 @@ const VideoLibrary = () => {
 // Videos — Upload
 const UploadVideo = () => {
   const wallet = useViewerWallet();
-  const { signedInvoke } = useStreamingIdentity();
+  const { signedInvoke } = useIdentity();
   const [form, setForm] = useState({ title: "", description: "", video_url: "", thumbnail_url: "", is_premium: false, unlock_price: 0 });
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);
@@ -687,7 +687,7 @@ const UploadVideo = () => {
 // Videos — Manager
 const VideoManager = () => {
   const wallet = useViewerWallet();
-  const { signedInvoke } = useStreamingIdentity();
+  const { signedInvoke } = useIdentity();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const load = () => { if (wallet) videoAPI.list(wallet).then((r) => setVideos(r.videos || [])).finally(() => setLoading(false)); };

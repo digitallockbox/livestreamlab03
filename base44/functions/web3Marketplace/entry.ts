@@ -4,7 +4,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 const verifyOwnership = async (base44, body, requiredWallet) => {
   try {
     const res = await base44.functions.invoke('verifyWalletSignature', {
-      wallet_address: body.auth_wallet, message: body.auth_message, signature: body.auth_signature
+      wallet_address: body.auth_wallet, message: body.auth_message, signature: body.auth_signature, chain: body.chain
     });
     const d = res?.data || res;
     if (!d?.valid) return { ok: false, status: 401, error: 'Wallet signature invalid' };

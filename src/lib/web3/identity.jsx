@@ -36,11 +36,11 @@ export function IdentityProvider({ children }) {
   };
 
   // Unified nonce signer — dispatches to the active chain's signer.
-  const signNonce = async (nonce) => {
+  const signNonce = useCallback(async (nonce) => {
     if (chain === "solana") return await signSolana(nonce);
     if (chain === "evm") return await signEvm(nonce);
     throw new Error("No chain selected");
-  };
+  }, [chain, evmAddress]);
 
   // Unified wallet address derived from the active chain.
   const walletAddress = chain === "solana" ? solanaAddress : evmAddress;
@@ -75,6 +75,16 @@ export function IdentityProvider({ children }) {
     if (walletAddress && !session) login();
   }, [walletAddress, session, login]);
 
+  // Sign an engine action with the connected wallet, then invoke the backend.
+  // The backend verifies the signature (Solana or EVM) before writing.
+  const signedInvoke = useCallback(async (name, payload) => {
+    if (!walletAddress) throw new Error("Wallet not connected");
+    const auth_message = `LiveStreamLab ${name} ts:${Date.now()}`;
+    const auth_signature = await signNonce(auth_message);
+    if (!auth_signature) throw new Error("Signature rejected");
+    return base44.functions.invoke(name, { ...payload, auth_wallet: walletAddress, chain, auth_message, auth_signature }).then((r) => r.data);
+  }, [walletAddress, chain, signNonce]);
+
   return (
     <IdentityContext.Provider
       value={{
@@ -86,6 +96,7 @@ export function IdentityProvider({ children }) {
         session,
         setSession,
         signNonce,
+        signedInvoke,
         login,
         authenticating,
         profile: session,

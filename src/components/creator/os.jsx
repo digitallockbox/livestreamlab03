@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Loader2, Zap, CreditCard, UserPlus, UserMinus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { useIdentity } from "@/lib/web3/identity";
 
 const invoke = (name, payload) => base44.functions.invoke(name, payload).then((r) => r.data);
@@ -170,7 +169,7 @@ export const FollowButton = ({ creatorWallet, viewerWallet }) => {
 };
 
 export const BoostButton = ({ creatorWallet, viewerWallet, amount = 10 }) => {
-  const { signedInvoke } = useStreamingIdentity();
+  const { signedInvoke } = useIdentity();
   const [sending, setSending] = useState(false);
   const handle = async () => {
     if (!viewerWallet || !creatorWallet) return;
@@ -185,7 +184,7 @@ export const BoostButton = ({ creatorWallet, viewerWallet, amount = 10 }) => {
 };
 
 export const SubscribeButton = ({ creatorWallet, viewerWallet, tier = "basic" }) => {
-  const { signedInvoke } = useStreamingIdentity();
+  const { signedInvoke } = useIdentity();
   const [sending, setSending] = useState(false);
   const handle = async () => {
     if (!viewerWallet || !creatorWallet) return;
