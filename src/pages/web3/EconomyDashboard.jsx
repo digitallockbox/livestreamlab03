@@ -37,13 +37,18 @@ export default function EconomyDashboard() {
         <h1 className="text-2xl font-display font-bold">Creator Economy</h1>
         <p className="text-sm text-muted-foreground mt-1">Revenue, streaming tokens, and transaction activity.</p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <EconomyCard label="Total Revenue" value={`$${(data.total_revenue || 0).toFixed(2)}`} sub="All time" />
         <EconomyCard
           label="Streaming Revenue"
           value={`${(data.streaming_revenue || 0).toFixed(2)}`}
           sub="$STREAMING tokens"
           accent="accent"
+        />
+        <EconomyCard
+          label="Boosts Received"
+          value={`${(data.boosts_total || 0).toFixed(0)} ⚡`}
+          sub={`${data.boost_count || 0} boosts`}
         />
         <EconomyCard label="Transactions" value={data.transaction_count || 0} sub="Recent activity" />
       </div>

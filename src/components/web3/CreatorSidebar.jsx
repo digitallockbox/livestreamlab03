@@ -1,11 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Wallet, User, ShieldCheck, Award, BookOpen, BarChart3 } from "lucide-react";
+import { Wallet, User, ShieldCheck, Award, BookOpen, BarChart3, Zap } from "lucide-react";
 
 const NAV = [
   { to: "/web3/profile", label: "Profile", icon: User },
   { to: "/web3/verify", label: "Verification", icon: ShieldCheck },
   { to: "/web3/badges", label: "Badges", icon: Award },
   { to: "/web3/passport", label: "Passport", icon: BookOpen },
+  { to: "/web3/boosts", label: "Boosts", icon: Zap },
   { to: "/web3/economy", label: "Economy", icon: BarChart3 }
 ];
 

@@ -74,6 +74,7 @@ import Web3Profile from '@/pages/web3/Web3Profile';
 import Web3Verify from '@/pages/web3/Web3Verify';
 import BadgeUpgrade from '@/pages/web3/BadgeUpgrade';
 import CreatorPassport from '@/pages/web3/CreatorPassport';
+import StreamBoost from '@/pages/web3/StreamBoost';
 import EconomyDashboard from '@/pages/web3/EconomyDashboard';
 
 
@@ -112,6 +113,7 @@ const AuthenticatedApp = () => {
         <Route path="/web3/verify" element={<Web3Verify />} />
         <Route path="/web3/badges" element={<BadgeUpgrade />} />
         <Route path="/web3/passport" element={<CreatorPassport />} />
+        <Route path="/web3/boosts" element={<StreamBoost />} />
         <Route path="/web3/economy" element={<EconomyDashboard />} />
       </Route>
       <Route path="/stream/:id" element={<StreamPage />} />

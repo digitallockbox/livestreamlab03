@@ -14,10 +14,21 @@ Deno.serve(async (req) => {
       if (t.type) by_type[t.type] = (by_type[t.type] || 0) + (t.amount || 0);
     });
 
+    const boostTxns = txns.filter((t) => t.source === 'boost');
+    const boosts_total = boostTxns.reduce((s, t) => s + (t.amount || 0), 0);
+    const recent_boosts = boostTxns.slice(0, 5).map((t) => ({
+      amount: t.amount,
+      description: t.description,
+      created_date: t.created_date
+    }));
+
     return Response.json({
       total_revenue: total,
       streaming_revenue: streaming_total,
       transaction_count: txns.length,
+      boosts_total,
+      boost_count: boostTxns.length,
+      recent_boosts,
       by_type,
       recent: txns.slice(0, 10)
     });

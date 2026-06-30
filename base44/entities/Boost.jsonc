@@ -1,0 +1,32 @@
+{
+  "name": "Boost",
+  "type": "object",
+  "properties": {
+    "viewer_wallet": {
+      "type": "string",
+      "description": "Wallet of the viewer sending the boost"
+    },
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet of the creator receiving the boost"
+    },
+    "amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Amount of $STREAMING sent"
+    },
+    "stream_id": {
+      "type": "string",
+      "description": "Optional stream this boost was sent during"
+    },
+    "message": {
+      "type": "string",
+      "description": "Optional message attached to the boost"
+    }
+  },
+  "required": [
+    "viewer_wallet",
+    "creator_wallet",
+    "amount"
+  ]
+}
