@@ -33,6 +33,10 @@ import GoLive from "@/components/creator/pages/GoLive";
 import Wallet from "@/components/creator/pages/Wallet";
 import Domains from "@/components/creator/pages/Domains";
 import Streams from "@/components/creator/pages/Streams";
+import Marketplace from "@/components/creator/pages/Marketplace";
+import AddMarketplaceProduct from "@/components/creator/pages/AddMarketplaceProduct";
+import MarketplaceProducts from "@/components/creator/pages/MarketplaceProducts";
+import MarketplaceSales from "@/components/creator/pages/MarketplaceSales";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -163,86 +167,7 @@ const CreatorPassport = () => {
   );
 };
 
-// Marketplace Dashboard
-const MarketplaceDashboard = () => {
-  const wallet = useViewerWallet();
-  const [data, setData] = useState({ products: [], count: 0, revenue: 0, sales: 0 });
-  const [loading, setLoading] = useState(true);
-  useEffect(() => { if (!wallet) { setLoading(false); return; } marketplaceAPI.list(wallet).then(setData).finally(() => setLoading(false)); }, [wallet]);
-  if (loading) return <Spinner />;
-  return (
-    <Page title="Marketplace" subtitle="Manage your digital products and track sales">
-      <div className="grid grid-cols-3 gap-4">
-        <Card><p className="text-xs text-muted-foreground">Products</p><p className="text-2xl font-display font-bold">{data.count}</p></Card>
-        <Card><p className="text-xs text-muted-foreground">Units Sold</p><p className="text-2xl font-display font-bold">{data.sales}</p></Card>
-        <Card><p className="text-xs text-muted-foreground">Revenue</p><p className="text-2xl font-display font-bold text-accent">${data.revenue.toFixed(2)}</p></Card>
-      </div>
-      <Link to="/marketplace/add" className="inline-flex px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">Add Product</Link>
-    </Page>
-  );
-};
-
-const AddMarketplaceProduct = () => {
-  const wallet = useViewerWallet();
-  const { signedInvoke } = useIdentity();
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", description: "", price: "", streamingPrice: "", category: "" });
-  const [saving, setSaving] = useState(false);
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const submit = async () => {
-    if (!wallet || !form.name) return;
-    setSaving(true);
-    try { await signedInvoke("web3Marketplace", { action: "add", creatorWallet: wallet, name: form.name, description: form.description, price: Number(form.price) || 0, streamingPrice: Number(form.streamingPrice) || 0, category: form.category }); navigate("/marketplace/products"); } finally { setSaving(false); }
-  };
-  return (
-    <Page title="Add Product" subtitle="Create a new digital product">
-      <Card className="space-y-3 max-w-xl">
-        <Input value={form.name} onChange={set("name")} placeholder="Name" />
-        <textarea value={form.description} onChange={set("description")} rows={3} placeholder="Description" className="w-full rounded-md border border-input bg-muted px-3 py-2" />
-        <div className="grid grid-cols-2 gap-3">
-          <Input value={form.price} onChange={set("price")} type="number" placeholder="Price USD" />
-          <Input value={form.streamingPrice} onChange={set("streamingPrice")} type="number" placeholder="$STREAMING" />
-        </div>
-        <Input value={form.category} onChange={set("category")} placeholder="Category" />
-        <button onClick={submit} disabled={saving} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">{saving ? "Saving..." : "Publish"}</button>
-      </Card>
-    </Page>
-  );
-};
-
-const MarketplaceProducts = () => {
-  const wallet = useViewerWallet();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => { if (!wallet) { setLoading(false); return; } marketplaceAPI.list(wallet).then((r) => setProducts(r.products || [])).finally(() => setLoading(false)); }, [wallet]);
-  if (loading) return <Spinner />;
-  return (
-    <Page title="Products" subtitle="Your marketplace catalog">
-      {products.length === 0 ? <Card><p className="text-sm text-muted-foreground">No products yet.</p></Card> : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {products.map((p) => (
-            <Card key={p.id}><p className="font-medium truncate">{p.name}</p><p className="text-xs text-muted-foreground capitalize">{p.category || "uncategorized"}</p><p className="font-display font-bold mt-2">${(p.price || 0).toFixed(2)}</p><p className="text-xs text-muted-foreground">{p.sales_count || 0} sold</p></Card>
-          ))}
-        </div>
-      )}
-    </Page>
-  );
-};
-
-const MarketplaceSales = () => {
-  const wallet = useViewerWallet();
-  const [data, setData] = useState({ sales: [], count: 0, total: 0 });
-  const [loading, setLoading] = useState(true);
-  useEffect(() => { if (!wallet) { setLoading(false); return; } marketplaceAPI.sales(wallet).then(setData).finally(() => setLoading(false)); }, [wallet]);
-  if (loading) return <Spinner />;
-  return (
-    <Page title="Sales" subtitle="Transaction history">
-      <Card>{data.sales.length === 0 ? <p className="text-sm text-muted-foreground">No sales yet.</p> : data.sales.map((s) => (
-        <div key={s.id} className="flex justify-between py-2 border-b border-border/50 last:border-0"><span className="text-sm truncate">{s.description}</span><span className="text-sm text-accent">+${(s.amount || 0).toFixed(2)}</span></div>
-      ))}</Card>
-    </Page>
-  );
-};
+// Marketplace pages live in @/components/creator/pages/Marketplace*
 
 // Stream View (watch-to-earn, real)
 const StreamView = () => {
@@ -869,7 +794,7 @@ function MainApp() {
         <Route path="/verify" element={<Web3Verify />} />
         <Route path="/badge" element={<BadgeUpgrade />} />
         <Route path="/passport" element={<CreatorPassport />} />
-        <Route path="/marketplace" element={<MarketplaceDashboard />} />
+        <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/marketplace/add" element={<AddMarketplaceProduct />} />
         <Route path="/marketplace/products" element={<MarketplaceProducts />} />
         <Route path="/marketplace/sales" element={<MarketplaceSales />} />
