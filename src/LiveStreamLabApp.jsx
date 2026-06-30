@@ -37,6 +37,10 @@ import Marketplace from "@/components/creator/pages/Marketplace";
 import AddMarketplaceProduct from "@/components/creator/pages/AddMarketplaceProduct";
 import MarketplaceProducts from "@/components/creator/pages/MarketplaceProducts";
 import MarketplaceSales from "@/components/creator/pages/MarketplaceSales";
+import Economy from "@/components/creator/pages/Economy";
+import Profile from "@/components/creator/pages/Profile";
+import Settings from "@/components/creator/pages/Settings";
+import Watch from "@/components/creator/pages/Watch";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -75,36 +79,7 @@ const Web3Login = () => {
   );
 };
 
-// Web3 Profile
-const Web3Profile = () => {
-  const { profile, loading, refresh } = useCreator();
-  const viewerWallet = useViewerWallet();
-  const [graph, setGraph] = useState(null);
-  const [form, setForm] = useState({ display_name: "", bio: "", ens_name: "", avatar_url: "" });
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { if (profile) setForm({ display_name: profile.display_name || "", bio: profile.bio || "", ens_name: profile.ens_name || "", avatar_url: profile.avatar_url || "" }); }, [profile]);
-  useEffect(() => { if (viewerWallet) socialAPI.graph(viewerWallet).then(setGraph); }, [viewerWallet]);
-  if (loading) return <Spinner />;
-  const save = async () => { setSaving(true); try { await web3ProfileAPI.update(form); refresh(); } finally { setSaving(false); } };
-  return (
-    <Page title="Web3 Profile" subtitle="Your on-chain creator identity">
-      <CreatorIdentityHeader profile={profile} />
-      <Card className="space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          {graph && <SocialGraph graph={graph} />}
-          {profile?.wallet_address && <FollowButton creatorWallet={profile.wallet_address} viewerWallet={viewerWallet} />}
-        </div>
-      </Card>
-      <Card className="space-y-3 max-w-xl">
-        <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} placeholder="Display name" />
-        <Input value={form.ens_name} onChange={(e) => setForm({ ...form, ens_name: e.target.value })} placeholder="ENS name (name.eth)" />
-        <Input value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} placeholder="Avatar URL" />
-        <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} placeholder="Bio" className="w-full rounded-md border border-input bg-muted px-3 py-2" />
-        <button onClick={save} disabled={saving} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">{saving ? "Saving..." : "Save Profile"}</button>
-      </Card>
-    </Page>
-  );
-};
+// Profile page lives in @/components/creator/pages/Profile
 
 // Verification
 const Web3Verify = () => {
@@ -354,44 +329,7 @@ const Messages = () => {
   );
 };
 
-// Economy Dashboard
-const EconomyDashboard = () => {
-  const { balance, loadingBalance, refreshBalance } = useStreamingIdentity();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    economyAPI.get().then((real) => {
-      const base = real || {};
-      setData({
-        ...base,
-        by_type: Object.keys(base.by_type || {}).length ? base.by_type : { stream_tip: 5, subscription: 9.99 }
-      });
-    }).finally(() => setLoading(false));
-  }, []);
-  if (loading || !data) return <Spinner />;
-  return (
-    <Page title="Creator Economy" subtitle="Revenue, streaming tokens, and transaction activity">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card>
-          <p className="text-xs text-muted-foreground">$STREAMING Balance (on-chain)</p>
-          <button onClick={refreshBalance} className="text-2xl font-display font-bold text-accent">
-            {loadingBalance ? "…" : balance} <span className="text-xs text-muted-foreground">↻</span>
-          </button>
-        </Card>
-        <Card><p className="text-xs text-muted-foreground">Total Revenue</p><p className="text-2xl font-display font-bold">${(data.total_revenue || 0).toFixed(2)}</p></Card>
-        <Card><p className="text-xs text-muted-foreground">$STREAMING</p><p className="text-2xl font-display font-bold text-accent">{(data.streaming_revenue || 0).toFixed(2)}</p></Card>
-        <Card><p className="text-xs text-muted-foreground">Boosts</p><p className="text-2xl font-display font-bold">{(data.boosts_total || 0).toFixed(0)} ⚡</p></Card>
-        <Card><p className="text-xs text-muted-foreground">Subscribers</p><p className="text-2xl font-display font-bold">{data.subscriber_count || 0}</p></Card>
-      </div>
-      <Card>
-        <h3 className="font-display font-semibold mb-3">Revenue by Type</h3>
-        {Object.keys(data.by_type || {}).length === 0 ? <p className="text-sm text-muted-foreground">No transactions yet.</p> : Object.entries(data.by_type).map(([type, amt]) => (
-          <div key={type} className="flex justify-between py-1.5 border-b border-border/50 last:border-0 text-sm"><span className="text-muted-foreground capitalize">{type.replace(/_/g, " ")}</span><span className="font-medium">${amt.toFixed(2)}</span></div>
-        ))}
-      </Card>
-    </Page>
-  );
-};
+// Economy page lives in @/components/creator/pages/Economy
 
 
 
@@ -428,89 +366,7 @@ const StreamAnalytics = () => {
 
 
 
-// Watch-to-Earn — viewer accrues $STREAMING each minute via the web3Watch tick loop
-const WatchToEarn = () => {
-  const { wallet } = useStreamingIdentity();
-  const [liveStreams, setLiveStreams] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState(null);
-  const [session, setSession] = useState(null);
-  const [tokens, setTokens] = useState(0);
-  const [minutes, setMinutes] = useState(0);
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    streamsAPI.live().then((r) => setLiveStreams(r.streams || [])).finally(() => setLoading(false));
-  }, []);
-
-  // +1 $STREAMING per minute while a session is active.
-  useEffect(() => {
-    if (!session) return;
-    const id = setInterval(async () => {
-      const res = await watchAPI.tick(session.id);
-      setTokens(res.session?.tokens_earned ?? tokens + 1);
-      setMinutes(res.session?.minutes_watched ?? minutes + 1);
-    }, 60000);
-    return () => clearInterval(id);
-  }, [session]);
-
-  // End the session on unmount.
-  useEffect(() => () => { if (session) watchAPI.end(session.id); }, [session]);
-
-  const start = async (stream) => {
-    if (!wallet) return;
-    setSelected(stream);
-    setBusy(true);
-    try {
-      const res = await watchAPI.start(wallet, stream.creator_wallet);
-      setSession(res.session);
-      setTokens(0); setMinutes(0);
-    } finally { setBusy(false); }
-  };
-
-  const stop = async () => {
-    if (!session) return;
-    await watchAPI.end(session.id);
-    setSession(null); setSelected(null);
-  };
-
-  return (
-    <Page title="Watch-to-Earn" subtitle="Earn $STREAMING for every minute you watch">
-      {session ? (
-        <Card className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Now watching</p>
-              <h3 className="font-display font-semibold">{selected?.title}</h3>
-              <p className="font-mono text-xs text-muted-foreground">{selected?.creator_wallet}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-display font-bold text-accent">{tokens}</p>
-              <p className="text-xs text-muted-foreground">$STREAMING earned · {minutes} min</p>
-            </div>
-          </div>
-          <button onClick={stop} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground text-sm">Stop &amp; claim</button>
-        </Card>
-      ) : loading ? <Spinner /> : liveStreams.length === 0 ? (
-        <Card><p className="text-sm text-muted-foreground">No live streams right now.</p></Card>
-      ) : (
-        <div className="grid gap-3">
-          {liveStreams.map((s) => (
-            <Card key={s.id} className="flex items-center justify-between">
-              <div>
-                <h3 className="font-display font-semibold">{s.title}</h3>
-                <p className="font-mono text-xs text-muted-foreground">{s.creator_wallet}</p>
-              </div>
-              <button onClick={() => start(s)} disabled={busy} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">
-                {busy ? "Starting…" : "Watch &amp; earn"}
-              </button>
-            </Card>
-          ))}
-        </div>
-      )}
-    </Page>
-  );
-};
+// Watch (watch-to-earn + StreamPlayer) lives in @/components/creator/pages/Watch
 
 
 
@@ -737,28 +593,7 @@ const UnifiedAnalytics = () => {
   );
 };
 
-// Settings hub — links into the five settings pages
-const SettingsHub = () => {
-  const items = [
-    { to: "/settings/profile", label: "Profile", desc: "Public creator profile" },
-    { to: "/settings/branding", label: "Branding", desc: "Channel visual identity" },
-    { to: "/settings/security", label: "Security", desc: "Password, 2FA, sessions" },
-    { to: "/settings/notifications", label: "Notifications", desc: "What updates you receive" },
-    { to: "/settings/connected", label: "Connected Accounts", desc: "OAuth integrations" },
-  ];
-  return (
-    <Page title="Settings" subtitle="Manage your creator account">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {items.map((i) => (
-          <Link key={i.to} to={i.to} className="rounded-2xl border border-border bg-card p-4 hover:border-primary/50 transition-colors">
-            <p className="font-display font-semibold">{i.label}</p>
-            <p className="text-xs text-muted-foreground">{i.desc}</p>
-          </Link>
-        ))}
-      </div>
-    </Page>
-  );
-};
+// Settings hub lives in @/components/creator/pages/Settings
 
 // Intermediate screen: wallet connected but not yet cryptographically verified.
 const VerifyWallet = () => {
@@ -790,7 +625,7 @@ function MainApp() {
         <Route element={<SharedLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Web3Login />} />
-        <Route path="/profile" element={<Web3Profile />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/verify" element={<Web3Verify />} />
         <Route path="/badge" element={<BadgeUpgrade />} />
         <Route path="/passport" element={<CreatorPassport />} />
@@ -801,7 +636,7 @@ function MainApp() {
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/domains" element={<Domains />} />
         <Route path="/go-live" element={<GoLive />} />
-        <Route path="/watch" element={<WatchToEarn />} />
+        <Route path="/watch" element={<Watch />} />
         <Route path="/streams" element={<Streams />} />
         <Route path="/streams/:id/analytics" element={<StreamAnalytics />} />
         <Route path="/videos" element={<VideoLibrary />} />
@@ -809,7 +644,7 @@ function MainApp() {
         <Route path="/videos/manager" element={<VideoManager />} />
         <Route path="/videos/analytics" element={<VideoAnalytics />} />
         <Route path="/analytics" element={<UnifiedAnalytics />} />
-        <Route path="/settings" element={<SettingsHub />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/settings/profile" element={<ProfileSettings />} />
         <Route path="/settings/branding" element={<BrandingSettings />} />
         <Route path="/settings/security" element={<SecuritySettings />} />
@@ -823,7 +658,7 @@ function MainApp() {
         <Route path="/feed/create" element={<CreatePost />} />
         <Route path="/feed/view" element={<PostView />} />
         <Route path="/messages" element={<Messages />} />
-        <Route path="/economy" element={<EconomyDashboard />} />
+        <Route path="/economy" element={<Economy />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -40,7 +40,7 @@ export default function ConnectedAccounts() {
           {connected.map((service) => {
             const Icon = service.icon;
             return (
-              <div key={service.id} className="flex items-center justify-between p-4 bg-card border border-border rounded-xl">
+              <div key={service.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-card border border-border rounded-xl">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
                     <Icon className="w-5 h-5 text-primary" />
@@ -76,7 +76,7 @@ export default function ConnectedAccounts() {
           {AVAILABLE_SERVICES.map((service) => {
             const Icon = service.icon;
             return (
-              <div key={service.id} className="flex items-center justify-between p-4 bg-secondary border border-border rounded-xl">
+              <div key={service.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-secondary border border-border rounded-xl">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                     <Icon className="w-5 h-5 text-muted-foreground" />

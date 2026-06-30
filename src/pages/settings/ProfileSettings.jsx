@@ -28,7 +28,7 @@ export default function ProfileSettings() {
         </div>
         <div><Label>Display Name</Label><Input value={form.name} onChange={e => set("name", e.target.value)} className="mt-1.5 bg-secondary border-border" /></div>
         <div><Label>Bio</Label><Textarea value={form.bio} onChange={e => set("bio", e.target.value)} className="mt-1.5 bg-secondary border-border h-24" /></div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div><Label>Twitter</Label><Input value={form.twitter} onChange={e => set("twitter", e.target.value)} className="mt-1.5 bg-secondary border-border" /></div>
           <div><Label>YouTube</Label><Input value={form.youtube} onChange={e => set("youtube", e.target.value)} className="mt-1.5 bg-secondary border-border" /></div>
         </div>
