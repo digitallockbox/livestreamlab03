@@ -1,0 +1,28 @@
+{
+  "name": "Post",
+  "type": "object",
+  "properties": {
+    "author_wallet": {
+      "type": "string",
+      "description": "Wallet of the post author"
+    },
+    "content": {
+      "type": "string"
+    },
+    "media_url": {
+      "type": "string"
+    },
+    "likes": {
+      "type": "number",
+      "default": 0
+    },
+    "comments": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "author_wallet",
+    "content"
+  ]
+}

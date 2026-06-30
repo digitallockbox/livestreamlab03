@@ -1,0 +1,44 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json().catch(() => ({}));
+    const action = body.action || 'get';
+
+    if (action === 'create') {
+      const authorWallet = (body.authorWallet || '').trim();
+      const content = (body.content || '').trim();
+      if (!authorWallet || !content) {
+        return Response.json({ error: 'authorWallet and content are required' }, { status: 400 });
+      }
+      const post = await base44.asServiceRole.entities.Post.create({
+        author_wallet: authorWallet,
+        content,
+        media_url: body.mediaUrl || ''
+      });
+      return Response.json({ post });
+    }
+
+    if (action === 'get') {
+      const wallet = (body.wallet || '').trim();
+      const query = wallet ? { author_wallet: wallet } : {};
+      const posts = await base44.asServiceRole.entities.Post.filter(query, '-created_date', 50);
+      return Response.json({ posts, count: posts.length });
+    }
+
+    if (action === 'view') {
+      const postId = (body.postId || '').trim();
+      if (!postId) return Response.json({ error: 'postId required' }, { status: 400 });
+      const post = await base44.asServiceRole.entities.Post.get(postId);
+      return Response.json({ post });
+    }
+
+    return Response.json({ error: 'Unknown action' }, { status: 400 });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+});

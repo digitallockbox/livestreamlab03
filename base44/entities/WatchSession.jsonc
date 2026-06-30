@@ -1,0 +1,35 @@
+{
+  "name": "WatchSession",
+  "type": "object",
+  "properties": {
+    "viewer_wallet": {
+      "type": "string"
+    },
+    "creator_wallet": {
+      "type": "string"
+    },
+    "stream_id": {
+      "type": "string"
+    },
+    "tokens_earned": {
+      "type": "number",
+      "default": 0
+    },
+    "minutes_watched": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "ended"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "viewer_wallet",
+    "creator_wallet"
+  ]
+}
