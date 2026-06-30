@@ -14,6 +14,7 @@ import BrandingSettings from "@/pages/settings/BrandingSettings";
 import SecuritySettings from "@/pages/settings/SecuritySettings";
 import NotificationSettings from "@/pages/settings/NotificationSettings";
 import ConnectedAccounts from "@/pages/settings/ConnectedAccounts";
+import SupabaseExplorer from "@/pages/SupabaseExplorer";
 
 // ======================================================
 //  API CONFIG
@@ -910,6 +911,7 @@ const Home = () => {
     { to: "/videos", label: "Videos", desc: "Library & uploads" },
     { to: "/analytics", label: "Analytics", desc: "Streams + VOD" },
     { to: "/settings", label: "Settings", desc: "Account & branding" },
+    { to: "/supabase", label: "Supabase", desc: "Browse Supabase data" },
     { to: "/boost", label: "Boosts", desc: "Support creators" },
     { to: "/subscriptions", label: "Subscriptions", desc: "Subscribe to creators" },
     { to: "/feed", label: "Feed", desc: "Posts & updates" },
@@ -1245,6 +1247,7 @@ function MainApp() {
         <Route path="/settings/security" element={<SecuritySettings />} />
         <Route path="/settings/notifications" element={<NotificationSettings />} />
         <Route path="/settings/connected" element={<ConnectedAccounts />} />
+        <Route path="/supabase" element={<SupabaseExplorer />} />
         <Route path="/stream" element={<StreamView />} />
         <Route path="/boost" element={<StreamBoost />} />
         <Route path="/subscriptions" element={<Subscriptions />} />
