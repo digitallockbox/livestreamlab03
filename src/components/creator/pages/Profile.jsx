@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useCreator } from "@/hooks/web3/useCreator";
 import { useViewerWallet, web3ProfileAPI, socialAPI, Page, Card, Input, Spinner, SocialGraph, FollowButton } from "@/components/creator/os";
 import CreatorIdentityHeader from "@/components/creator/CreatorIdentityHeader";
+import { useIdentity } from "@/lib/web3/identity";
 
 export default function Profile() {
   const { profile, loading, refresh } = useCreator();
+  const { signedInvoke } = useIdentity();
   const viewerWallet = useViewerWallet();
   const [graph, setGraph] = useState(null);
   const [form, setForm] = useState({ display_name: "", bio: "", ens_name: "", avatar_url: "" });
@@ -19,7 +21,7 @@ export default function Profile() {
 
   const save = async () => {
     setSaving(true);
-    try { await web3ProfileAPI.update(form); refresh(); } finally { setSaving(false); }
+    try { await signedInvoke("web3Profile", { action: "update", ...form }); refresh(); } finally { setSaving(false); }
   };
 
   return (

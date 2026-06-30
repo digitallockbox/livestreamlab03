@@ -1,28 +1,14 @@
-import { useState, useEffect } from "react";
-import { web3Profile } from "@/lib/web3/web3Profile";
+import { useIdentity } from "@/lib/web3/identity";
 
+// useCreator — the creator's Web3Profile is already loaded into the identity
+// session by the wallet handshake (web3Login verify). Wallet-only creators have
+// no Base44 session, so we read from the session instead of web3Profile.me().
 export function useCreator() {
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const refresh = () =>
-    web3Profile
-      .me()
-      .then((res) => setProfile(res.profile))
-      .catch((e) => setError(e.message));
-
-  useEffect(() => {
-    let active = true;
-    web3Profile
-      .me()
-      .then((res) => active && setProfile(res.profile))
-      .catch((e) => active && setError(e.message))
-      .finally(() => active && setLoading(false));
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  return { profile, loading, error, refresh };
+  const { session, refreshProfile } = useIdentity();
+  return {
+    profile: session,
+    loading: !session,
+    error: null,
+    refresh: refreshProfile,
+  };
 }

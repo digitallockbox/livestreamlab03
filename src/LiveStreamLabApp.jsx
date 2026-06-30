@@ -86,8 +86,9 @@ const Web3Login = () => {
 // Verification
 const Web3Verify = () => {
   const { profile, refresh } = useCreator();
+  const { signedInvoke } = useIdentity();
   const [busy, setBusy] = useState(null);
-  const verify = async (level) => { setBusy(level); try { await verificationAPI.mint(level); refresh(); } finally { setBusy(null); } };
+  const verify = async (level) => { setBusy(level); try { await signedInvoke("web3Verify", { level }); refresh(); } finally { setBusy(null); } };
   return (
     <Page title="Verification" subtitle="Mint your verification badge">
       <Card className="space-y-3 max-w-md">
@@ -105,9 +106,10 @@ const Web3Verify = () => {
 // Badge Upgrade
 const BadgeUpgrade = () => {
   const { profile, refresh } = useCreator();
+  const { signedInvoke } = useIdentity();
   const [busy, setBusy] = useState(false);
   const TIERS = ["bronze", "silver", "gold", "diamond"];
-  const upgrade = async (tier) => { setBusy(true); try { await badgesAPI.upgrade(tier); refresh(); } finally { setBusy(false); } };
+  const upgrade = async (tier) => { setBusy(true); try { await signedInvoke("web3Badges", tier ? { tier } : {}); refresh(); } finally { setBusy(false); } };
   return (
     <Page title="Badge Upgrade" subtitle="Upgrade your creator badge tier">
       <Card className="space-y-4 max-w-md">
@@ -599,12 +601,13 @@ const UnifiedAnalytics = () => {
 
 // Intermediate screen: wallet connected but not yet cryptographically verified.
 const VerifyWallet = () => {
-  const { walletAddress, login, authenticating } = useIdentity();
+  const { walletAddress, login, authenticating, loginError } = useIdentity();
   return (
     <div className="max-w-md mx-auto p-8 mt-20 text-center space-y-4">
       <h1 className="text-2xl font-display font-bold">Verify Wallet</h1>
       <p className="text-sm text-muted-foreground break-all font-mono">{walletAddress}</p>
       <p className="text-sm text-muted-foreground">Sign a nonce to prove wallet ownership and unlock the Creator OS.</p>
+      {loginError && <p className="text-sm text-destructive">{loginError}</p>}
       <button onClick={login} disabled={authenticating} className="px-6 py-2 rounded-md bg-primary text-primary-foreground text-sm">
         {authenticating ? "Verifying…" : "Sign to Continue"}
       </button>

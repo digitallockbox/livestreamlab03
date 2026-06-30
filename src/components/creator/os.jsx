@@ -21,7 +21,7 @@ export const web3LoginAPI = {
 };
 
 export const web3ProfileAPI = {
-  me: () => invoke("web3Profile", { action: "me" }),
+  me: (wallet_address) => invoke("web3Profile", { action: "me", wallet_address }),
   get: (wallet_address) => invoke("web3Profile", { action: "get", wallet_address }),
   update: (payload) => invoke("web3Profile", { action: "update", ...payload }),
 };
@@ -112,8 +112,6 @@ export const domainsAPI = {
 export const storeAPI = {
   list: (creatorWallet) => invoke("web3Store", { action: "list", creatorWallet }),
   searchAmazon: (searchTerm) => invoke("web3Store", { action: "searchAmazon", searchTerm }),
-  addAmazon: (creatorWallet, asin) => invoke("web3Store", { action: "addAmazon", creatorWallet, asin }),
-  addCustom: (creatorWallet, data) => invoke("web3Store", { action: "addCustom", creatorWallet, ...data }),
   click: (payload) => invoke("web3Store", { action: "click", ...payload }),
 };
 

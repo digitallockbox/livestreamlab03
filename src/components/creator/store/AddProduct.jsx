@@ -5,7 +5,7 @@ import { Card, Input, storeAPI } from "@/components/creator/os";
 import { base44 } from "@/api/base44Client";
 
 export default function AddProduct({ onAdded }) {
-  const { walletAddress } = useIdentity();
+  const { walletAddress, signedInvoke } = useIdentity();
 
   // Amazon search + ASIN import
   const [search, setSearch] = useState("");
@@ -46,7 +46,7 @@ export default function AddProduct({ onAdded }) {
     setAddingAsin(true);
     setStatus("");
     try {
-      const res = await storeAPI.addAmazon(walletAddress, asin);
+      const res = await signedInvoke("web3Store", { action: "addAmazon", creatorWallet: walletAddress, asin });
       setStatus(res.success ? `Added: ${res.product?.name || "Amazon product"}` : "Failed to add Amazon product");
       if (res.success) onAdded?.();
     } catch {
@@ -77,7 +77,9 @@ export default function AddProduct({ onAdded }) {
     setAddingCustom(true);
     setStatus("");
     try {
-      const res = await storeAPI.addCustom(walletAddress, {
+      const res = await signedInvoke("web3Store", {
+        action: "addCustom",
+        creatorWallet: walletAddress,
         title: title.trim(),
         price,
         url,

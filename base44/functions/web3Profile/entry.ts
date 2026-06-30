@@ -1,35 +1,50 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// web3Profile — wallet-owned creator profile reads/updates.
+// Wallet-only creators have no Base44 session, so auth is via wallet signature,
+// and profiles are looked up by wallet_address (not created_by_id).
+
+const EDITABLE = ['display_name', 'avatar_url', 'bio', 'ens_name'];
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await req.json().catch(() => ({}));
     const action = body.action || 'me';
 
-    if (action === 'me') {
-      const list = await base44.asServiceRole.entities.Web3Profile.filter({ created_by_id: user.id });
-      return Response.json({ profile: list[0] || null });
+    const byWallet = async (wallet) => {
+      if (!wallet) return null;
+      const list = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: String(wallet).trim() });
+      return list[0] || null;
+    };
+
+    // Public profile read (by wallet address).
+    if (action === 'me' || action === 'get') {
+      const wallet = body.wallet_address || '';
+      return Response.json({ profile: await byWallet(wallet) });
     }
-    if (action === 'get') {
-      if (!body.wallet_address) return Response.json({ error: 'wallet_address required' }, { status: 400 });
-      const list = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: body.wallet_address });
-      return Response.json({ profile: list[0] || null });
-    }
+
+    // Wallet-signed profile update.
     if (action === 'update') {
-      const list = await base44.asServiceRole.entities.Web3Profile.filter({ created_by_id: user.id });
-      if (!list[0]) return Response.json({ error: 'Profile not found' }, { status: 404 });
+      const v = await base44.functions.invoke('verifyWalletSignature', {
+        wallet_address: body.auth_wallet,
+        message: body.auth_message,
+        signature: body.auth_signature,
+        chain: body.chain,
+      });
+      const d = v?.data || v;
+      if (!d?.valid) return Response.json({ error: 'Wallet signature invalid' }, { status: 401 });
+      const profile = await byWallet(d.wallet_address);
+      if (!profile) return Response.json({ error: 'Profile not found' }, { status: 404 });
       const patch = {};
-      for (const k of ['display_name', 'avatar_url', 'bio', 'ens_name']) {
-        if (body[k] !== undefined) patch[k] = body[k];
-      }
-      const updated = await base44.asServiceRole.entities.Web3Profile.update(list[0].id, patch);
+      for (const k of EDITABLE) if (body[k] !== undefined) patch[k] = body[k];
+      const updated = await base44.asServiceRole.entities.Web3Profile.update(profile.id, patch);
       return Response.json({ profile: updated });
     }
+
     return Response.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
+    console.error('web3Profile error:', error?.message || error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

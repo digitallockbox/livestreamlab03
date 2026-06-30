@@ -1,9 +1,9 @@
 // identity.jsx
 // Multi-chain identity context: tracks the active chain ("solana" | "evm"),
-// the connected EVM address, a session token, and a unified nonce signer.
-// Phantom (Solana) signing goes through the injected window.solana provider;
-// MetaMask (EVM) signing uses window.ethereum personal_sign.
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+// the connected wallet address, a verified session (the Web3Profile returned by
+// web3Login), and a unified nonce signer. Phantom (Solana) signing goes through
+// the injected window.solana provider; MetaMask (EVM) uses window.ethereum personal_sign.
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { base44 } from "@/api/base44Client";
 
@@ -15,6 +15,11 @@ export function IdentityProvider({ children }) {
   const [chain, setChain] = useState("");        // "solana" | "evm" | ""
   const [session, setSession] = useState(null);
   const [authenticating, setAuthenticating] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
+  // Tracks the wallet we last attempted the handshake for, so the auto-login
+  // only fires once per wallet (prevents repeated sign prompts / loops).
+  const attemptedFor = useRef("");
 
   const solanaAddress = publicKey ? publicKey.toBase58() : "";
 
@@ -49,6 +54,7 @@ export function IdentityProvider({ children }) {
   const login = useCallback(async () => {
     if (!walletAddress || !chain) return null;
     setAuthenticating(true);
+    setLoginError("");
     try {
       const ch = await base44.functions.invoke("web3Login", { action: "challenge" }).then((r) => r.data);
       const signature = await signNonce(ch.message);
@@ -63,12 +69,27 @@ export function IdentityProvider({ children }) {
       setSession(res.profile);
       return res.profile;
     } catch (e) {
-      console.warn("Identity login failed:", e?.message || e);
+      const msg = e?.message || "Sign-in failed";
+      console.warn("Identity login failed:", msg);
+      setLoginError(msg);
       return null;
     } finally {
       setAuthenticating(false);
     }
   }, [chain, walletAddress, signNonce]);
+
+  // Re-fetch the profile from the backend (no re-sign) and sync the session.
+  const refreshProfile = useCallback(async () => {
+    if (!walletAddress) return null;
+    try {
+      const res = await base44.functions.invoke("web3Profile", { action: "get", wallet_address: walletAddress }).then((r) => r.data);
+      if (res?.profile) setSession(res.profile);
+      return res?.profile || null;
+    } catch (e) {
+      console.warn("refreshProfile failed:", e?.message || e);
+      return null;
+    }
+  }, [walletAddress]);
 
   // If Phantom auto-connects (e.g. on reload) before a chain is chosen, default to Solana
   // so the wallet address resolves and the handshake can proceed automatically.
@@ -76,8 +97,7 @@ export function IdentityProvider({ children }) {
     if (publicKey && !chain) setChain("solana");
   }, [publicKey, chain]);
 
-  // Symmetric EVM handling: restore a previously-authorized MetaMask account on reload
-  // so the wallet address resolves and the handshake can proceed automatically.
+  // Symmetric EVM handling: restore a previously-authorized MetaMask account on reload.
   useEffect(() => {
     const eth = window.ethereum;
     if (!evmAddress && !chain && eth?.selectedAddress) {
@@ -87,8 +107,13 @@ export function IdentityProvider({ children }) {
   }, [evmAddress, chain]);
 
   // Auto-run the handshake once a wallet is connected and not yet verified.
+  // Guarded by attemptedFor so it fires exactly once per wallet; manual retry
+  // is available on the VerifyWallet screen via login().
   useEffect(() => {
-    if (walletAddress && !session) login();
+    if (walletAddress && !session && attemptedFor.current !== walletAddress) {
+      attemptedFor.current = walletAddress;
+      login();
+    }
   }, [walletAddress, session, login]);
 
   // Sign an engine action with the connected wallet, then invoke the backend.
@@ -114,7 +139,9 @@ export function IdentityProvider({ children }) {
         signNonce,
         signedInvoke,
         login,
+        refreshProfile,
         authenticating,
+        loginError,
         profile: session,
       }}
     >

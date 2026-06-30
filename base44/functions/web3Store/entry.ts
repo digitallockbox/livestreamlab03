@@ -1,19 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // web3Store — Unified commerce engine for the Creator OS Store.
+// Wallet-only creators have no Base44 session: reads are open, writes are wallet-signed.
 // Actions:
-//   list        -> { creatorWallet }                       => { products: [...] }   (creator's saved inventory)
-//   searchAmazon-> { searchTerm }                          => { results: [...] }     (Rainforest search, not saved)
-//   addAmazon   -> { creatorWallet, asin }                  => { success, product }   (fetch full details, save with affiliate tag)
-//   addCustom   -> { creatorWallet, title, price, url, description, image_url } => { success, product }
-//   click       -> { title?, url?, source?, asin? }        => { ok: true }           (affiliate click tracking)
+//   list        -> { creatorWallet }                       => { products: [...] }
+//   searchAmazon-> { searchTerm }                          => { results: [...] }
+//   addAmazon   -> { creatorWallet, asin } + wallet sig     => { success, product }
+//   addCustom   -> { creatorWallet, title, price, url, description, image_url } + wallet sig => { success, product }
+//   click       -> { title?, url?, source?, asin? }        => { ok: true }
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await req.json().catch(() => ({}));
     const action = body.action || 'list';
 
@@ -27,7 +25,23 @@ Deno.serve(async (req) => {
     };
     const parsePrice = (raw) => parseFloat(String(raw || "").replace(/[^0-9.]/g, "")) || 0;
 
-    // ---- LIST: creator's saved inventory ----
+    // Verify the caller owns the wallet in the payload.
+    const verifyOwner = async (requiredWallet) => {
+      const v = await base44.functions.invoke('verifyWalletSignature', {
+        wallet_address: body.auth_wallet,
+        message: body.auth_message,
+        signature: body.auth_signature,
+        chain: body.chain,
+      });
+      const d = v?.data || v;
+      if (!d?.valid) return { ok: false, status: 401, error: 'Wallet signature invalid' };
+      if (requiredWallet && d.wallet_address !== requiredWallet) {
+        return { ok: false, status: 403, error: 'Wallet not authorized for this action' };
+      }
+      return { ok: true, wallet: d.wallet_address };
+    };
+
+    // ---- LIST: creator's saved inventory (open read) ----
     if (action === 'list') {
       let products = [];
       if (body.creatorWallet) {
@@ -44,7 +58,7 @@ Deno.serve(async (req) => {
       return Response.json({ products: products || [] });
     }
 
-    // ---- SEARCH AMAZON (Rainforest) ----
+    // ---- SEARCH AMAZON (Rainforest) — open read ----
     if (action === 'searchAmazon') {
       let results = [];
       if (RAINFOREST_API_KEY && body.searchTerm) {
@@ -66,9 +80,11 @@ Deno.serve(async (req) => {
       return Response.json({ results });
     }
 
-    // ---- ADD AMAZON (full product lookup, save with affiliate tag) ----
+    // ---- ADD AMAZON (wallet-signed) ----
     if (action === 'addAmazon') {
       if (!body.creatorWallet) return Response.json({ error: "Missing creatorWallet" }, { status: 400 });
+      const v = await verifyOwner(body.creatorWallet);
+      if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
       const asinClean = extractAsin(body.asin);
       if (!asinClean) return Response.json({ error: "Missing ASIN" }, { status: 400 });
 
@@ -107,9 +123,11 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, product });
     }
 
-    // ---- ADD CUSTOM ----
+    // ---- ADD CUSTOM (wallet-signed) ----
     if (action === 'addCustom') {
       if (!body.creatorWallet || !body.title) return Response.json({ error: "Missing required fields" }, { status: 400 });
+      const v = await verifyOwner(body.creatorWallet);
+      if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
       const product = await base44.asServiceRole.entities.Product.create({
         creator_wallet: body.creatorWallet,
         name: body.title,
@@ -124,7 +142,7 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, product });
     }
 
-    // ---- CLICK: affiliate click tracking ----
+    // ---- CLICK: affiliate click tracking (open) ----
     if (action === 'click') {
       const linkUrl = body.url || (body.asin ? affiliateUrl(body.asin) : "");
       if (!linkUrl) return Response.json({ error: "Missing url" }, { status: 400 });
