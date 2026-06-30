@@ -1,5 +1,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// Cryptographically prove the caller owns the wallet in the payload.
+const verifyOwnership = async (base44, body, requiredWallet) => {
+  try {
+    const res = await base44.functions.invoke('verifyWalletSignature', {
+      wallet_address: body.auth_wallet, message: body.auth_message, signature: body.auth_signature
+    });
+    const d = res?.data || res;
+    if (!d?.valid) return { ok: false, status: 401, error: 'Wallet signature invalid' };
+    if (requiredWallet && d.wallet_address !== requiredWallet) {
+      return { ok: false, status: 403, error: 'Wallet not authorized for this action' };
+    }
+    return { ok: true, wallet_address: d.wallet_address };
+  } catch (e) {
+    return { ok: false, status: 401, error: 'Wallet verification failed' };
+  }
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -20,6 +37,9 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'create') {
+      if (!body.creatorWallet) return Response.json({ error: 'creatorWallet required' }, { status: 400 });
+      const v = await verifyOwnership(base44, body, body.creatorWallet);
+      if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
       const video = await base44.asServiceRole.entities.Video.create({
         creator_wallet: body.creatorWallet,
         title: body.title,
@@ -34,6 +54,10 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'update') {
+      const existing = await base44.asServiceRole.entities.Video.get(body.id);
+      if (!existing) return Response.json({ error: 'Video not found' }, { status: 404 });
+      const v = await verifyOwnership(base44, body, existing.creator_wallet);
+      if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
       const patch = {};
       for (const k of ['title', 'description', 'thumbnail_url', 'video_url', 'status']) {
         if (body[k] !== undefined) patch[k] = body[k];
@@ -45,6 +69,10 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'delete') {
+      const existing = await base44.asServiceRole.entities.Video.get(body.id);
+      if (!existing) return Response.json({ error: 'Video not found' }, { status: 404 });
+      const v = await verifyOwnership(base44, body, existing.creator_wallet);
+      if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
       await base44.asServiceRole.entities.Video.delete(body.id);
       return Response.json({ ok: true });
     }

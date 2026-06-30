@@ -96,6 +96,17 @@ function IdentityInner({ children }) {
     if (publicKey && !profile) login();
   }, [publicKey, profile, login]);
 
+  // Sign the engine action with the connected wallet, then invoke the backend.
+  // The backend verifies the signature against auth_wallet before writing.
+  const signedInvoke = useCallback(async (name, payload) => {
+    if (!publicKey) throw new Error("Wallet not connected");
+    const auth_wallet = publicKey.toBase58();
+    const auth_message = `LiveStreamLab ${name} ts:${Date.now()}`;
+    const auth_signature = await sign(auth_message);
+    if (!auth_signature) throw new Error("Signature rejected");
+    return base44.functions.invoke(name, { ...payload, auth_wallet, auth_message, auth_signature }).then((r) => r.data);
+  }, [publicKey, sign]);
+
   // Real on-chain $STREAMING SPL transfer (Phantom signs, sent to RPC).
   const sendStreaming = useCallback(async (recipientAddress, amount) => {
     if (!publicKey) throw new Error("Wallet not connected");
@@ -123,6 +134,7 @@ function IdentityInner({ children }) {
     refreshBalance,
     signMessage: sign,
     login,
+    signedInvoke,
     sendStreaming,
   };
 

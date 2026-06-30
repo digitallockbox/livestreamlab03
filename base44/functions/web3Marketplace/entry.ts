@@ -1,5 +1,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// Cryptographically prove the caller owns the wallet in the payload.
+const verifyOwnership = async (base44, body, requiredWallet) => {
+  try {
+    const res = await base44.functions.invoke('verifyWalletSignature', {
+      wallet_address: body.auth_wallet, message: body.auth_message, signature: body.auth_signature
+    });
+    const d = res?.data || res;
+    if (!d?.valid) return { ok: false, status: 401, error: 'Wallet signature invalid' };
+    if (requiredWallet && d.wallet_address !== requiredWallet) {
+      return { ok: false, status: 403, error: 'Wallet not authorized for this action' };
+    }
+    return { ok: true, wallet_address: d.wallet_address };
+  } catch (e) {
+    return { ok: false, status: 401, error: 'Wallet verification failed' };
+  }
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -15,6 +32,8 @@ Deno.serve(async (req) => {
       if (!creatorWallet || !name) {
         return Response.json({ error: 'creatorWallet and name are required' }, { status: 400 });
       }
+      const v = await verifyOwnership(base44, body, creatorWallet);
+      if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
       const product = await base44.asServiceRole.entities.Product.create({
         creator_wallet: creatorWallet,
         name,
@@ -55,6 +74,8 @@ Deno.serve(async (req) => {
       if (!buyerWallet || !productId) {
         return Response.json({ error: 'buyerWallet and productId are required' }, { status: 400 });
       }
+      const v = await verifyOwnership(base44, body, buyerWallet);
+      if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
       const product = await base44.asServiceRole.entities.Product.get(productId);
       if (!product) return Response.json({ error: 'Product not found' }, { status: 404 });
       const transaction = await base44.asServiceRole.entities.Transaction.create({

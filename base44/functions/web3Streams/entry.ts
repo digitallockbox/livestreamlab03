@@ -1,5 +1,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// Cryptographically prove the caller owns the wallet in the payload.
+const verifyOwnership = async (base44, body, requiredWallet) => {
+  try {
+    const res = await base44.functions.invoke('verifyWalletSignature', {
+      wallet_address: body.auth_wallet, message: body.auth_message, signature: body.auth_signature
+    });
+    const d = res?.data || res;
+    if (!d?.valid) return { ok: false, status: 401, error: 'Wallet signature invalid' };
+    if (requiredWallet && d.wallet_address !== requiredWallet) {
+      return { ok: false, status: 403, error: 'Wallet not authorized for this action' };
+    }
+    return { ok: true, wallet_address: d.wallet_address };
+  } catch (e) {
+    return { ok: false, status: 401, error: 'Wallet verification failed' };
+  }
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -14,6 +31,8 @@ Deno.serve(async (req) => {
       if (!creatorWallet || !title) {
         return Response.json({ error: 'creatorWallet and title required' }, { status: 400 });
       }
+      const v = await verifyOwnership(base44, body, creatorWallet);
+      if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
       const streamKey = crypto.randomUUID();
       const stream = await base44.asServiceRole.entities.Stream.create({
         title,
@@ -54,6 +73,9 @@ Deno.serve(async (req) => {
       const { streamId } = body;
       if (!streamId) return Response.json({ error: 'streamId required' }, { status: 400 });
       const existing = await base44.asServiceRole.entities.Stream.get(streamId);
+      if (!existing) return Response.json({ error: 'Stream not found' }, { status: 404 });
+      const v = await verifyOwnership(base44, body, existing.creator_wallet);
+      if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
       const started = new Date(existing.created_date).getTime();
       const minutes = Math.max(1, Math.round((Date.now() - started) / 60000));
       const updated = await base44.asServiceRole.entities.Stream.update(streamId, {

@@ -188,11 +188,12 @@ const FollowButton = ({ creatorWallet, viewerWallet }) => {
 };
 
 const BoostButton = ({ creatorWallet, viewerWallet, amount = 10 }) => {
+  const { signedInvoke } = useStreamingIdentity();
   const [sending, setSending] = useState(false);
   const handle = async () => {
     if (!viewerWallet || !creatorWallet) return;
     setSending(true);
-    try { await boostsAPI.send({ viewerWallet, creatorWallet, amount, message: "Boost!" }); } finally { setSending(false); }
+    try { await signedInvoke("web3Boosts", { action: "send", viewerWallet, creatorWallet, amount, message: "Boost!" }); } finally { setSending(false); }
   };
   return (
     <button onClick={handle} disabled={sending} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-primary/15 text-primary text-sm border border-primary/30 hover:bg-primary/25">
@@ -202,11 +203,12 @@ const BoostButton = ({ creatorWallet, viewerWallet, amount = 10 }) => {
 };
 
 const SubscribeButton = ({ creatorWallet, viewerWallet, tier = "basic" }) => {
+  const { signedInvoke } = useStreamingIdentity();
   const [sending, setSending] = useState(false);
   const handle = async () => {
     if (!viewerWallet || !creatorWallet) return;
     setSending(true);
-    try { await subscriptionsAPI.subscribe({ subscriberWallet: viewerWallet, creatorWallet, tier }); } finally { setSending(false); }
+    try { await signedInvoke("web3Subscriptions", { action: "subscribe", subscriberWallet: viewerWallet, creatorWallet, tier }); } finally { setSending(false); }
   };
   return (
     <button onClick={handle} disabled={sending} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-accent/15 text-accent text-sm border border-accent/30 hover:bg-accent/25">
@@ -363,6 +365,7 @@ const MarketplaceDashboard = () => {
 
 const AddMarketplaceProduct = () => {
   const wallet = useViewerWallet();
+  const { signedInvoke } = useStreamingIdentity();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", description: "", price: "", streamingPrice: "", category: "" });
   const [saving, setSaving] = useState(false);
@@ -370,7 +373,7 @@ const AddMarketplaceProduct = () => {
   const submit = async () => {
     if (!wallet || !form.name) return;
     setSaving(true);
-    try { await marketplaceAPI.add(wallet, { name: form.name, description: form.description, price: Number(form.price) || 0, streamingPrice: Number(form.streamingPrice) || 0, category: form.category }); navigate("/marketplace/products"); } finally { setSaving(false); }
+    try { await signedInvoke("web3Marketplace", { action: "add", creatorWallet: wallet, name: form.name, description: form.description, price: Number(form.price) || 0, streamingPrice: Number(form.streamingPrice) || 0, category: form.category }); navigate("/marketplace/products"); } finally { setSaving(false); }
   };
   return (
     <Page title="Add Product" subtitle="Create a new digital product">
@@ -464,6 +467,7 @@ const StreamView = () => {
 // Boost Page
 const StreamBoost = () => {
   const viewerWallet = useViewerWallet();
+  const { signedInvoke } = useStreamingIdentity();
   const [toWallet, setToWallet] = useState("");
   const [amount, setAmount] = useState(10);
   const [boosts, setBoosts] = useState({ boosts: [], total: 0, count: 0 });
@@ -472,7 +476,7 @@ const StreamBoost = () => {
   const send = async () => {
     if (!viewerWallet || !toWallet) return;
     setSending(true);
-    try { await boostsAPI.send({ viewerWallet, creatorWallet: toWallet, amount }); boostsAPI.list(viewerWallet).then(setBoosts); } finally { setSending(false); }
+    try { await signedInvoke("web3Boosts", { action: "send", viewerWallet, creatorWallet: toWallet, amount }); boostsAPI.list(viewerWallet).then(setBoosts); } finally { setSending(false); }
   };
   return (
     <Page title="Stream Boosts" subtitle="Send $STREAMING boosts to creators">
@@ -492,6 +496,7 @@ const StreamBoost = () => {
 // Subscriptions
 const Subscriptions = () => {
   const viewerWallet = useViewerWallet();
+  const { signedInvoke } = useStreamingIdentity();
   const [toWallet, setToWallet] = useState("");
   const [tier, setTier] = useState("basic");
   const [subs, setSubs] = useState({ subscribers: [], count: 0, mrr: 0 });
@@ -500,7 +505,7 @@ const Subscriptions = () => {
   const subscribe = async () => {
     if (!viewerWallet || !toWallet) return;
     setSending(true);
-    try { await subscriptionsAPI.subscribe({ subscriberWallet: viewerWallet, creatorWallet: toWallet, tier }); subscriptionsAPI.list(viewerWallet).then(setSubs); } finally { setSending(false); }
+    try { await signedInvoke("web3Subscriptions", { action: "subscribe", subscriberWallet: viewerWallet, creatorWallet: toWallet, tier }); subscriptionsAPI.list(viewerWallet).then(setSubs); } finally { setSending(false); }
   };
   return (
     <Page title="Subscriptions" subtitle="Tiered subscriptions and your subscribers">
@@ -647,6 +652,7 @@ const EconomyDashboard = () => {
 // Go Live — creator starts a stream session (returns RTMP url + key)
 const GoLive = () => {
   const viewerWallet = useViewerWallet();
+  const { signedInvoke } = useStreamingIdentity();
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("gaming");
   const [stream, setStream] = useState(null);
@@ -655,7 +661,7 @@ const GoLive = () => {
     if (!viewerWallet || !title.trim()) return;
     setBusy(true);
     try {
-      const res = await streamsAPI.start(viewerWallet, title.trim(), { category });
+      const res = await signedInvoke("web3Streams", { action: "start", creatorWallet: viewerWallet, title: title.trim(), category });
       setStream(res);
     } finally { setBusy(false); }
   };
@@ -978,6 +984,7 @@ const VideoLibrary = () => {
 // Videos — Upload
 const UploadVideo = () => {
   const wallet = useViewerWallet();
+  const { signedInvoke } = useStreamingIdentity();
   const [form, setForm] = useState({ title: "", description: "", video_url: "", thumbnail_url: "", is_premium: false, unlock_price: 0 });
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);
@@ -986,7 +993,7 @@ const UploadVideo = () => {
     if (!wallet || !form.title.trim()) return;
     setBusy(true);
     try {
-      const res = await videoAPI.create(wallet, form);
+      const res = await signedInvoke("web3Videos", { action: "create", creatorWallet: wallet, ...form });
       setDone(res.video);
       setForm({ title: "", description: "", video_url: "", thumbnail_url: "", is_premium: false, unlock_price: 0 });
     } finally { setBusy(false); }
@@ -1010,15 +1017,16 @@ const UploadVideo = () => {
 // Videos — Manager
 const VideoManager = () => {
   const wallet = useViewerWallet();
+  const { signedInvoke } = useStreamingIdentity();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const load = () => { if (wallet) videoAPI.list(wallet).then((r) => setVideos(r.videos || [])).finally(() => setLoading(false)); };
   useEffect(load, [wallet]);
   const toggleStatus = async (v) => {
-    await videoAPI.update(v.id, { status: v.status === "published" ? "draft" : "published" });
+    await signedInvoke("web3Videos", { action: "update", id: v.id, status: v.status === "published" ? "draft" : "published" });
     load();
   };
-  const remove = async (v) => { await videoAPI.remove(v.id); load(); };
+  const remove = async (v) => { await signedInvoke("web3Videos", { action: "delete", id: v.id }); load(); };
   return (
     <Page title="Video Manager" subtitle="Edit status and remove videos">
       {loading ? <Spinner /> : videos.length === 0 ? <Card><p className="text-sm text-muted-foreground">No videos to manage.</p></Card> : (
