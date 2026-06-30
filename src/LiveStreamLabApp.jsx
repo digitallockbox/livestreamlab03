@@ -15,6 +15,7 @@ import NotificationSettings from "@/pages/settings/NotificationSettings";
 import ConnectedAccounts from "@/pages/settings/ConnectedAccounts";
 import SupabaseExplorer from "@/pages/SupabaseExplorer";
 import SharedLayout from "@/components/creator/SharedLayout";
+import MultiWalletLogin from "@/components/creator/MultiWalletLogin";
 import {
   Page, Card, Spinner, Input, useViewerWallet,
   web3LoginAPI, web3ProfileAPI, verificationAPI, badgesAPI, passportAPI,
@@ -866,28 +867,6 @@ const SettingsHub = () => {
   );
 };
 
-// ======================================================
-//  SIGN-UP (disappears once wallet connects)
-// ======================================================
-const SignupScreen = () => {
-  const { connect, connected, wallet, authenticating } = useStreamingIdentity();
-  const [busy, setBusy] = useState(false);
-  const handleConnect = async () => {
-    setBusy(true);
-    try { await connect(); } finally { setBusy(false); }
-  };
-  return (
-    <div className="max-w-md mx-auto p-8 mt-20 text-center space-y-4">
-      <h1 className="text-3xl font-display font-bold">Welcome to LiveStreamLab</h1>
-      <p className="text-sm text-muted-foreground">Connect your Phantom wallet to enter the Creator OS.</p>
-      <button onClick={handleConnect} disabled={busy} className="px-6 py-2 rounded-md bg-primary text-primary-foreground text-sm">
-        {busy ? "Connecting…" : authenticating ? "Verifying wallet…" : connected ? `Connected ${wallet?.slice(0, 6)}…${wallet?.slice(-4)}` : "Connect Phantom"}
-      </button>
-      <p className="text-xs text-muted-foreground">Your wallet + $STREAMING token is your identity. No Phantom? Install it at phantom.com.</p>
-    </div>
-  );
-};
-
 // Intermediate screen: wallet connected but not yet cryptographically verified.
 const VerifyWallet = () => {
   const { wallet, login, authenticating } = useStreamingIdentity();
@@ -909,7 +888,7 @@ const VerifyWallet = () => {
 function MainApp() {
   const { connected, profile } = useStreamingIdentity();
   // Identity gate: wallet must be connected AND cryptographically verified before any engine loads.
-  if (!connected) return <SignupScreen />;
+  if (!connected) return <MultiWalletLogin />;
   if (!profile) return <VerifyWallet />;
   return (
     <BrowserRouter>
