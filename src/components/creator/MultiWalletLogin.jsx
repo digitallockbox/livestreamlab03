@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useIdentity } from "@/lib/web3/identity";
 
-// Multi-wallet entry screen. Phantom is the fully-supported path (Solana signing
-// + $STREAMING balance via the identity provider). MetaMask connects the EVM
-// account for display; full Creator OS access currently requires Phantom.
+// Multi-wallet entry screen. Phantom (Solana) is the fully-supported path;
+// MetaMask (EVM) connects the account for display.
 export default function MultiWalletLogin() {
-  const { connect, connected, wallet, authenticating, evmAddress, setEvmAddress, setChain } = useStreamingIdentity();
+  const { connect, publicKey } = useWallet();
+  const { evmAddress, setEvmAddress, setChain } = useIdentity();
   const [busy, setBusy] = useState(null); // "phantom" | "metamask" | null
   const [error, setError] = useState("");
+  const solanaConnected = !!publicKey && publicKey.toBase58();
 
   const handlePhantom = async () => {
     setBusy("phantom");
@@ -56,7 +58,7 @@ export default function MultiWalletLogin() {
             disabled={!!busy}
             className="w-full px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
-            {busy === "phantom" ? "Connecting…" : authenticating ? "Verifying wallet…" : connected && wallet ? `Connected ${wallet.slice(0, 6)}…${wallet.slice(-4)}` : "Connect Phantom (Solana)"}
+            {busy === "phantom" ? "Connecting…" : solanaConnected ? `Connected ${publicKey.toBase58().slice(0, 6)}…${publicKey.toBase58().slice(-4)}` : "Connect Phantom (Solana)"}
           </button>
 
           <button
@@ -70,10 +72,10 @@ export default function MultiWalletLogin() {
 
         {error && <p className="text-sm text-destructive text-center">{error}</p>}
 
-        {connected && wallet && (
+        {solanaConnected && (
           <div className="rounded-xl border border-border bg-card p-4 space-y-1">
             <p className="text-xs text-muted-foreground">Solana Wallet Connected</p>
-            <p className="font-mono text-sm break-all">{wallet}</p>
+            <p className="font-mono text-sm break-all">{publicKey.toBase58()}</p>
           </div>
         )}
 

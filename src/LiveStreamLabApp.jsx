@@ -16,6 +16,7 @@ import ConnectedAccounts from "@/pages/settings/ConnectedAccounts";
 import SupabaseExplorer from "@/pages/SupabaseExplorer";
 import SharedLayout from "@/components/creator/SharedLayout";
 import MultiWalletLogin from "@/components/creator/MultiWalletLogin";
+import { IdentityProvider } from "@/lib/web3/identity";
 import {
   Page, Card, Spinner, Input, useViewerWallet,
   web3LoginAPI, web3ProfileAPI, verificationAPI, badgesAPI, passportAPI,
@@ -938,7 +939,9 @@ function MainApp() {
 export default function LiveStreamLabApp() {
   return (
     <PhantomIdentityProvider>
-      <MainApp />
+      <IdentityProvider>
+        <MainApp />
+      </IdentityProvider>
     </PhantomIdentityProvider>
   );
 }
