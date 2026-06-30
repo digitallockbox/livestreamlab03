@@ -15,6 +15,7 @@ import SecuritySettings from "@/pages/settings/SecuritySettings";
 import NotificationSettings from "@/pages/settings/NotificationSettings";
 import ConnectedAccounts from "@/pages/settings/ConnectedAccounts";
 import SupabaseExplorer from "@/pages/SupabaseExplorer";
+import SharedLayout from "@/components/creator/SharedLayout";
 
 // ======================================================
 //  API CONFIG
@@ -1245,6 +1246,7 @@ function MainApp() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route element={<SharedLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Web3Login />} />
         <Route path="/profile" element={<Web3Profile />} />
@@ -1280,6 +1282,7 @@ function MainApp() {
         <Route path="/feed/view" element={<PostView />} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/economy" element={<EconomyDashboard />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
