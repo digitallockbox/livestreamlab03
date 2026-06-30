@@ -50,6 +50,11 @@ export default function EconomyDashboard() {
           value={`${(data.boosts_total || 0).toFixed(0)} ⚡`}
           sub={`${data.boost_count || 0} boosts`}
         />
+        <EconomyCard
+          label="Subscribers"
+          value={data.subscriber_count || 0}
+          sub={`$${(data.subs_mrr || 0).toFixed(2)} MRR`}
+        />
         <EconomyCard label="Transactions" value={data.transaction_count || 0} sub="Recent activity" />
       </div>
       <div className="rounded-2xl border border-border bg-card p-6">

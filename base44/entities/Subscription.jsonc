@@ -1,0 +1,45 @@
+{
+  "name": "Subscription",
+  "type": "object",
+  "properties": {
+    "subscriber_wallet": {
+      "type": "string",
+      "description": "Wallet of the subscriber"
+    },
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet of the creator being subscribed to"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "basic",
+        "plus",
+        "premium"
+      ],
+      "default": "basic"
+    },
+    "price_monthly": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "cancelled",
+        "expired"
+      ],
+      "default": "active"
+    },
+    "renews_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "subscriber_wallet",
+    "creator_wallet",
+    "tier"
+  ]
+}

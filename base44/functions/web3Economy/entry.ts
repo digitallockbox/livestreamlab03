@@ -22,6 +22,9 @@ Deno.serve(async (req) => {
       created_date: t.created_date
     }));
 
+    const subTxns = txns.filter((t) => t.source === 'subscription');
+    const subs_mrr = subTxns.reduce((s, t) => s + (t.amount || 0), 0);
+
     return Response.json({
       total_revenue: total,
       streaming_revenue: streaming_total,
@@ -29,6 +32,8 @@ Deno.serve(async (req) => {
       boosts_total,
       boost_count: boostTxns.length,
       recent_boosts,
+      subscriber_count: subTxns.length,
+      subs_mrr,
       by_type,
       recent: txns.slice(0, 10)
     });

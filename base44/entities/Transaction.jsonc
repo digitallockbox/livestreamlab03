@@ -11,7 +11,8 @@
         "video_unlock",
         "audio_boost",
         "podcast",
-        "payout"
+        "payout",
+        "subscription"
       ]
     },
     "amount": {
