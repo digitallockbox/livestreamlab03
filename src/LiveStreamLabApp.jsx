@@ -799,6 +799,90 @@ const Wallet = () => {
   );
 };
 
+// Watch-to-Earn — viewer accrues $STREAMING each minute via the web3Watch tick loop
+const WatchToEarn = () => {
+  const { wallet } = useStreamingIdentity();
+  const [liveStreams, setLiveStreams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+  const [session, setSession] = useState(null);
+  const [tokens, setTokens] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    streamsAPI.live().then((r) => setLiveStreams(r.streams || [])).finally(() => setLoading(false));
+  }, []);
+
+  // +1 $STREAMING per minute while a session is active.
+  useEffect(() => {
+    if (!session) return;
+    const id = setInterval(async () => {
+      const res = await watchAPI.tick(session.id);
+      setTokens(res.session?.tokens_earned ?? tokens + 1);
+      setMinutes(res.session?.minutes_watched ?? minutes + 1);
+    }, 60000);
+    return () => clearInterval(id);
+  }, [session]);
+
+  // End the session on unmount.
+  useEffect(() => () => { if (session) watchAPI.end(session.id); }, [session]);
+
+  const start = async (stream) => {
+    if (!wallet) return;
+    setSelected(stream);
+    setBusy(true);
+    try {
+      const res = await watchAPI.start(wallet, stream.creator_wallet);
+      setSession(res.session);
+      setTokens(0); setMinutes(0);
+    } finally { setBusy(false); }
+  };
+
+  const stop = async () => {
+    if (!session) return;
+    await watchAPI.end(session.id);
+    setSession(null); setSelected(null);
+  };
+
+  return (
+    <Page title="Watch-to-Earn" subtitle="Earn $STREAMING for every minute you watch">
+      {session ? (
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Now watching</p>
+              <h3 className="font-display font-semibold">{selected?.title}</h3>
+              <p className="font-mono text-xs text-muted-foreground">{selected?.creator_wallet}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-display font-bold text-accent">{tokens}</p>
+              <p className="text-xs text-muted-foreground">$STREAMING earned · {minutes} min</p>
+            </div>
+          </div>
+          <button onClick={stop} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground text-sm">Stop &amp; claim</button>
+        </Card>
+      ) : loading ? <Spinner /> : liveStreams.length === 0 ? (
+        <Card><p className="text-sm text-muted-foreground">No live streams right now.</p></Card>
+      ) : (
+        <div className="grid gap-3">
+          {liveStreams.map((s) => (
+            <Card key={s.id} className="flex items-center justify-between">
+              <div>
+                <h3 className="font-display font-semibold">{s.title}</h3>
+                <p className="font-mono text-xs text-muted-foreground">{s.creator_wallet}</p>
+              </div>
+              <button onClick={() => start(s)} disabled={busy} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">
+                {busy ? "Starting…" : "Watch &amp; earn"}
+              </button>
+            </Card>
+          ))}
+        </div>
+      )}
+    </Page>
+  );
+};
+
 // ======================================================
 //  SIGN-UP (disappears once wallet connects)
 // ======================================================
@@ -842,6 +926,7 @@ function MainApp() {
         <Route path="/marketplace/sales" element={<MarketplaceSales />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/go-live" element={<GoLive />} />
+        <Route path="/watch" element={<WatchToEarn />} />
         <Route path="/streams" element={<AllStreams />} />
         <Route path="/streams/:id/analytics" element={<StreamAnalytics />} />
         <Route path="/stream" element={<StreamView />} />
