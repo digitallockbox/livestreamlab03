@@ -17,6 +17,7 @@ import SupabaseExplorer from "@/pages/SupabaseExplorer";
 import SharedLayout from "@/components/creator/SharedLayout";
 import MultiWalletLogin from "@/components/creator/MultiWalletLogin";
 import Onboarding from "@/components/creator/Onboarding";
+import CreatorIdentityHeader from "@/components/creator/CreatorIdentityHeader";
 import { IdentityProvider, useIdentity } from "@/lib/web3/identity";
 import {
   Page, Card, Spinner, Input, useViewerWallet,
@@ -81,16 +82,12 @@ const Web3Profile = () => {
   const save = async () => { setSaving(true); try { await web3ProfileAPI.update(form); refresh(); } finally { setSaving(false); } };
   return (
     <Page title="Web3 Profile" subtitle="Your on-chain creator identity">
+      <CreatorIdentityHeader profile={profile} />
       <Card className="space-y-3">
-        <div className="flex items-center gap-3">
-          {profile?.avatar_url ? <img src={profile.avatar_url} className="w-12 h-12 rounded-full" alt="" /> : <div className="w-12 h-12 rounded-full bg-muted" />}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-mono truncate">{profile?.wallet_address || "No wallet connected"}</p>
-            <div className="flex gap-2 mt-1 flex-wrap"><Web3NameBadge creator={profile} /><VerificationBadge creator={profile} /><CreatorBadge creator={profile} /><PassportBadge creator={profile} /></div>
-          </div>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          {graph && <SocialGraph graph={graph} />}
           {profile?.wallet_address && <FollowButton creatorWallet={profile.wallet_address} viewerWallet={viewerWallet} />}
         </div>
-        {graph && <SocialGraph graph={graph} />}
       </Card>
       <Card className="space-y-3 max-w-xl">
         <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} placeholder="Display name" />

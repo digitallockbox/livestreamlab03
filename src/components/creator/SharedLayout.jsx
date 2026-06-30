@@ -21,7 +21,7 @@ const NAV = [
 
 export default function SharedLayout() {
   const { wallet, balance, connected } = useStreamingIdentity();
-  const { session } = useIdentity();
+  const { session, chain } = useIdentity();
   const domain = session?.bound_domain;
   const loc = useLocation();
   return (
@@ -45,6 +45,9 @@ export default function SharedLayout() {
             })}
           </nav>
           <div className="flex items-center gap-2 shrink-0">
+            {chain && (
+              <span className="hidden md:inline text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary capitalize">{chain}</span>
+            )}
             {domain && (
               <span className="hidden lg:inline text-xs text-primary font-medium max-w-[140px] truncate">{domain}</span>
             )}
