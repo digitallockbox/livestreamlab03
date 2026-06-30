@@ -5,7 +5,7 @@
 // ======================================================
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useParams, useNavigate } from "react-router-dom";
-import { Loader2, Zap, CreditCard, ShoppingBag, Send, UserPlus, UserMinus, CheckCircle2 } from "lucide-react";
+import { Loader2, Zap, CreditCard, ShoppingBag, Send, UserPlus, UserMinus, CheckCircle2, Radio, Video, BarChart3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useCreator } from "@/hooks/web3/useCreator";
 import { PhantomIdentityProvider, useStreamingIdentity } from "@/lib/web3/streamingIdentity";
@@ -903,6 +903,7 @@ const Home = () => {
     { to: "/profile", label: "Profile", desc: "Identity & badges" },
     { to: "/marketplace", label: "Marketplace", desc: "Sell products" },
     { to: "/videos", label: "Videos", desc: "Library & uploads" },
+    { to: "/analytics", label: "Analytics", desc: "Streams + VOD" },
     { to: "/boost", label: "Boosts", desc: "Support creators" },
     { to: "/subscriptions", label: "Subscriptions", desc: "Subscribe to creators" },
     { to: "/feed", label: "Feed", desc: "Posts & updates" },
@@ -1061,6 +1062,102 @@ const VideoAnalytics = () => {
   );
 };
 
+// Unified Streams + Videos Analytics
+const UnifiedAnalytics = () => {
+  const wallet = useViewerWallet();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const load = () => {
+    if (!wallet) return;
+    setLoading(true);
+    Promise.all([
+      streamsAPI.past(wallet).catch(() => ({ streams: [] })),
+      videoAPI.analytics(wallet).catch(() => ({ totals: {}, count: 0, videos: [] })),
+      boostsAPI.list(wallet).catch(() => ({ total: 0, count: 0 })),
+      subscriptionsAPI.list(wallet).catch(() => ({ count: 0, mrr: 0 })),
+    ]).then(([streamsRes, videoRes, boostsRes, subsRes]) => {
+      const streams = streamsRes?.streams || [];
+      const streamViewers = streams.reduce((a, s) => a + (s.peak_viewers || s.viewer_count || 0), 0);
+      const streamTips = streams.reduce((a, s) => a + (s.tips_earned || 0), 0);
+      const streamMinutes = streams.reduce((a, s) => a + (s.duration_minutes || 0), 0);
+      const vTotals = videoRes?.totals || {};
+      const videoUnlocks = vTotals.streaming_unlocks || 0;
+      const boostsTotal = boostsRes?.total || 0;
+      setData({
+        streams: { count: streams.length, viewers: streamViewers, tips: streamTips, minutes: streamMinutes, top: [...streams].sort((a, b) => (b.tips_earned || 0) - (a.tips_earned || 0)).slice(0, 5) },
+        videos: { count: videoRes?.count || 0, views: vTotals.views || 0, hours: vTotals.watch_time_hours || 0, unlocks: videoUnlocks, revenue: vTotals.revenue || 0, top: [...(videoRes?.videos || [])].sort((a, b) => (b.streaming_unlocks || 0) - (a.streaming_unlocks || 0)).slice(0, 5) },
+        boosts: { count: boostsRes?.count || 0, total: boostsTotal },
+        subs: { count: subsRes?.count || 0, mrr: subsRes?.mrr || 0 },
+        totalStreaming: streamTips + videoUnlocks + boostsTotal
+      });
+    }).finally(() => setLoading(false));
+  };
+  useEffect(load, [wallet]);
+
+  if (!wallet) return <Page title="Unified Analytics"><Card><p className="text-sm text-muted-foreground">Connect your wallet to view analytics.</p></Card></Page>;
+  if (loading) return <Page title="Unified Analytics"><Spinner /></Page>;
+  const d = data;
+  return (
+    <Page title="Unified Analytics" subtitle="Streams + VOD performance, earnings, boosts and subscriptions">
+      <Card className="bg-gradient-card">
+        <p className="text-xs text-muted-foreground">Total $STREAMING earned (streams + VOD + boosts)</p>
+        <p className="text-4xl font-display font-bold text-gradient-brand mt-1">{d.totalStreaming.toLocaleString()}</p>
+      </Card>
+
+      <div>
+        <h2 className="font-display font-semibold mb-2 flex items-center gap-2"><Radio className="w-4 h-4 text-primary" /> Live Streams</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Card><p className="text-xs text-muted-foreground">Streams</p><p className="text-xl font-display font-bold">{d.streams.count}</p></Card>
+          <Card><p className="text-xs text-muted-foreground">Peak viewers</p><p className="text-xl font-display font-bold">{d.streams.viewers.toLocaleString()}</p></Card>
+          <Card><p className="text-xs text-muted-foreground">Watch minutes</p><p className="text-xl font-display font-bold">{d.streams.minutes.toLocaleString()}</p></Card>
+          <Card><p className="text-xs text-muted-foreground">Tips ($STREAMING)</p><p className="text-xl font-display font-bold text-accent">{d.streams.tips.toLocaleString()}</p></Card>
+        </div>
+      </div>
+
+      <div>
+        <h2 className="font-display font-semibold mb-2 flex items-center gap-2"><Video className="w-4 h-4 text-primary" /> VOD Library</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Card><p className="text-xs text-muted-foreground">Videos</p><p className="text-xl font-display font-bold">{d.videos.count}</p></Card>
+          <Card><p className="text-xs text-muted-foreground">Views</p><p className="text-xl font-display font-bold">{d.videos.views.toLocaleString()}</p></Card>
+          <Card><p className="text-xs text-muted-foreground">Watch hours</p><p className="text-xl font-display font-bold">{d.videos.hours.toLocaleString()}</p></Card>
+          <Card><p className="text-xs text-muted-foreground">$STREAMING unlocks</p><p className="text-xl font-display font-bold text-accent">{d.videos.unlocks.toLocaleString()}</p></Card>
+        </div>
+      </div>
+
+      <div>
+        <h2 className="font-display font-semibold mb-2 flex items-center gap-2"><Zap className="w-4 h-4 text-accent" /> Boosts & Subscriptions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Card><p className="text-xs text-muted-foreground">Boosts</p><p className="text-xl font-display font-bold">{d.boosts.count}</p></Card>
+          <Card><p className="text-xs text-muted-foreground">Boost total ($STREAMING)</p><p className="text-xl font-display font-bold text-accent">{d.boosts.total.toLocaleString()}</p></Card>
+          <Card><p className="text-xs text-muted-foreground">Active subs</p><p className="text-xl font-display font-bold">{d.subs.count}</p></Card>
+          <Card><p className="text-xs text-muted-foreground">Subs MRR (USD)</p><p className="text-xl font-display font-bold">${d.subs.mrr.toFixed(2)}</p></Card>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <h3 className="font-display font-semibold mb-2">Top Streams by Tips</h3>
+          {d.streams.top.length === 0 ? <p className="text-sm text-muted-foreground">No streams yet.</p> : d.streams.top.map((s) => (
+            <div key={s.id} className="flex justify-between py-1.5 border-b border-border/50 last:border-0 text-sm">
+              <span className="truncate pr-2">{s.title}</span>
+              <span className="text-accent whitespace-nowrap">{(s.tips_earned || 0).toLocaleString()} ◎</span>
+            </div>
+          ))}
+        </Card>
+        <Card>
+          <h3 className="font-display font-semibold mb-2">Top Videos by Unlocks</h3>
+          {d.videos.top.length === 0 ? <p className="text-sm text-muted-foreground">No videos yet.</p> : d.videos.top.map((v) => (
+            <div key={v.id} className="flex justify-between py-1.5 border-b border-border/50 last:border-0 text-sm">
+              <span className="truncate pr-2">{v.title}</span>
+              <span className="text-accent whitespace-nowrap">{(v.streaming_unlocks || 0).toLocaleString()} ◎</span>
+            </div>
+          ))}
+        </Card>
+      </div>
+    </Page>
+  );
+};
+
 // ======================================================
 //  SIGN-UP (disappears once wallet connects)
 // ======================================================
@@ -1112,6 +1209,7 @@ function MainApp() {
         <Route path="/videos/upload" element={<UploadVideo />} />
         <Route path="/videos/manager" element={<VideoManager />} />
         <Route path="/videos/analytics" element={<VideoAnalytics />} />
+        <Route path="/analytics" element={<UnifiedAnalytics />} />
         <Route path="/stream" element={<StreamView />} />
         <Route path="/boost" element={<StreamBoost />} />
         <Route path="/subscriptions" element={<Subscriptions />} />
