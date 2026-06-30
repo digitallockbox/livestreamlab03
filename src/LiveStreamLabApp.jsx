@@ -1193,7 +1193,7 @@ const SettingsHub = () => {
 //  SIGN-UP (disappears once wallet connects)
 // ======================================================
 const SignupScreen = () => {
-  const { connect, connected, wallet } = useStreamingIdentity();
+  const { connect, connected, wallet, authenticating } = useStreamingIdentity();
   const [busy, setBusy] = useState(false);
   const handleConnect = async () => {
     setBusy(true);
@@ -1204,7 +1204,7 @@ const SignupScreen = () => {
       <h1 className="text-3xl font-display font-bold">Welcome to LiveStreamLab</h1>
       <p className="text-sm text-muted-foreground">Connect your Phantom wallet to enter the Creator OS.</p>
       <button onClick={handleConnect} disabled={busy} className="px-6 py-2 rounded-md bg-primary text-primary-foreground text-sm">
-        {busy ? "Connecting…" : connected ? `Connected ${wallet?.slice(0, 6)}…${wallet?.slice(-4)}` : "Connect Phantom"}
+        {busy ? "Connecting…" : authenticating ? "Verifying wallet…" : connected ? `Connected ${wallet?.slice(0, 6)}…${wallet?.slice(-4)}` : "Connect Phantom"}
       </button>
       <p className="text-xs text-muted-foreground">Your wallet + $STREAMING token is your identity. No Phantom? Install it at phantom.com.</p>
     </div>

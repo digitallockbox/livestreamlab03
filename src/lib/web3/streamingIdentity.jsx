@@ -2,6 +2,7 @@
 // Phantom + $STREAMING SPL identity layer — the root of the Creator OS.
 // Real on-chain: Phantom wallet connection, $STREAMING SPL balance, message signing.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { ConnectionProvider, WalletProvider, useWallet } from "@solana/wallet-adapter-react";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
@@ -30,6 +31,8 @@ function IdentityInner({ children }) {
   const { publicKey, connect, disconnect, select, wallets, signMessage, sendTransaction } = useWallet();
   const [balance, setBalance] = useState(0);
   const [loadingBalance, setLoadingBalance] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [authenticating, setAuthenticating] = useState(false);
 
   const connection = useMemo(() => new Connection(RPC_ENDPOINT), []);
 
@@ -64,6 +67,35 @@ function IdentityInner({ children }) {
     return btoa(String.fromCharCode(...sig));
   }, [signMessage]);
 
+  // Complete the Phantom handshake: challenge → wallet signs → backend verifies ownership.
+  const login = useCallback(async () => {
+    if (!publicKey) return null;
+    setAuthenticating(true);
+    try {
+      const ch = await base44.functions.invoke("web3Login", { action: "challenge" }).then((r) => r.data);
+      const sigB64 = await sign(ch.message);
+      if (!sigB64) throw new Error("Signature rejected");
+      const res = await base44.functions.invoke("web3Login", {
+        action: "verify",
+        wallet_address: publicKey.toBase58(),
+        message: ch.message,
+        signature: sigB64,
+      }).then((r) => r.data);
+      setProfile(res.profile);
+      return res.profile;
+    } catch (e) {
+      console.warn("Phantom login failed:", e?.message || e);
+      return null;
+    } finally {
+      setAuthenticating(false);
+    }
+  }, [publicKey, sign]);
+
+  // Auto-run the handshake once the wallet connects.
+  useEffect(() => {
+    if (publicKey && !profile) login();
+  }, [publicKey, profile, login]);
+
   // Real on-chain $STREAMING SPL transfer (Phantom signs, sent to RPC).
   const sendStreaming = useCallback(async (recipientAddress, amount) => {
     if (!publicKey) throw new Error("Wallet not connected");
@@ -82,12 +114,15 @@ function IdentityInner({ children }) {
     connected: !!publicKey,
     wallet: publicKey ? publicKey.toBase58() : null,
     publicKey,
+    profile,
+    authenticating,
     balance,
     loadingBalance,
     connect: connectPhantom,
     disconnect,
     refreshBalance,
     signMessage: sign,
+    login,
     sendStreaming,
   };
 
