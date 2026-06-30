@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { economyAPI, Page, Card, Spinner } from "@/components/creator/os";
 
@@ -44,6 +45,7 @@ export default function Economy() {
           </div>
         ))}
       </Card>
+      <Link to="/payouts" className="text-primary hover:underline text-sm inline-flex items-center gap-1">Manage payouts →</Link>
     </Page>
   );
 }

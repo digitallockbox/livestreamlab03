@@ -41,6 +41,7 @@ import Economy from "@/components/creator/pages/Economy";
 import Profile from "@/components/creator/pages/Profile";
 import Settings from "@/components/creator/pages/Settings";
 import Watch from "@/components/creator/pages/Watch";
+import Payouts from "@/components/creator/pages/Payouts";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -659,6 +660,7 @@ function MainApp() {
         <Route path="/feed/view" element={<PostView />} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/economy" element={<Economy />} />
+        <Route path="/payouts" element={<Payouts />} />
         </Route>
       </Routes>
     </BrowserRouter>
