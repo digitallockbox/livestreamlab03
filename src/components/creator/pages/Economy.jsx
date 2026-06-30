@@ -45,7 +45,10 @@ export default function Economy() {
           </div>
         ))}
       </Card>
-      <Link to="/payouts" className="text-primary hover:underline text-sm inline-flex items-center gap-1">Manage payouts →</Link>
+      <div className="flex flex-wrap gap-4">
+        <Link to="/sales" className="text-primary hover:underline text-sm inline-flex items-center gap-1">Sales dashboard →</Link>
+        <Link to="/payouts" className="text-primary hover:underline text-sm inline-flex items-center gap-1">Manage payouts →</Link>
+      </div>
     </Page>
   );
 }
