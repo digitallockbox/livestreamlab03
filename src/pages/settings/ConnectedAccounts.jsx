@@ -1,60 +1,154 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Github, Twitter, Mail, Twitch, Zap, Unlink2, Link2, Save, X } from "lucide-react";
+import { Github, Twitter, Mail, Twitch, Zap, Unlink2, Link2, Save, X, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { useIdentity } from "@/lib/web3/identity";
 
 const INITIAL_CONNECTED = [
   { id: "github", name: "GitHub", icon: Github, status: "connected", email: "dev@example.com", connected_at: "Mar 15, 2026" },
   { id: "google", name: "Google Account", icon: Mail, status: "connected", email: "creator@gmail.com", connected_at: "Jan 10, 2026" },
 ];
 
-const INITIAL_AVAILABLE = [
-  { id: "twitch", name: "Twitch", icon: Twitch, description: "Connect your Twitch channel for multicast streaming", type: "username", placeholder: "twitch.tv/yourname" },
-  { id: "x", name: "X (Twitter)", icon: Twitter, description: "Link your X account for stream notifications", type: "username", placeholder: "@yourhandle" },
+const AVAILABLE_SERVICES = [
+  { id: "twitch", name: "Twitch", icon: Twitch, description: "Connect your Twitch channel for multicast streaming", field: "twitch", placeholder: "twitch.tv/yourname" },
+  { id: "x", name: "X (Twitter)", icon: Twitter, description: "Link your X account for stream notifications", field: "twitter", placeholder: "@yourhandle" },
   { id: "stripe", name: "Stripe", icon: Zap, description: "Payment processing & payouts", type: "oauth" },
 ];
 
 export default function ConnectedAccounts() {
+  const { walletAddress } = useIdentity();
   const [connected, setConnected] = useState(INITIAL_CONNECTED);
-  const [available, setAvailable] = useState(INITIAL_AVAILABLE);
+  const [available, setAvailable] = useState(AVAILABLE_SERVICES);
   const [connectingId, setConnectingId] = useState(null);
   const [usernameInput, setUsernameInput] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState("");
 
-  const handleDisconnect = (id) => {
-    setConnected(connected.filter(s => s.id !== id));
-    const service = available.find(s => s.id === id);
-    if (service && !available.find(s => s.id === id)) {
-      setAvailable([...available, service]);
+  // Load connected accounts from backend
+  useEffect(() => {
+    if (!walletAddress) return;
+    
+    const loadAccounts = async () => {
+      try {
+        const res = await base44.functions.invoke('getConnectedAccounts', {});
+        const { twitch, twitter } = res.data;
+        
+        const newConnected = [...INITIAL_CONNECTED];
+        const newAvailable = [];
+        
+        if (twitch) {
+          newConnected.push({
+            id: "twitch",
+            name: "Twitch",
+            icon: Twitch,
+            status: "connected",
+            username: twitch,
+            connected_at: "Recently",
+          });
+        } else {
+          newAvailable.push(AVAILABLE_SERVICES.find(s => s.id === "twitch"));
+        }
+        
+        if (twitter) {
+          newConnected.push({
+            id: "x",
+            name: "X (Twitter)",
+            icon: Twitter,
+            status: "connected",
+            username: twitter,
+            connected_at: "Recently",
+          });
+        } else {
+          newAvailable.push(AVAILABLE_SERVICES.find(s => s.id === "x"));
+        }
+        
+        // Add Stripe
+        newAvailable.push(AVAILABLE_SERVICES.find(s => s.id === "stripe"));
+        
+        setConnected(newConnected);
+        setAvailable(newAvailable.filter(Boolean));
+      } catch (error) {
+        console.error('Failed to load accounts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadAccounts();
+  }, [walletAddress]);
+
+  const handleDisconnect = async (id) => {
+    setSaving(true);
+    setStatus("");
+    
+    try {
+      const twitch = id === "twitch" ? "" : connected.find(c => c.id === "twitch")?.username;
+      const twitter = id === "x" ? "" : connected.find(c => c.id === "x")?.username;
+      
+      await base44.functions.invoke('updateConnectedAccounts', {
+        twitch: twitch || null,
+        twitter: twitter || null,
+      });
+      
+      setConnected(connected.filter(s => s.id !== id));
+      const service = AVAILABLE_SERVICES.find(s => s.id === id);
+      if (service && !available.find(s => s.id === id)) {
+        setAvailable([...available, service]);
+      }
+      setStatus("Disconnected successfully");
+    } catch (error) {
+      setStatus("Failed to disconnect");
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleConnect = (service) => {
-    if (service.type === "username") {
+    if (service.type === "username" || service.field) {
       setConnectingId(service.id);
       setUsernameInput("");
     } else {
-      // OAuth flow would go here
       alert(`OAuth flow for ${service.name} - not yet implemented`);
     }
   };
 
-  const saveUsername = (service) => {
+  const saveUsername = async (service) => {
     if (!usernameInput.trim()) return;
     
-    const newConnection = {
-      id: service.id,
-      name: service.name,
-      icon: service.icon,
-      status: "connected",
-      username: usernameInput.trim(),
-      connected_at: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    };
+    setSaving(true);
+    setStatus("");
     
-    setConnected([...connected, newConnection]);
-    setAvailable(available.filter(s => s.id !== service.id));
-    setConnectingId(null);
-    setUsernameInput("");
+    try {
+      const twitch = service.field === "twitch" ? usernameInput.trim() : connected.find(c => c.id === "twitch")?.username;
+      const twitter = service.field === "twitter" ? usernameInput.trim() : connected.find(c => c.id === "x")?.username;
+      
+      await base44.functions.invoke('updateConnectedAccounts', {
+        twitch: twitch || null,
+        twitter: twitter || null,
+      });
+      
+      const newConnection = {
+        id: service.id,
+        name: service.name,
+        icon: service.icon,
+        status: "connected",
+        username: usernameInput.trim(),
+        connected_at: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      };
+      
+      setConnected([...connected, newConnection]);
+      setAvailable(available.filter(s => s.id !== service.id));
+      setConnectingId(null);
+      setUsernameInput("");
+      setStatus("Connected successfully");
+    } catch (error) {
+      setStatus("Failed to connect");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const cancelConnection = () => {
@@ -69,7 +163,19 @@ export default function ConnectedAccounts() {
         <p className="text-muted-foreground mt-1">Manage third-party integrations and OAuth connections.</p>
       </div>
 
-      {/* Connected Services */}
+      {status && (
+        <div className={`mb-6 p-3 rounded-lg text-sm ${status.includes('success') ? 'bg-accent/10 text-accent' : 'bg-destructive/10 text-destructive'}`}>
+          {status}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+      <>
+        {/* Connected Services */}
       <div className="mb-12">
         <h2 className="font-display font-semibold text-lg text-foreground mb-4">Active Connections</h2>
         <div className="space-y-3">
@@ -95,8 +201,9 @@ export default function ConnectedAccounts() {
                     variant="outline"
                     className="text-destructive hover:text-destructive border-destructive/20 hover:border-destructive/50 gap-1.5"
                     onClick={() => handleDisconnect(service.id)}
+                    disabled={saving}
                   >
-                    <Unlink2 className="w-3.5 h-3.5" /> Disconnect
+                    {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Unlink2 className="w-3.5 h-3.5" />} {saving ? "..." : "Disconnect"}
                   </Button>
                 </div>
               </div>
@@ -133,20 +240,22 @@ export default function ConnectedAccounts() {
                       placeholder={service.placeholder}
                       className="h-9 w-full sm:w-48"
                       autoFocus
+                      disabled={saving}
                     />
                     <Button
                       size="sm"
                       className="bg-accent hover:bg-accent/90 gap-1.5"
                       onClick={() => saveUsername(service)}
-                      disabled={!usernameInput.trim()}
+                      disabled={!usernameInput.trim() || saving}
                     >
-                      <Save className="w-3.5 h-3.5" /> Save
+                      {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Save
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       className="border-border hover:bg-destructive/10 hover:text-destructive"
                       onClick={cancelConnection}
+                      disabled={saving}
                     >
                       <X className="w-3.5 h-3.5" />
                     </Button>
@@ -156,6 +265,7 @@ export default function ConnectedAccounts() {
                     size="sm"
                     className="bg-primary hover:bg-primary/90 gap-1.5"
                     onClick={() => handleConnect(service)}
+                    disabled={saving}
                   >
                     <Link2 className="w-3.5 h-3.5" /> Connect
                   </Button>
@@ -169,9 +279,11 @@ export default function ConnectedAccounts() {
       {/* Security Note */}
       <div className="mt-8 p-4 bg-muted/30 border border-border rounded-lg">
         <p className="text-xs text-muted-foreground">
-          <strong>Security:</strong> We only request the minimum permissions needed. You can revoke access anytime by disconnecting above. Your credentials are never stored.
+          <strong>Security:</strong> Your connected account information is stored securely. You can disconnect anytime from above.
         </p>
       </div>
+      </>
+      )}
     </div>
   );
 }

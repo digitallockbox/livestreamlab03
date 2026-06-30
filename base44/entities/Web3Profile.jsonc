@@ -65,6 +65,14 @@
     "bound_domain": {
       "type": "string",
       "description": "Freename domain bound during onboarding (e.g. yourname.livestreamlab)"
+    },
+    "twitch_username": {
+      "type": "string",
+      "description": "Twitch channel username"
+    },
+    "twitter_handle": {
+      "type": "string",
+      "description": "X (Twitter) handle"
     }
   },
   "required": [
