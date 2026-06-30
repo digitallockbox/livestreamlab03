@@ -16,7 +16,7 @@ import ConnectedAccounts from "@/pages/settings/ConnectedAccounts";
 import SupabaseExplorer from "@/pages/SupabaseExplorer";
 import SharedLayout from "@/components/creator/SharedLayout";
 import MultiWalletLogin from "@/components/creator/MultiWalletLogin";
-import { IdentityProvider } from "@/lib/web3/identity";
+import { IdentityProvider, useIdentity } from "@/lib/web3/identity";
 import {
   Page, Card, Spinner, Input, useViewerWallet,
   web3LoginAPI, web3ProfileAPI, verificationAPI, badgesAPI, passportAPI,
@@ -870,12 +870,12 @@ const SettingsHub = () => {
 
 // Intermediate screen: wallet connected but not yet cryptographically verified.
 const VerifyWallet = () => {
-  const { wallet, login, authenticating } = useStreamingIdentity();
+  const { walletAddress, login, authenticating } = useIdentity();
   return (
     <div className="max-w-md mx-auto p-8 mt-20 text-center space-y-4">
       <h1 className="text-2xl font-display font-bold">Verify Wallet</h1>
-      <p className="text-sm text-muted-foreground break-all font-mono">{wallet}</p>
-      <p className="text-sm text-muted-foreground">Sign a nonce with Phantom to prove ownership and unlock the Creator OS.</p>
+      <p className="text-sm text-muted-foreground break-all font-mono">{walletAddress}</p>
+      <p className="text-sm text-muted-foreground">Sign a nonce to prove wallet ownership and unlock the Creator OS.</p>
       <button onClick={login} disabled={authenticating} className="px-6 py-2 rounded-md bg-primary text-primary-foreground text-sm">
         {authenticating ? "Verifying…" : "Sign to Continue"}
       </button>
@@ -887,10 +887,10 @@ const VerifyWallet = () => {
 //  ROUTER (all pages merged) + wallet gate
 // ======================================================
 function MainApp() {
-  const { connected, profile } = useStreamingIdentity();
-  // Identity gate: wallet must be connected AND cryptographically verified before any engine loads.
-  if (!connected) return <MultiWalletLogin />;
-  if (!profile) return <VerifyWallet />;
+  const { walletAddress, session } = useIdentity();
+  // Identity gate: a wallet must be connected AND cryptographically verified before any engine loads.
+  if (!walletAddress) return <MultiWalletLogin />;
+  if (!session) return <VerifyWallet />;
   return (
     <BrowserRouter>
       <Routes>

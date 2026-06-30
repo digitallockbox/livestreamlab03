@@ -91,10 +91,7 @@ function IdentityInner({ children }) {
     }
   }, [publicKey, sign]);
 
-  // Auto-run the handshake once the wallet connects.
-  useEffect(() => {
-    if (publicKey && !profile) login();
-  }, [publicKey, profile, login]);
+  // Login is now driven by the unified useIdentity layer (chain-aware).
 
   // Sign the engine action with the connected wallet, then invoke the backend.
   // The backend verifies the signature against auth_wallet before writing.

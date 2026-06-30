@@ -3,8 +3,9 @@
 // the connected EVM address, a session token, and a unified nonce signer.
 // Phantom (Solana) signing goes through the injected window.solana provider;
 // MetaMask (EVM) signing uses window.ethereum personal_sign.
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { base44 } from "@/api/base44Client";
 
 const IdentityContext = createContext(null);
 
@@ -13,6 +14,7 @@ export function IdentityProvider({ children }) {
   const [evmAddress, setEvmAddress] = useState("");
   const [chain, setChain] = useState("");        // "solana" | "evm" | ""
   const [session, setSession] = useState(null);
+  const [authenticating, setAuthenticating] = useState(false);
 
   const solanaAddress = publicKey ? publicKey.toBase58() : "";
 
@@ -43,6 +45,36 @@ export function IdentityProvider({ children }) {
   // Unified wallet address derived from the active chain.
   const walletAddress = chain === "solana" ? solanaAddress : evmAddress;
 
+  // Challenge → signNonce → verify handshake. Works for both Solana and EVM.
+  const login = useCallback(async () => {
+    if (!walletAddress || !chain) return null;
+    setAuthenticating(true);
+    try {
+      const ch = await base44.functions.invoke("web3Login", { action: "challenge" }).then((r) => r.data);
+      const signature = await signNonce(ch.message);
+      if (!signature) throw new Error("Signature rejected");
+      const res = await base44.functions.invoke("web3Login", {
+        action: "verify",
+        chain,
+        wallet_address: walletAddress,
+        message: ch.message,
+        signature,
+      }).then((r) => r.data);
+      setSession(res.profile);
+      return res.profile;
+    } catch (e) {
+      console.warn("Identity login failed:", e?.message || e);
+      return null;
+    } finally {
+      setAuthenticating(false);
+    }
+  }, [chain, walletAddress, signNonce]);
+
+  // Auto-run the handshake once a wallet is connected and not yet verified.
+  useEffect(() => {
+    if (walletAddress && !session) login();
+  }, [walletAddress, session, login]);
+
   return (
     <IdentityContext.Provider
       value={{
@@ -54,6 +86,9 @@ export function IdentityProvider({ children }) {
         session,
         setSession,
         signNonce,
+        login,
+        authenticating,
+        profile: session,
       }}
     >
       {children}

@@ -2,13 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Loader2, Zap, CreditCard, UserPlus, UserMinus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
+import { useIdentity } from "@/lib/web3/identity";
 
 const invoke = (name, payload) => base44.functions.invoke(name, payload).then((r) => r.data);
 
-// Identity root: the connected Phantom wallet is the viewer/creator identity across the whole OS.
+// Identity root: the unified (Solana or EVM) wallet address is the viewer/creator identity across the whole OS.
 export const useViewerWallet = () => {
-  const { wallet } = useStreamingIdentity();
-  return wallet;
+  const { walletAddress } = useIdentity();
+  return walletAddress;
 };
 
 // ======================================================

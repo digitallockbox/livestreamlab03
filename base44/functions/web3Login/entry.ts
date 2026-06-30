@@ -3,6 +3,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import nacl from 'npm:tweetnacl@1.0.3';
 import bs58 from 'npm:bs58@6.0.0';
+import { ethers } from 'npm:ethers@6.13.4';
 
 const FIVE_MIN = 5 * 60 * 1000;
 
@@ -22,17 +23,23 @@ Deno.serve(async (req) => {
 
     // Step 2 — verify the Ed25519 signature against the claimed wallet address.
     if (action === 'verify') {
-      const { wallet_address, message, signature } = body;
+      const { wallet_address, message, signature, chain } = body;
       if (!wallet_address || !message || !signature) {
         return Response.json({ error: 'wallet_address, message, signature required' }, { status: 400 });
       }
+      const normalized = chain === 'evm' ? String(wallet_address).toLowerCase() : wallet_address;
 
       let ok = false;
       try {
-        const msgBytes = new TextEncoder().encode(message);
-        const sigBytes = Uint8Array.from(atob(signature), (c) => c.charCodeAt(0));
-        const pubKeyBytes = bs58.decode(wallet_address);
-        ok = nacl.sign.detached.verify(msgBytes, sigBytes, pubKeyBytes);
+        if (chain === 'evm') {
+          const recovered = ethers.verifyMessage(String(message), String(signature));
+          ok = recovered.toLowerCase() === normalized;
+        } else {
+          const msgBytes = new TextEncoder().encode(message);
+          const sigBytes = Uint8Array.from(atob(signature), (c) => c.charCodeAt(0));
+          const pubKeyBytes = bs58.decode(wallet_address);
+          ok = nacl.sign.detached.verify(msgBytes, sigBytes, pubKeyBytes);
+        }
       } catch (e) {
         return Response.json({ error: 'Signature verification failed: ' + e.message }, { status: 400 });
       }
@@ -46,12 +53,12 @@ Deno.serve(async (req) => {
       }
 
       // Upsert the wallet's Web3Profile, marking it wallet-verified.
-      const existing = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address });
+      const existing = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: normalized });
       let profile = existing[0];
       if (!profile) {
-        const short = wallet_address.slice(0, 6) + '...' + wallet_address.slice(-4);
+        const short = normalized.slice(0, 6) + '...' + normalized.slice(-4);
         profile = await base44.asServiceRole.entities.Web3Profile.create({
-          wallet_address,
+          wallet_address: normalized,
           display_name: short,
           avatar_url: '',
           bio: '',
