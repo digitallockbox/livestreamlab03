@@ -35,7 +35,7 @@ export const badgesAPI = {
 };
 
 export const passportAPI = {
-  get: () => invoke("web3Passport", {}),
+  get: (wallet_address) => invoke("web3Passport", { wallet_address }),
 };
 
 export const marketplaceAPI = {
@@ -158,6 +158,7 @@ export const SocialGraph = ({ graph }) => (
 );
 
 export const FollowButton = ({ creatorWallet, viewerWallet }) => {
+  const { signedInvoke } = useIdentity();
   const [following, setFollowing] = useState(false);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -168,7 +169,7 @@ export const FollowButton = ({ creatorWallet, viewerWallet }) => {
     if (!viewerWallet || !creatorWallet) return;
     setBusy(true);
     try {
-      const res = await (following ? socialAPI.unfollow({ followerWallet: viewerWallet, creatorWallet }) : socialAPI.follow({ followerWallet: viewerWallet, creatorWallet }));
+      const res = await (following ? signedInvoke("web3Social", { action: "unfollow", followerWallet: viewerWallet, creatorWallet }) : signedInvoke("web3Social", { action: "follow", followerWallet: viewerWallet, creatorWallet }));
       setFollowing(res.following);
     } finally { setBusy(false); }
   };

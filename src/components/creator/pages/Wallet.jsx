@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
+import { useIdentity } from "@/lib/web3/identity";
 import { Page, Card, Input, transfersAPI } from "@/components/creator/os";
 
 export default function Wallet() {
   const { wallet, balance, loadingBalance, refreshBalance, sendStreaming } = useStreamingIdentity();
+  const { signedInvoke } = useIdentity();
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
@@ -21,7 +23,7 @@ export default function Wallet() {
     try {
       const s = await sendStreaming(recipient.trim(), Number(amount));
       setSig(s);
-      await transfersAPI.record({ sender: wallet, recipient: recipient.trim(), amount: Number(amount), signature: s });
+      await signedInvoke("web3Transfers", { action: "record", sender: wallet, recipient: recipient.trim(), amount: Number(amount), signature: s });
       refreshBalance();
       setRecipient(""); setAmount("");
     } catch (e) { setError(e?.message || "Transfer failed"); }

@@ -126,9 +126,10 @@ const BadgeUpgrade = () => {
 
 // Passport
 const CreatorPassport = () => {
+  const wallet = useViewerWallet();
   const [passport, setPassport] = useState(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { passportAPI.get().then((r) => setPassport(r.passport)).finally(() => setLoading(false)); }, []);
+  useEffect(() => { if (!wallet) { setLoading(false); return; } passportAPI.get(wallet).then((r) => setPassport(r.passport)).finally(() => setLoading(false)); }, [wallet]);
   if (loading) return <Spinner />;
   if (!passport) return <Page title="Creator Passport" subtitle="Your creator passport NFT"><Card><p className="text-sm text-muted-foreground">No passport found. Create a profile first.</p></Card></Page>;
   return (
@@ -267,6 +268,7 @@ const Feed = () => {
 
 const CreatePost = () => {
   const wallet = useViewerWallet();
+  const { signedInvoke } = useIdentity();
   const [content, setContent] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
   const [saving, setSaving] = useState(false);
@@ -274,7 +276,7 @@ const CreatePost = () => {
   const submit = async () => {
     if (!wallet || !content.trim()) return;
     setSaving(true);
-    try { await feedAPI.create({ authorWallet: wallet, content: content.trim(), mediaUrl }); navigate("/feed"); } finally { setSaving(false); }
+    try { await signedInvoke("web3Feed", { action: "create", authorWallet: wallet, content: content.trim(), mediaUrl }); navigate("/feed"); } finally { setSaving(false); }
   };
   return (
     <Page title="Create Post" subtitle="Publish to your feed">
@@ -306,6 +308,7 @@ const PostView = () => {
 // Messaging
 const Messages = () => {
   const wallet = useViewerWallet();
+  const { signedInvoke } = useIdentity();
   const [toWallet, setToWallet] = useState("");
   const [content, setContent] = useState("");
   const [inbox, setInbox] = useState([]);
@@ -314,7 +317,7 @@ const Messages = () => {
   const send = async () => {
     if (!wallet || !toWallet || !content.trim()) return;
     setSending(true);
-    try { await messagingAPI.send({ senderWallet: wallet, recipientWallet: toWallet, content: content.trim() }); messagingAPI.inbox(wallet).then((r) => setInbox(r.messages || [])); setContent(""); } finally { setSending(false); }
+    try { await signedInvoke("web3Messages", { action: "send", senderWallet: wallet, recipientWallet: toWallet, content: content.trim() }); messagingAPI.inbox(wallet).then((r) => setInbox(r.messages || [])); setContent(""); } finally { setSending(false); }
   };
   return (
     <Page title="Messages" subtitle="Direct messages">

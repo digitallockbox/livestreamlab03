@@ -3,10 +3,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const wallet = (await req.json().catch(() => ({}))).wallet;
 
-    const txns = await base44.asServiceRole.entities.Transaction.list('-created_date', 100);
+    const allTxns = await base44.asServiceRole.entities.Transaction.list('-created_date', 200);
+    // Scope economy to the caller's wallet when provided.
+    const txns = wallet
+      ? allTxns.filter((t) => !t.sender_wallet || !t.recipient_wallet || t.sender_wallet === wallet || t.recipient_wallet === wallet)
+      : allTxns;
     const total = txns.reduce((s, t) => s + (t.amount || 0), 0);
     const streaming_total = txns.reduce((s, t) => s + (t.streaming_amount || 0), 0);
     const by_type = {};

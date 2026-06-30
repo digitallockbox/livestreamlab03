@@ -1,16 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// web3Passport — derived creator passport. Looked up by wallet_address (no Base44 session).
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+    const body = await req.json().catch(() => ({}));
     const TIERS = ['bronze', 'silver', 'gold', 'diamond'];
-    let profile = null;
+    const wallet = (body.wallet_address || '').trim();
 
-    if (user) {
-      const list = await base44.asServiceRole.entities.Web3Profile.filter({ created_by_id: user.id });
+    let profile = null;
+    if (wallet) {
+      const list = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: wallet });
       profile = list[0] || null;
     }
 
