@@ -1,29 +1,65 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Github, Twitter, Mail, Twitch, Zap, Unlink2, Link2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Github, Twitter, Mail, Twitch, Zap, Unlink2, Link2, Save, X } from "lucide-react";
 
-const CONNECTED_SERVICES = [
+const INITIAL_CONNECTED = [
   { id: "github", name: "GitHub", icon: Github, status: "connected", email: "dev@example.com", connected_at: "Mar 15, 2026" },
-  { id: "twitter", name: "Twitter", icon: Twitter, status: "connected", username: "@cryptocreator", connected_at: "Feb 28, 2026" },
   { id: "google", name: "Google Account", icon: Mail, status: "connected", email: "creator@gmail.com", connected_at: "Jan 10, 2026" },
 ];
 
-const AVAILABLE_SERVICES = [
-  { id: "twitch", name: "Twitch", icon: Twitch, description: "Stream multicast to Twitch" },
-  { id: "stripe", name: "Stripe", icon: Zap, description: "Payment processing & payouts" },
+const INITIAL_AVAILABLE = [
+  { id: "twitch", name: "Twitch", icon: Twitch, description: "Connect your Twitch channel for multicast streaming", type: "username", placeholder: "twitch.tv/yourname" },
+  { id: "x", name: "X (Twitter)", icon: Twitter, description: "Link your X account for stream notifications", type: "username", placeholder: "@yourhandle" },
+  { id: "stripe", name: "Stripe", icon: Zap, description: "Payment processing & payouts", type: "oauth" },
 ];
 
 export default function ConnectedAccounts() {
-  const [connected, setConnected] = useState(CONNECTED_SERVICES);
+  const [connected, setConnected] = useState(INITIAL_CONNECTED);
+  const [available, setAvailable] = useState(INITIAL_AVAILABLE);
+  const [connectingId, setConnectingId] = useState(null);
+  const [usernameInput, setUsernameInput] = useState("");
 
   const handleDisconnect = (id) => {
     setConnected(connected.filter(s => s.id !== id));
+    const service = available.find(s => s.id === id);
+    if (service && !available.find(s => s.id === id)) {
+      setAvailable([...available, service]);
+    }
   };
 
   const handleConnect = (service) => {
-    // Mock connection
-    alert(`Connecting to ${service.name}...`);
+    if (service.type === "username") {
+      setConnectingId(service.id);
+      setUsernameInput("");
+    } else {
+      // OAuth flow would go here
+      alert(`OAuth flow for ${service.name} - not yet implemented`);
+    }
+  };
+
+  const saveUsername = (service) => {
+    if (!usernameInput.trim()) return;
+    
+    const newConnection = {
+      id: service.id,
+      name: service.name,
+      icon: service.icon,
+      status: "connected",
+      username: usernameInput.trim(),
+      connected_at: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    };
+    
+    setConnected([...connected, newConnection]);
+    setAvailable(available.filter(s => s.id !== service.id));
+    setConnectingId(null);
+    setUsernameInput("");
+  };
+
+  const cancelConnection = () => {
+    setConnectingId(null);
+    setUsernameInput("");
   };
 
   return (
@@ -73,26 +109,57 @@ export default function ConnectedAccounts() {
       <div>
         <h2 className="font-display font-semibold text-lg text-foreground mb-4">Available Services</h2>
         <div className="space-y-3">
-          {AVAILABLE_SERVICES.map((service) => {
+          {available.map((service) => {
             const Icon = service.icon;
+            const isConnecting = connectingId === service.id;
+            
             return (
               <div key={service.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-secondary border border-border rounded-xl">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-1">
                   <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                     <Icon className="w-5 h-5 text-muted-foreground" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm font-semibold text-foreground">{service.name}</p>
                     <p className="text-xs text-muted-foreground">{service.description}</p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  className="bg-primary hover:bg-primary/90 gap-1.5"
-                  onClick={() => handleConnect(service)}
-                >
-                  <Link2 className="w-3.5 h-3.5" /> Connect
-                </Button>
+                
+                {isConnecting ? (
+                  <div className="flex items-center gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+                    <Input
+                      value={usernameInput}
+                      onChange={(e) => setUsernameInput(e.target.value)}
+                      placeholder={service.placeholder}
+                      className="h-9 w-full sm:w-48"
+                      autoFocus
+                    />
+                    <Button
+                      size="sm"
+                      className="bg-accent hover:bg-accent/90 gap-1.5"
+                      onClick={() => saveUsername(service)}
+                      disabled={!usernameInput.trim()}
+                    >
+                      <Save className="w-3.5 h-3.5" /> Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-border hover:bg-destructive/10 hover:text-destructive"
+                      onClick={cancelConnection}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="bg-primary hover:bg-primary/90 gap-1.5"
+                    onClick={() => handleConnect(service)}
+                  >
+                    <Link2 className="w-3.5 h-3.5" /> Connect
+                  </Button>
+                )}
               </div>
             );
           })}
