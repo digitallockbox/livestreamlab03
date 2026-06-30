@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { economy } from "@/lib/web3/economy";
 import EconomyCard from "@/components/web3/EconomyCard";
 import RevenueChart from "@/components/web3/RevenueChart";
+import MarketplaceCard from "@/components/web3/MarketplaceCard";
 
 export default function EconomyDashboard() {
   const [data, setData] = useState(null);
@@ -57,6 +58,7 @@ export default function EconomyDashboard() {
         />
         <EconomyCard label="Transactions" value={data.transaction_count || 0} sub="Recent activity" />
       </div>
+      <MarketplaceCard sales={data.sales_count || 0} total={data.sales_total || 0} />
       <div className="rounded-2xl border border-border bg-card p-6">
         <h3 className="font-display font-semibold mb-4">Revenue Trend</h3>
         <RevenueChart data={chartData} />

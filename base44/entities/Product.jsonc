@@ -2,6 +2,10 @@
   "name": "Product",
   "type": "object",
   "properties": {
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet of the creator who owns this product"
+    },
     "name": {
       "type": "string"
     },

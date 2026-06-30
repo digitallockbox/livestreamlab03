@@ -25,6 +25,9 @@ Deno.serve(async (req) => {
     const subTxns = txns.filter((t) => t.source === 'subscription');
     const subs_mrr = subTxns.reduce((s, t) => s + (t.amount || 0), 0);
 
+    const saleTxns = txns.filter((t) => t.source === 'marketplace' && t.type === 'store_sale');
+    const sales_total = saleTxns.reduce((s, t) => s + (t.amount || 0), 0);
+
     return Response.json({
       total_revenue: total,
       streaming_revenue: streaming_total,
@@ -34,6 +37,8 @@ Deno.serve(async (req) => {
       recent_boosts,
       subscriber_count: subTxns.length,
       subs_mrr,
+      sales_count: saleTxns.length,
+      sales_total,
       by_type,
       recent: txns.slice(0, 10)
     });

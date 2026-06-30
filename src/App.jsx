@@ -76,6 +76,10 @@ import BadgeUpgrade from '@/pages/web3/BadgeUpgrade';
 import CreatorPassport from '@/pages/web3/CreatorPassport';
 import StreamBoost from '@/pages/web3/StreamBoost';
 import Subscriptions from '@/pages/web3/Subscriptions';
+import MarketplaceDashboard from '@/pages/web3/MarketplaceDashboard';
+import AddMarketplaceProduct from '@/pages/web3/AddMarketplaceProduct';
+import MarketplaceProducts from '@/pages/web3/MarketplaceProducts';
+import MarketplaceSales from '@/pages/web3/MarketplaceSales';
 import EconomyDashboard from '@/pages/web3/EconomyDashboard';
 
 
@@ -116,6 +120,10 @@ const AuthenticatedApp = () => {
         <Route path="/web3/passport" element={<CreatorPassport />} />
         <Route path="/web3/boosts" element={<StreamBoost />} />
         <Route path="/web3/subscriptions" element={<Subscriptions />} />
+        <Route path="/web3/marketplace" element={<MarketplaceDashboard />} />
+        <Route path="/web3/marketplace/add" element={<AddMarketplaceProduct />} />
+        <Route path="/web3/marketplace/products" element={<MarketplaceProducts />} />
+        <Route path="/web3/marketplace/sales" element={<MarketplaceSales />} />
         <Route path="/web3/economy" element={<EconomyDashboard />} />
       </Route>
       <Route path="/stream/:id" element={<StreamPage />} />
