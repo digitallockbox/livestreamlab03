@@ -1,0 +1,41 @@
+{
+  "name": "Domain",
+  "type": "object",
+  "properties": {
+    "domain": {
+      "type": "string",
+      "description": "Full domain name purchased (e.g. creator.livestreamlab)"
+    },
+    "wallet": {
+      "type": "string",
+      "description": "Wallet address that owns the domain"
+    },
+    "chain": {
+      "type": "string",
+      "description": "Chain the domain was minted on (solana | evm)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "purchased",
+        "minted",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "tx_hash": {
+      "type": "string",
+      "description": "On-chain mint/registration transaction hash"
+    },
+    "freename_order_id": {
+      "type": "string",
+      "description": "Freename order identifier returned by the purchase API"
+    }
+  },
+  "required": [
+    "domain",
+    "wallet",
+    "chain"
+  ]
+}
