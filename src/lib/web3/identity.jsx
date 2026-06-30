@@ -76,6 +76,16 @@ export function IdentityProvider({ children }) {
     if (publicKey && !chain) setChain("solana");
   }, [publicKey, chain]);
 
+  // Symmetric EVM handling: restore a previously-authorized MetaMask account on reload
+  // so the wallet address resolves and the handshake can proceed automatically.
+  useEffect(() => {
+    const eth = window.ethereum;
+    if (!evmAddress && !chain && eth?.selectedAddress) {
+      setEvmAddress(eth.selectedAddress);
+      setChain("evm");
+    }
+  }, [evmAddress, chain]);
+
   // Auto-run the handshake once a wallet is connected and not yet verified.
   useEffect(() => {
     if (walletAddress && !session) login();
