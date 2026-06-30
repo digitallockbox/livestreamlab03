@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Radio, ShoppingBag, BarChart3, Globe, Settings as SettingsIcon } from "lucide-react";
+import { Radio, ShoppingBag, Store as StoreIcon, BarChart3, Globe, Settings as SettingsIcon } from "lucide-react";
 import { useIdentity } from "@/lib/web3/identity";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { Card, streamsAPI } from "@/components/creator/os";
@@ -8,10 +8,12 @@ import Marketplace from "@/components/creator/pages/Marketplace";
 import Economy from "@/components/creator/pages/Economy";
 import Domains from "@/components/creator/pages/Domains";
 import Settings from "@/components/creator/pages/Settings";
+import Store from "@/components/creator/pages/Store";
 
 const MODULES = [
   { key: "streams", label: "Streams", icon: Radio, Component: Streams },
   { key: "marketplace", label: "Marketplace", icon: ShoppingBag, Component: Marketplace },
+  { key: "store", label: "Store", icon: StoreIcon, Component: Store },
   { key: "earnings", label: "Earnings", icon: BarChart3, Component: Economy },
   { key: "domain", label: "Domain", icon: Globe, Component: Domains },
   { key: "settings", label: "Settings", icon: SettingsIcon, Component: Settings },

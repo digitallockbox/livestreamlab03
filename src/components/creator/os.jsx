@@ -109,6 +109,11 @@ export const domainsAPI = {
   get: (wallet) => invoke("freenamePurchase", { action: "get", wallet }),
 };
 
+export const storeAPI = {
+  list: (creatorWallet, searchTerm) => invoke("web3Store", { action: "list", creatorWallet, searchTerm }),
+  click: (payload) => invoke("web3Store", { action: "click", ...payload }),
+};
+
 // ======================================================
 //  SHARED UI HELPERS
 // ======================================================
