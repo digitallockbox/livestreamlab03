@@ -5,8 +5,7 @@
 // ======================================================
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useParams, useNavigate } from "react-router-dom";
-import { Loader2, Zap, CreditCard, ShoppingBag, Send, UserPlus, UserMinus, CheckCircle2, Radio, Video, BarChart3 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { Loader2, Send, CheckCircle2, Radio, Video, Zap } from "lucide-react";
 import { useCreator } from "@/hooks/web3/useCreator";
 import { PhantomIdentityProvider, useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import ProfileSettings from "@/pages/settings/ProfileSettings";
@@ -16,207 +15,23 @@ import NotificationSettings from "@/pages/settings/NotificationSettings";
 import ConnectedAccounts from "@/pages/settings/ConnectedAccounts";
 import SupabaseExplorer from "@/pages/SupabaseExplorer";
 import SharedLayout from "@/components/creator/SharedLayout";
+import {
+  Page, Card, Spinner, Input, useViewerWallet,
+  web3LoginAPI, web3ProfileAPI, verificationAPI, badgesAPI, passportAPI,
+  marketplaceAPI, watchAPI, boostsAPI, subscriptionsAPI, socialAPI, feedAPI,
+  messagingAPI, economyAPI, streamsAPI, videoAPI,
+  Web3NameBadge, VerificationBadge, CreatorBadge, PassportBadge, SocialGraph,
+  FollowButton, BoostButton, SubscribeButton,
+} from "@/components/creator/os";
+import Home from "@/components/creator/pages/Home";
+import GoLive from "@/components/creator/pages/GoLive";
+import Wallet from "@/components/creator/pages/Wallet";
 
-// ======================================================
-//  API CONFIG
-// ======================================================
-const invoke = (name, payload) => base44.functions.invoke(name, payload).then((r) => r.data);
+// API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
-// Identity root: the connected Phantom wallet is the viewer/creator identity across the whole OS.
-const useViewerWallet = () => {
-  const { wallet } = useStreamingIdentity();
-  return wallet;
-};
 
-// ======================================================
-//  API CONNECTORS (ALL MERGED — bound to real Base44 functions)
-// ======================================================
-const web3LoginAPI = {
-  login: (wallet_address) => invoke("web3Login", { wallet_address }),
-  nonce: () => invoke("web3Login", {}),
-  verify: (payload) => invoke("web3Verify", payload),
-};
 
-const web3ProfileAPI = {
-  me: () => invoke("web3Profile", { action: "me" }),
-  get: (wallet_address) => invoke("web3Profile", { action: "get", wallet_address }),
-  update: (payload) => invoke("web3Profile", { action: "update", ...payload }),
-};
 
-const verificationAPI = {
-  mint: (level) => invoke("web3Verify", { level }),
-};
-
-const badgesAPI = {
-  upgrade: (tier) => invoke("web3Badges", tier ? { tier } : {}),
-};
-
-const passportAPI = {
-  get: () => invoke("web3Passport", {}),
-};
-
-const marketplaceAPI = {
-  add: (creatorWallet, data) => invoke("web3Marketplace", { action: "add", creatorWallet, ...data }),
-  list: (creatorWallet) => invoke("web3Marketplace", { action: "list", creatorWallet }),
-  sales: (creatorWallet) => invoke("web3Marketplace", { action: "sales", creatorWallet }),
-  purchase: (payload) => invoke("web3Marketplace", { action: "buy", ...payload }),
-};
-
-const watchAPI = {
-  start: (viewerWallet, creatorWallet) => invoke("web3Watch", { action: "start", viewerWallet, creatorWallet }),
-  tick: (sessionId) => invoke("web3Watch", { action: "tick", sessionId }),
-  end: (sessionId) => invoke("web3Watch", { action: "end", sessionId }),
-};
-
-const boostsAPI = {
-  send: (payload) => invoke("web3Boosts", { action: "send", ...payload }),
-  list: (wallet) => invoke("web3Boosts", { action: "list", wallet }),
-};
-
-const subscriptionsAPI = {
-  subscribe: (payload) => invoke("web3Subscriptions", { action: "subscribe", ...payload }),
-  list: (wallet) => invoke("web3Subscriptions", { action: "list", wallet }),
-};
-
-const socialAPI = {
-  follow: (payload) => invoke("web3Social", { action: "follow", ...payload }),
-  unfollow: (payload) => invoke("web3Social", { action: "unfollow", ...payload }),
-  graph: (wallet) => invoke("web3Social", { action: "graph", wallet }),
-};
-
-const feedAPI = {
-  create: (payload) => invoke("web3Feed", { action: "create", ...payload }),
-  get: (wallet) => invoke("web3Feed", { action: "get", wallet }),
-  view: (postId) => invoke("web3Feed", { action: "view", postId }),
-};
-
-const messagingAPI = {
-  send: (payload) => invoke("web3Messages", { action: "send", ...payload }),
-  inbox: (wallet) => invoke("web3Messages", { action: "inbox", wallet }),
-};
-
-const economyAPI = {
-  get: () => invoke("web3Economy", {}),
-};
-
-const streamsAPI = {
-  start: (creatorWallet, title, extra = {}) => invoke("web3Streams", { action: "start", creatorWallet, title, ...extra }),
-  live: () => invoke("web3Streams", { action: "live" }),
-  past: (creatorWallet) => invoke("web3Streams", { action: "past", creatorWallet }),
-  end: (streamId) => invoke("web3Streams", { action: "end", streamId }),
-  analytics: (streamId) => invoke("web3Streams", { action: "analytics", streamId }),
-};
-
-const transfersAPI = {
-  record: (payload) => invoke("web3Transfers", { action: "record", ...payload }),
-  list: (wallet) => invoke("web3Transfers", { action: "list", wallet }),
-};
-
-const videoAPI = {
-  list: (creatorWallet) => invoke("web3Videos", { action: "list", creatorWallet }),
-  create: (creatorWallet, data) => invoke("web3Videos", { action: "create", creatorWallet, ...data }),
-  update: (id, data) => invoke("web3Videos", { action: "update", id, ...data }),
-  remove: (id) => invoke("web3Videos", { action: "delete", id }),
-  analytics: (creatorWallet) => invoke("web3Videos", { action: "analytics", creatorWallet }),
-};
-
-// ======================================================
-//  SHARED UI HELPERS
-// ======================================================
-const Page = ({ title, subtitle, children }) => (
-  <div className="max-w-5xl mx-auto space-y-6 p-4">
-    <div>
-      <h1 className="text-2xl font-display font-bold">{title}</h1>
-      {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
-    </div>
-    {children}
-  </div>
-);
-const Card = ({ children, className = "" }) => (
-  <div className={`rounded-2xl border border-border bg-card p-6 ${className}`}>{children}</div>
-);
-const Spinner = () => <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
-const Input = (props) => <input {...props} className={`w-full rounded-md border border-input bg-muted px-3 py-2 ${props.className || ""}`} />;
-
-// Tiny mock fallback — used only when real data is empty, never blocks real calls
-const withMock = (real, mock) => (real && Object.keys(real).length > 0 ? real : mock);
-
-// ======================================================
-//  COMPONENTS (all real)
-// ======================================================
-const Web3NameBadge = ({ creator }) => <span className="font-mono text-sm">{creator?.ens_name || creator?.display_name || "—"}</span>;
-const VerificationBadge = ({ creator }) => (
-  <span className={`text-xs px-2 py-0.5 rounded-full ${creator?.verified ? "bg-accent/15 text-accent" : "bg-muted text-muted-foreground"}`}>
-    {creator?.verified ? "Verified" : "Unverified"}
-  </span>
-);
-const CreatorBadge = ({ creator }) => (
-  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary capitalize">{creator?.badge_tier || "bronze"}</span>
-);
-const PassportBadge = ({ creator }) => (
-  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
-    {creator?.verification_level === "full" ? "Passport Active" : "No Passport"}
-  </span>
-);
-
-const SocialGraph = ({ graph }) => (
-  <div className="text-sm text-muted-foreground">
-    Followers: {graph?.followers_count || 0} · Following: {graph?.following_count || 0} · Connections: {(graph?.following || []).length}
-  </div>
-);
-
-const FollowButton = ({ creatorWallet, viewerWallet }) => {
-  const [following, setFollowing] = useState(false);
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    if (!viewerWallet) return;
-    socialAPI.graph(viewerWallet).then((g) => setFollowing((g.following || []).includes(creatorWallet)));
-  }, [viewerWallet, creatorWallet]);
-  const handle = async () => {
-    if (!viewerWallet || !creatorWallet) return;
-    setBusy(true);
-    try {
-      const res = await (following ? socialAPI.unfollow({ followerWallet: viewerWallet, creatorWallet }) : socialAPI.follow({ followerWallet: viewerWallet, creatorWallet }));
-      setFollowing(res.following);
-    } finally { setBusy(false); }
-  };
-  return (
-    <button onClick={handle} disabled={busy} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-secondary text-secondary-foreground text-sm hover:bg-secondary/80">
-      {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : following ? <UserMinus className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-      {following ? "Unfollow" : "Follow"}
-    </button>
-  );
-};
-
-const BoostButton = ({ creatorWallet, viewerWallet, amount = 10 }) => {
-  const { signedInvoke } = useStreamingIdentity();
-  const [sending, setSending] = useState(false);
-  const handle = async () => {
-    if (!viewerWallet || !creatorWallet) return;
-    setSending(true);
-    try { await signedInvoke("web3Boosts", { action: "send", viewerWallet, creatorWallet, amount, message: "Boost!" }); } finally { setSending(false); }
-  };
-  return (
-    <button onClick={handle} disabled={sending} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-primary/15 text-primary text-sm border border-primary/30 hover:bg-primary/25">
-      {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />} Boost {amount}
-    </button>
-  );
-};
-
-const SubscribeButton = ({ creatorWallet, viewerWallet, tier = "basic" }) => {
-  const { signedInvoke } = useStreamingIdentity();
-  const [sending, setSending] = useState(false);
-  const handle = async () => {
-    if (!viewerWallet || !creatorWallet) return;
-    setSending(true);
-    try { await signedInvoke("web3Subscriptions", { action: "subscribe", subscriberWallet: viewerWallet, creatorWallet, tier }); } finally { setSending(false); }
-  };
-  return (
-    <button onClick={handle} disabled={sending} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-accent/15 text-accent text-sm border border-accent/30 hover:bg-accent/25">
-      {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />} Subscribe ({tier})
-    </button>
-  );
-};
 
 // ======================================================
 //  PAGES (all real)
@@ -650,53 +465,7 @@ const EconomyDashboard = () => {
   );
 };
 
-// Go Live — creator starts a stream session (returns RTMP url + key)
-const GoLive = () => {
-  const viewerWallet = useViewerWallet();
-  const { signedInvoke } = useStreamingIdentity();
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("gaming");
-  const [stream, setStream] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const start = async () => {
-    if (!viewerWallet || !title.trim()) return;
-    setBusy(true);
-    try {
-      const res = await signedInvoke("web3Streams", { action: "start", creatorWallet: viewerWallet, title: title.trim(), category });
-      setStream(res);
-    } finally { setBusy(false); }
-  };
-  return (
-    <Page title="Go Live" subtitle="Start a new stream session">
-      <Card className="space-y-3 max-w-lg">
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Stream title" />
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-md border border-input bg-muted px-3 py-2">
-          <option value="gaming">Gaming</option>
-          <option value="music">Music</option>
-          <option value="talk_show">Talk Show</option>
-          <option value="education">Education</option>
-          <option value="creative">Creative</option>
-          <option value="tech">Tech</option>
-          <option value="other">Other</option>
-        </select>
-        <button onClick={start} disabled={busy || !title.trim()} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">
-          {busy ? "Starting…" : "Start Stream"}
-        </button>
-        {stream && (
-          <div className="pt-2 text-sm space-y-1 break-all">
-            <p><span className="text-muted-foreground">Stream ID:</span> {stream.id}</p>
-            <p><span className="text-muted-foreground">RTMP URL:</span> {stream.rtmpUrl}</p>
-            <p><span className="text-muted-foreground">Stream Key:</span> <span className="font-mono">{stream.streamKey}</span></p>
-            <div className="flex gap-4 pt-1">
-              <Link to={`/streams/${stream.id}/analytics`} className="text-primary hover:underline">Stream Analytics →</Link>
-              <Link to="/streams" className="text-primary hover:underline">All Streams →</Link>
-            </div>
-          </div>
-        )}
-      </Card>
-    </Page>
-  );
-};
+
 
 // All Streams — list live + past
 const AllStreams = () => {
@@ -763,68 +532,7 @@ const StreamAnalytics = () => {
   );
 };
 
-// Wallet — real on-chain $STREAMING send/receive via Phantom + transfer history
-const Wallet = () => {
-  const { wallet, balance, loadingBalance, refreshBalance, sendStreaming } = useStreamingIdentity();
-  const [recipient, setRecipient] = useState("");
-  const [amount, setAmount] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [sig, setSig] = useState(null);
-  const [error, setError] = useState("");
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    if (!wallet) return;
-    transfersAPI.list(wallet).then((r) => setHistory(r.transfers || [])).finally(() => setLoading(false));
-  }, [wallet]);
-  const send = async () => {
-    if (!wallet || !recipient.trim() || !amount) return;
-    setBusy(true); setError(""); setSig(null);
-    try {
-      const s = await sendStreaming(recipient.trim(), Number(amount));
-      setSig(s);
-      await transfersAPI.record({ sender: wallet, recipient: recipient.trim(), amount: Number(amount), signature: s });
-      refreshBalance();
-      setRecipient(""); setAmount("");
-    } catch (e) { setError(e?.message || "Transfer failed"); }
-    finally { setBusy(false); }
-  };
-  return (
-    <Page title="STREAMING Wallet" subtitle="On-chain $STREAMING transfers via Phantom">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card>
-          <p className="text-xs text-muted-foreground">Balance (on-chain)</p>
-          <button onClick={refreshBalance} className="text-2xl font-display font-bold text-accent">
-            {loadingBalance ? "…" : balance} <span className="text-xs text-muted-foreground">↻</span>
-          </button>
-        </Card>
-        <Card>
-          <p className="text-xs text-muted-foreground">Your address</p>
-          <p className="font-mono text-sm break-all">{wallet}</p>
-        </Card>
-      </div>
-      <Card className="space-y-3 max-w-lg">
-        <h3 className="font-display font-semibold">Send $STREAMING</h3>
-        <Input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="Recipient wallet address" className="font-mono" />
-        <Input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" type="number" />
-        <button onClick={send} disabled={busy || !recipient.trim() || !amount} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">
-          {busy ? "Signing…" : "Send (Phantom)"}
-        </button>
-        {sig && <p className="text-xs text-accent break-all">✓ Tx: {sig}</p>}
-        {error && <p className="text-xs text-destructive">{error}</p>}
-      </Card>
-      <Card>
-        <h3 className="font-display font-semibold mb-3">Transfer History</h3>
-        {loading ? <p className="text-sm text-muted-foreground">Loading…</p> : history.length === 0 ? <p className="text-sm text-muted-foreground">No transfers yet.</p> : history.map((t) => (
-          <div key={t.id} className="flex justify-between py-1.5 border-b border-border/50 last:border-0 text-sm">
-            <span className="font-mono text-xs">{t.sender_wallet === wallet ? "→ " + (t.recipient_wallet || "").slice(0, 8) : "← " + (t.sender_wallet || "").slice(0, 8)}…</span>
-            <span className="font-medium">{t.amount} $STREAMING</span>
-          </div>
-        ))}
-      </Card>
-    </Page>
-  );
-};
+
 
 // Watch-to-Earn — viewer accrues $STREAMING each minute via the web3Watch tick loop
 const WatchToEarn = () => {
@@ -910,54 +618,7 @@ const WatchToEarn = () => {
   );
 };
 
-// Home — the Creator OS landing that ties every vertical together
-const Home = () => {
-  const { wallet, balance, loadingBalance, refreshBalance } = useStreamingIdentity();
-  const [liveCount, setLiveCount] = useState(0);
-  useEffect(() => { streamsAPI.live().then((r) => setLiveCount((r.streams || []).length)); }, []);
-  const tiles = [
-    { to: "/go-live", label: "Go Live", desc: "Start a stream" },
-    { to: "/watch", label: "Watch-to-Earn", desc: "Earn $STREAMING" },
-    { to: "/wallet", label: "Wallet", desc: "Send / receive" },
-    { to: "/profile", label: "Profile", desc: "Identity & badges" },
-    { to: "/marketplace", label: "Marketplace", desc: "Sell products" },
-    { to: "/videos", label: "Videos", desc: "Library & uploads" },
-    { to: "/analytics", label: "Analytics", desc: "Streams + VOD" },
-    { to: "/settings", label: "Settings", desc: "Account & branding" },
-    { to: "/supabase", label: "Supabase", desc: "Browse Supabase data" },
-    { to: "/boost", label: "Boosts", desc: "Support creators" },
-    { to: "/subscriptions", label: "Subscriptions", desc: "Subscribe to creators" },
-    { to: "/feed", label: "Feed", desc: "Posts & updates" },
-    { to: "/messages", label: "Messages", desc: "Direct messages" },
-    { to: "/economy", label: "Economy", desc: "Revenue overview" },
-  ];
-  return (
-    <Page title="Creator OS" subtitle="Your Web3 creator ecosystem">
-      <Card className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground">Connected wallet</p>
-          <p className="font-mono text-sm break-all">{wallet}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground">Balance</p>
-          <button onClick={refreshBalance} className="text-xl font-display font-bold text-accent">{loadingBalance ? "…" : balance} <span className="text-xs text-muted-foreground">↻</span></button>
-        </div>
-      </Card>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {tiles.map((t) => (
-          <Link key={t.to} to={t.to} className="rounded-2xl border border-border bg-card p-4 hover:border-primary/50 transition-colors">
-            <p className="font-display font-semibold">{t.label}</p>
-            <p className="text-xs text-muted-foreground">{t.desc}</p>
-          </Link>
-        ))}
-      </div>
-      <Card className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Live now</p>
-        <Link to="/watch" className="text-sm text-primary hover:underline">{liveCount} streams · Watch &amp; earn →</Link>
-      </Card>
-    </Page>
-  );
-};
+
 
 // Videos — Library
 const VideoLibrary = () => {
