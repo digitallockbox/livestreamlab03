@@ -9,13 +9,7 @@ export default function Economy() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    economyAPI.get().then((real) => {
-      const base = real || {};
-      setData({
-        ...base,
-        by_type: Object.keys(base.by_type || {}).length ? base.by_type : { stream_tip: 5, subscription: 9.99 },
-      });
-    }).finally(() => setLoading(false));
+    economyAPI.get().then((real) => { setData(real || {}); }).finally(() => setLoading(false));
   }, []);
 
   if (loading || !data) return <Page title="Creator Economy" subtitle="Revenue, streaming tokens, and transaction activity"><Spinner /></Page>;

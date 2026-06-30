@@ -31,7 +31,7 @@ export default function SharedLayout() {
           <Link to="/" className="font-display font-bold text-gradient-brand whitespace-nowrap">LiveStreamLab</Link>
           <nav className="flex-1 flex items-center gap-0.5 overflow-x-auto no-scrollbar">
             {NAV.map((n) => {
-              const active = loc.pathname === n.to;
+              const active = n.to === "/" ? loc.pathname === "/" : loc.pathname.startsWith(n.to);
               const Icon = n.icon;
               return (
                 <Link
