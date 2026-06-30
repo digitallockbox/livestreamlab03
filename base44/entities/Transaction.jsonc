@@ -12,7 +12,8 @@
         "audio_boost",
         "podcast",
         "payout",
-        "subscription"
+        "subscription",
+        "transfer"
       ]
     },
     "amount": {
@@ -37,6 +38,14 @@
     },
     "source": {
       "type": "string"
+    },
+    "sender_wallet": {
+      "type": "string",
+      "description": "Wallet sending a transfer"
+    },
+    "recipient_wallet": {
+      "type": "string",
+      "description": "Wallet receiving a transfer"
     }
   },
   "required": [

@@ -4,8 +4,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ConnectionProvider, WalletProvider, useWallet } from "@solana/wallet-adapter-react";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
-import { Connection, PublicKey } from "@solana/web3.js";
-import { getAssociatedTokenAddress, getAccount } from "@solana/spl-token";
+import { Connection, PublicKey, Transaction } from "@solana/web3.js";
+import { getAssociatedTokenAddress, getAccount, createTransferInstruction } from "@solana/spl-token";
 
 // --- CONFIG: replace with your real values --------------------------------
 export const STREAMING_MINT = "STREAMING_MINT_PLACEHOLDER"; // <-- set the real SPL mint address
@@ -27,7 +27,7 @@ async function readStreamingBalance(connection, walletPubkey) {
 }
 
 function IdentityInner({ children }) {
-  const { publicKey, connect, disconnect, select, wallets, signMessage } = useWallet();
+  const { publicKey, connect, disconnect, select, wallets, signMessage, sendTransaction } = useWallet();
   const [balance, setBalance] = useState(0);
   const [loadingBalance, setLoadingBalance] = useState(false);
 
@@ -64,6 +64,20 @@ function IdentityInner({ children }) {
     return btoa(String.fromCharCode(...sig));
   }, [signMessage]);
 
+  // Real on-chain $STREAMING SPL transfer (Phantom signs, sent to RPC).
+  const sendStreaming = useCallback(async (recipientAddress, amount) => {
+    if (!publicKey) throw new Error("Wallet not connected");
+    const mint = new PublicKey(STREAMING_MINT);
+    const senderATA = await getAssociatedTokenAddress(mint, publicKey);
+    const recipient = new PublicKey(recipientAddress);
+    const recipientATA = await getAssociatedTokenAddress(mint, recipient);
+    const ix = createTransferInstruction(senderATA, recipientATA, publicKey, Number(amount));
+    const tx = new Transaction().add(ix);
+    const signature = await sendTransaction(tx, connection);
+    await connection.confirmTransaction(signature, "confirmed");
+    return signature;
+  }, [publicKey, sendTransaction, connection]);
+
   const value = {
     connected: !!publicKey,
     wallet: publicKey ? publicKey.toBase58() : null,
@@ -74,6 +88,7 @@ function IdentityInner({ children }) {
     disconnect,
     refreshBalance,
     signMessage: sign,
+    sendStreaming,
   };
 
   return <IdentityContext.Provider value={value}>{children}</IdentityContext.Provider>;
