@@ -33,6 +33,8 @@ function IdentityInner({ children }) {
   const [loadingBalance, setLoadingBalance] = useState(false);
   const [profile, setProfile] = useState(null);
   const [authenticating, setAuthenticating] = useState(false);
+  const [chain, setChain] = useState("");        // "solana" | "evm" | ""
+  const [evmAddress, setEvmAddress] = useState("");
 
   const connection = useMemo(() => new Connection(RPC_ENDPOINT), []);
 
@@ -66,6 +68,23 @@ function IdentityInner({ children }) {
     const sig = await signMessage(encoded);
     return btoa(String.fromCharCode(...sig));
   }, [signMessage]);
+
+  // EVM (MetaMask) personal_sign → returns the hex signature string.
+  const signEvm = useCallback(async (message) => {
+    if (!window.ethereum) throw new Error("MetaMask not available");
+    if (!evmAddress) throw new Error("No EVM account connected");
+    return window.ethereum.request({ method: "personal_sign", params: [message, evmAddress] });
+  }, [evmAddress]);
+
+  // Unified nonce signer — dispatches to the active chain's signer.
+  const signNonce = useCallback(async (nonce) => {
+    if (chain === "solana") return sign(nonce);
+    if (chain === "evm") return signEvm(nonce);
+    throw new Error("No chain selected");
+  }, [chain, sign, signEvm]);
+
+  // Unified wallet address derived from the active chain.
+  const walletAddress = chain === "evm" ? evmAddress : (publicKey ? publicKey.toBase58() : "");
 
   // Complete the Phantom handshake: challenge → wallet signs → backend verifies ownership.
   const login = useCallback(async () => {
@@ -136,6 +155,13 @@ function IdentityInner({ children }) {
     login,
     signedInvoke,
     sendStreaming,
+    chain,
+    setChain,
+    evmAddress,
+    setEvmAddress,
+    signEvm,
+    signNonce,
+    walletAddress,
   };
 
   return <IdentityContext.Provider value={value}>{children}</IdentityContext.Provider>;

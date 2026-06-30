@@ -5,8 +5,7 @@ import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 // + $STREAMING balance via the identity provider). MetaMask connects the EVM
 // account for display; full Creator OS access currently requires Phantom.
 export default function MultiWalletLogin() {
-  const { connect, connected, wallet, authenticating } = useStreamingIdentity();
-  const [evmAddress, setEvmAddress] = useState("");
+  const { connect, connected, wallet, authenticating, evmAddress, setEvmAddress, setChain } = useStreamingIdentity();
   const [busy, setBusy] = useState(null); // "phantom" | "metamask" | null
   const [error, setError] = useState("");
 
@@ -15,6 +14,7 @@ export default function MultiWalletLogin() {
     setError("");
     try {
       await connect();
+      setChain("solana");
     } catch (err) {
       setError(err?.message || "Phantom connect failed");
     } finally {
@@ -31,7 +31,10 @@ export default function MultiWalletLogin() {
         return;
       }
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      if (accounts && accounts.length > 0) setEvmAddress(accounts[0]);
+      if (accounts && accounts.length > 0) {
+        setEvmAddress(accounts[0]);
+        setChain("evm");
+      }
     } catch (err) {
       setError(err?.message || "MetaMask connect failed");
     } finally {
