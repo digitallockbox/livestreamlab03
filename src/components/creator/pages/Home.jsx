@@ -35,7 +35,7 @@ export default function Home() {
           <button onClick={refreshBalance} className="text-xl font-display font-bold text-accent">{loadingBalance ? "…" : balance} <span className="text-xs text-muted-foreground">↻</span></button>
         </div>
       </Card>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {tiles.map((t) => (
           <Link key={t.to} to={t.to} className="rounded-2xl border border-border bg-card p-4 hover:border-primary/50 transition-colors">
             <p className="font-display font-semibold">{t.label}</p>

@@ -52,7 +52,7 @@ export default function Domains() {
           {!name.includes(".") && <span className="text-sm text-muted-foreground whitespace-nowrap">.livestreamlab</span>}
         </div>
         {fullName && <p className="text-xs font-mono text-muted-foreground">Registering: {fullName}</p>}
-        <button onClick={purchase} disabled={busy || !name.trim()} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">
+        <button onClick={purchase} disabled={busy || !name.trim()} className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />} Purchase Domain on Freename
         </button>
         {result?.error && <p className="text-sm text-destructive">{result.error}</p>}
@@ -65,7 +65,7 @@ export default function Domains() {
         {loading ? <Spinner /> : domains.length === 0 ? (
           <Card><p className="text-sm text-muted-foreground">No domains registered yet.</p></Card>
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {domains.map((d) => {
               const b = STATUS_BADGE[d.status] || STATUS_BADGE.pending;
               const Icon = b.icon;
