@@ -67,6 +67,15 @@ import UserProfile from '@/pages/public/UserProfile';
 // Wallet
 import StreamingWalletPage from '@/pages/wallet/StreamingWalletPage';
 
+// Web3 Creator
+import Web3Layout from '@/components/web3/Web3Layout';
+import Web3Login from '@/pages/web3/Web3Login';
+import Web3Profile from '@/pages/web3/Web3Profile';
+import Web3Verify from '@/pages/web3/Web3Verify';
+import BadgeUpgrade from '@/pages/web3/BadgeUpgrade';
+import CreatorPassport from '@/pages/web3/CreatorPassport';
+import EconomyDashboard from '@/pages/web3/EconomyDashboard';
+
 
 
 // Block Explorer
@@ -95,6 +104,16 @@ const AuthenticatedApp = () => {
       <Route path="/auth/login" element={<TridentLogin />} />
       <Route path="/auth/register" element={<TridentLogin />} />
       <Route path="/onboarding" element={<CreatorOnboarding />} />
+
+      {/* Web3 Creator */}
+      <Route path="/web3/login" element={<Web3Login />} />
+      <Route element={<Web3Layout />}>
+        <Route path="/web3/profile" element={<Web3Profile />} />
+        <Route path="/web3/verify" element={<Web3Verify />} />
+        <Route path="/web3/badges" element={<BadgeUpgrade />} />
+        <Route path="/web3/passport" element={<CreatorPassport />} />
+        <Route path="/web3/economy" element={<EconomyDashboard />} />
+      </Route>
       <Route path="/stream/:id" element={<StreamPage />} />
       <Route path="/store/product/:id" element={<ProductPage />} />
       <Route path="/checkout" element={<Checkout />} />

@@ -1,0 +1,64 @@
+{
+  "name": "Web3Profile",
+  "type": "object",
+  "properties": {
+    "wallet_address": {
+      "type": "string",
+      "description": "On-chain wallet address (0x...)"
+    },
+    "ens_name": {
+      "type": "string",
+      "description": "ENS name (e.g. name.eth)"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "verification_level": {
+      "type": "string",
+      "enum": [
+        "none",
+        "basic",
+        "full"
+      ],
+      "default": "none"
+    },
+    "badge_tier": {
+      "type": "string",
+      "enum": [
+        "bronze",
+        "silver",
+        "gold",
+        "diamond"
+      ],
+      "default": "bronze"
+    },
+    "followers": {
+      "type": "number",
+      "default": 0
+    },
+    "following": {
+      "type": "number",
+      "default": 0
+    },
+    "social_graph": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "wallet_address"
+  ]
+}
