@@ -9,6 +9,11 @@ import { Loader2, Zap, CreditCard, ShoppingBag, Send, UserPlus, UserMinus, Check
 import { base44 } from "@/api/base44Client";
 import { useCreator } from "@/hooks/web3/useCreator";
 import { PhantomIdentityProvider, useStreamingIdentity } from "@/lib/web3/streamingIdentity";
+import ProfileSettings from "@/pages/settings/ProfileSettings";
+import BrandingSettings from "@/pages/settings/BrandingSettings";
+import SecuritySettings from "@/pages/settings/SecuritySettings";
+import NotificationSettings from "@/pages/settings/NotificationSettings";
+import ConnectedAccounts from "@/pages/settings/ConnectedAccounts";
 
 // ======================================================
 //  API CONFIG
@@ -904,6 +909,7 @@ const Home = () => {
     { to: "/marketplace", label: "Marketplace", desc: "Sell products" },
     { to: "/videos", label: "Videos", desc: "Library & uploads" },
     { to: "/analytics", label: "Analytics", desc: "Streams + VOD" },
+    { to: "/settings", label: "Settings", desc: "Account & branding" },
     { to: "/boost", label: "Boosts", desc: "Support creators" },
     { to: "/subscriptions", label: "Subscriptions", desc: "Subscribe to creators" },
     { to: "/feed", label: "Feed", desc: "Posts & updates" },
@@ -1158,6 +1164,29 @@ const UnifiedAnalytics = () => {
   );
 };
 
+// Settings hub — links into the five settings pages
+const SettingsHub = () => {
+  const items = [
+    { to: "/settings/profile", label: "Profile", desc: "Public creator profile" },
+    { to: "/settings/branding", label: "Branding", desc: "Channel visual identity" },
+    { to: "/settings/security", label: "Security", desc: "Password, 2FA, sessions" },
+    { to: "/settings/notifications", label: "Notifications", desc: "What updates you receive" },
+    { to: "/settings/connected", label: "Connected Accounts", desc: "OAuth integrations" },
+  ];
+  return (
+    <Page title="Settings" subtitle="Manage your creator account">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {items.map((i) => (
+          <Link key={i.to} to={i.to} className="rounded-2xl border border-border bg-card p-4 hover:border-primary/50 transition-colors">
+            <p className="font-display font-semibold">{i.label}</p>
+            <p className="text-xs text-muted-foreground">{i.desc}</p>
+          </Link>
+        ))}
+      </div>
+    </Page>
+  );
+};
+
 // ======================================================
 //  SIGN-UP (disappears once wallet connects)
 // ======================================================
@@ -1210,6 +1239,12 @@ function MainApp() {
         <Route path="/videos/manager" element={<VideoManager />} />
         <Route path="/videos/analytics" element={<VideoAnalytics />} />
         <Route path="/analytics" element={<UnifiedAnalytics />} />
+        <Route path="/settings" element={<SettingsHub />} />
+        <Route path="/settings/profile" element={<ProfileSettings />} />
+        <Route path="/settings/branding" element={<BrandingSettings />} />
+        <Route path="/settings/security" element={<SecuritySettings />} />
+        <Route path="/settings/notifications" element={<NotificationSettings />} />
+        <Route path="/settings/connected" element={<ConnectedAccounts />} />
         <Route path="/stream" element={<StreamView />} />
         <Route path="/boost" element={<StreamBoost />} />
         <Route path="/subscriptions" element={<Subscriptions />} />
