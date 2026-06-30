@@ -752,7 +752,10 @@ const StreamAnalytics = () => {
         <Card><p className="text-xs text-muted-foreground">Boosts</p><p className="text-2xl font-display font-bold">{data.boostsCount}</p></Card>
         <Card><p className="text-xs text-muted-foreground">Subscribers</p><p className="text-2xl font-display font-bold">{data.subsCount}</p></Card>
       </div>
-      <Link to="/streams" className="text-primary hover:underline text-sm">← Back to all streams</Link>
+      <div className="flex gap-4">
+        <Link to="/streams" className="text-primary hover:underline text-sm">← Back to all streams</Link>
+        <Link to="/analytics" className="text-primary hover:underline text-sm">Unified Analytics →</Link>
+      </div>
     </Page>
   );
 };
@@ -1075,6 +1078,7 @@ const VideoAnalytics = () => {
           </div>
         ))}
       </Card>
+      <Link to="/analytics" className="text-primary hover:underline text-sm">Unified Analytics →</Link>
     </Page>
   );
 };
