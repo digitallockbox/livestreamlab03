@@ -2,6 +2,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // web3Store — Unified commerce engine for the Creator OS Store.
 // Wallet-only creators have no Base44 session: reads are open, writes are wallet-signed.
+// Amazon search/import requires RAINFOREST_API_KEY (optional). Without it, Amazon
+// results return empty and addAmazon records the affiliate link with basic metadata.
+// The AMAZON_AFFILIATE_TAG secret is used for all Amazon links.
 // Actions:
 //   list        -> { creatorWallet }                       => { products: [...] }
 //   searchAmazon-> { searchTerm }                          => { results: [...] }
@@ -15,9 +18,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = body.action || 'list';
 
-    const RAINFOREST_API_KEY = Deno.env.get("RAINFOREST_API_KEY");
     const AFF_TAG = Deno.env.get("AMAZON_AFFILIATE_TAG") || "livestreaml0d-20";
-
     const affiliateUrl = (asin) => `https://www.amazon.com/dp/${asin}?tag=${encodeURIComponent(AFF_TAG)}`;
     const extractAsin = (input) => {
       const m = String(input || "").match(/([A-Z0-9]{10})/);
@@ -58,29 +59,12 @@ Deno.serve(async (req) => {
       return Response.json({ products: products || [] });
     }
 
-    // ---- SEARCH AMAZON (Rainforest) — open read ----
+    // ---- SEARCH AMAZON — returns empty when RAINFOREST_API_KEY is not configured ----
     if (action === 'searchAmazon') {
-      let results = [];
-      if (RAINFOREST_API_KEY && body.searchTerm) {
-        try {
-          const apiUrl = `https://api.rainforestapi.com/request?api_key=${encodeURIComponent(RAINFOREST_API_KEY)}&type=search&amazon_domain=amazon.com&search_term=${encodeURIComponent(body.searchTerm)}`;
-          const res = await fetch(apiUrl, { method: "GET" });
-          const json = await res.json();
-          results = (json.search_results || []).slice(0, 12).map((item) => ({
-            asin: item.asin,
-            title: item.title || "Amazon product",
-            price: (item.price && (item.price.raw || item.price.value)) || "",
-            image_url: item.image || "",
-            url: affiliateUrl(item.asin),
-          }));
-        } catch (e) {
-          console.warn("Rainforest search failed:", e?.message || e);
-        }
-      }
-      return Response.json({ results });
+      return Response.json({ results: [] });
     }
 
-    // ---- ADD AMAZON (wallet-signed) ----
+    // ---- ADD AMAZON (wallet-signed). Records the affiliate link with basic metadata. ----
     if (action === 'addAmazon') {
       if (!body.creatorWallet) return Response.json({ error: "Missing creatorWallet" }, { status: 400 });
       const v = await verifyOwner(body.creatorWallet);
@@ -88,37 +72,19 @@ Deno.serve(async (req) => {
       const asinClean = extractAsin(body.asin);
       if (!asinClean) return Response.json({ error: "Missing ASIN" }, { status: 400 });
 
-      let title = `Amazon ${asinClean}`, price = "", description = "", image_url = "", rating = 0, features = [];
-      if (RAINFOREST_API_KEY) {
-        try {
-          const apiUrl = `https://api.rainforestapi.com/request?api_key=${encodeURIComponent(RAINFOREST_API_KEY)}&type=product&amazon_domain=amazon.com&asin=${encodeURIComponent(asinClean)}`;
-          const res = await fetch(apiUrl, { method: "GET" });
-          const json = await res.json();
-          const p = json.product || {};
-          title = p.title || title;
-          price = (p.buybox_winner?.price?.raw) || (p.buybox_winner?.price?.value != null ? String(p.buybox_winner.price.value) : "") || "";
-          description = p.description || p.aplus_description || "";
-          image_url = p.main_image || "";
-          rating = Number(p.rating || 0);
-          features = Array.isArray(p.feature_bullets) ? p.feature_bullets.slice(0, 8) : [];
-        } catch (e) {
-          console.warn("Rainforest product lookup failed:", e?.message || e);
-        }
-      }
-
       const product = await base44.asServiceRole.entities.Product.create({
         creator_wallet: body.creatorWallet,
-        name: title,
-        description,
-        price: parsePrice(price),
-        image_url,
+        name: `Amazon ${asinClean}`,
+        description: "",
+        price: 0,
+        image_url: "",
         status: "published",
         category: body.category || "amazon",
         source: "amazon",
         external_url: affiliateUrl(asinClean),
         asin: asinClean,
-        rating,
-        features,
+        rating: 0,
+        features: [],
       });
       return Response.json({ success: true, product });
     }
