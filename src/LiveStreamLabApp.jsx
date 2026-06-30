@@ -8,15 +8,17 @@ import { BrowserRouter, Routes, Route, Link, useParams, useNavigate } from "reac
 import { Loader2, Zap, CreditCard, ShoppingBag, Send, UserPlus, UserMinus, CheckCircle2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useCreator } from "@/hooks/web3/useCreator";
+import { PhantomIdentityProvider, useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 
 // ======================================================
 //  API CONFIG
 // ======================================================
 const invoke = (name, payload) => base44.functions.invoke(name, payload).then((r) => r.data);
 
+// Identity root: the connected Phantom wallet is the viewer/creator identity across the whole OS.
 const useViewerWallet = () => {
-  const { profile } = useCreator();
-  return profile?.wallet_address || null;
+  const { wallet } = useStreamingIdentity();
+  return wallet;
 };
 
 // ======================================================
@@ -578,6 +580,7 @@ const Messages = () => {
 
 // Economy Dashboard
 const EconomyDashboard = () => {
+  const { balance, loadingBalance, refreshBalance } = useStreamingIdentity();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -593,6 +596,12 @@ const EconomyDashboard = () => {
   return (
     <Page title="Creator Economy" subtitle="Revenue, streaming tokens, and transaction activity">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card>
+          <p className="text-xs text-muted-foreground">$STREAMING Balance (on-chain)</p>
+          <button onClick={refreshBalance} className="text-2xl font-display font-bold text-accent">
+            {loadingBalance ? "…" : balance} <span className="text-xs text-muted-foreground">↻</span>
+          </button>
+        </Card>
         <Card><p className="text-xs text-muted-foreground">Total Revenue</p><p className="text-2xl font-display font-bold">${(data.total_revenue || 0).toFixed(2)}</p></Card>
         <Card><p className="text-xs text-muted-foreground">$STREAMING</p><p className="text-2xl font-display font-bold text-accent">{(data.streaming_revenue || 0).toFixed(2)}</p></Card>
         <Card><p className="text-xs text-muted-foreground">Boosts</p><p className="text-2xl font-display font-bold">{(data.boosts_total || 0).toFixed(0)} ⚡</p></Card>
@@ -611,21 +620,21 @@ const EconomyDashboard = () => {
 // ======================================================
 //  SIGN-UP (disappears once wallet connects)
 // ======================================================
-const SignupScreen = ({ onConnected }) => {
-  const [wallet, setWallet] = useState("");
+const SignupScreen = () => {
+  const { connect, connected, wallet } = useStreamingIdentity();
   const [busy, setBusy] = useState(false);
-  const connect = async () => {
-    if (!wallet.trim()) return;
+  const handleConnect = async () => {
     setBusy(true);
-    try { await web3LoginAPI.login(wallet.trim()); onConnected(wallet.trim()); } finally { setBusy(false); }
+    try { await connect(); } finally { setBusy(false); }
   };
   return (
     <div className="max-w-md mx-auto p-8 mt-20 text-center space-y-4">
       <h1 className="text-3xl font-display font-bold">Welcome to LiveStreamLab</h1>
-      <p className="text-sm text-muted-foreground">Create your account by connecting your wallet.</p>
-      <Input value={wallet} onChange={(e) => setWallet(e.target.value)} placeholder="0x... wallet address" className="font-mono" />
-      <button onClick={connect} disabled={busy} className="px-6 py-2 rounded-md bg-primary text-primary-foreground text-sm">{busy ? "Connecting..." : "Connect Wallet"}</button>
-      <p className="text-xs text-muted-foreground">Connect your Base44 wallet to enter the Creator OS.</p>
+      <p className="text-sm text-muted-foreground">Connect your Phantom wallet to enter the Creator OS.</p>
+      <button onClick={handleConnect} disabled={busy} className="px-6 py-2 rounded-md bg-primary text-primary-foreground text-sm">
+        {busy ? "Connecting…" : connected ? `Connected ${wallet?.slice(0, 6)}…${wallet?.slice(-4)}` : "Connect Phantom"}
+      </button>
+      <p className="text-xs text-muted-foreground">Your wallet + $STREAMING token is your identity. No Phantom? Install it at phantom.com.</p>
     </div>
   );
 };
@@ -634,11 +643,9 @@ const SignupScreen = ({ onConnected }) => {
 //  ROUTER (all pages merged) + wallet gate
 // ======================================================
 function MainApp() {
-  const [connectedWallet, setConnectedWallet] = useState(null);
-  const { profile, loading } = useCreator();
-  const wallet = connectedWallet || profile?.wallet_address || null;
-  if (loading && !connectedWallet) return <Spinner />;
-  if (!wallet) return <SignupScreen onConnected={setConnectedWallet} />;
+  const { connected } = useStreamingIdentity();
+  // Identity gate: the whole Creator OS unlocks once Phantom is connected.
+  if (!connected) return <SignupScreen />;
   return (
     <BrowserRouter>
       <Routes>
@@ -665,5 +672,9 @@ function MainApp() {
 }
 
 export default function LiveStreamLabApp() {
-  return <MainApp />;
+  return (
+    <PhantomIdentityProvider>
+      <MainApp />
+    </PhantomIdentityProvider>
+  );
 }
