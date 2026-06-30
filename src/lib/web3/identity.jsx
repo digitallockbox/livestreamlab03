@@ -70,6 +70,12 @@ export function IdentityProvider({ children }) {
     }
   }, [chain, walletAddress, signNonce]);
 
+  // If Phantom auto-connects (e.g. on reload) before a chain is chosen, default to Solana
+  // so the wallet address resolves and the handshake can proceed automatically.
+  useEffect(() => {
+    if (publicKey && !chain) setChain("solana");
+  }, [publicKey, chain]);
+
   // Auto-run the handshake once a wallet is connected and not yet verified.
   useEffect(() => {
     if (walletAddress && !session) login();
