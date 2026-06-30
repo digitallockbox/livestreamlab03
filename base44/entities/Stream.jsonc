@@ -50,9 +50,18 @@
     },
     "description": {
       "type": "string"
+    },
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet of the creator running the stream"
+    },
+    "stream_key": {
+      "type": "string",
+      "description": "RTMP stream key for the ingest server"
     }
   },
   "required": [
-    "title"
+    "title",
+    "creator_wallet"
   ]
 }

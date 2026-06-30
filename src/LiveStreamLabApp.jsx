@@ -92,6 +92,14 @@ const economyAPI = {
   get: () => invoke("web3Economy", {}),
 };
 
+const streamsAPI = {
+  start: (creatorWallet, title, extra = {}) => invoke("web3Streams", { action: "start", creatorWallet, title, ...extra }),
+  live: () => invoke("web3Streams", { action: "live" }),
+  past: (creatorWallet) => invoke("web3Streams", { action: "past", creatorWallet }),
+  end: (streamId) => invoke("web3Streams", { action: "end", streamId }),
+  analytics: (streamId) => invoke("web3Streams", { action: "analytics", streamId }),
+};
+
 // ======================================================
 //  SHARED UI HELPERS
 // ======================================================
@@ -617,6 +625,112 @@ const EconomyDashboard = () => {
   );
 };
 
+// Go Live — creator starts a stream session (returns RTMP url + key)
+const GoLive = () => {
+  const viewerWallet = useViewerWallet();
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("gaming");
+  const [stream, setStream] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const start = async () => {
+    if (!viewerWallet || !title.trim()) return;
+    setBusy(true);
+    try {
+      const res = await streamsAPI.start(viewerWallet, title.trim(), { category });
+      setStream(res);
+    } finally { setBusy(false); }
+  };
+  return (
+    <Page title="Go Live" subtitle="Start a new stream session">
+      <Card className="space-y-3 max-w-lg">
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Stream title" />
+        <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-md border border-input bg-muted px-3 py-2">
+          <option value="gaming">Gaming</option>
+          <option value="music">Music</option>
+          <option value="talk_show">Talk Show</option>
+          <option value="education">Education</option>
+          <option value="creative">Creative</option>
+          <option value="tech">Tech</option>
+          <option value="other">Other</option>
+        </select>
+        <button onClick={start} disabled={busy || !title.trim()} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">
+          {busy ? "Starting…" : "Start Stream"}
+        </button>
+        {stream && (
+          <div className="pt-2 text-sm space-y-1 break-all">
+            <p><span className="text-muted-foreground">Stream ID:</span> {stream.id}</p>
+            <p><span className="text-muted-foreground">RTMP URL:</span> {stream.rtmpUrl}</p>
+            <p><span className="text-muted-foreground">Stream Key:</span> <span className="font-mono">{stream.streamKey}</span></p>
+            <Link to="/streams" className="text-primary hover:underline">View all streams →</Link>
+          </div>
+        )}
+      </Card>
+    </Page>
+  );
+};
+
+// All Streams — list live + past
+const AllStreams = () => {
+  const viewerWallet = useViewerWallet();
+  const [live, setLive] = useState([]);
+  const [past, setPast] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    Promise.all([streamsAPI.live(), streamsAPI.past(viewerWallet)])
+      .then(([l, p]) => { setLive(l.streams || []); setPast(p.streams || []); })
+      .finally(() => setLoading(false));
+  }, [viewerWallet]);
+  if (loading) return <Spinner />;
+  return (
+    <Page title="All Streams" subtitle="Live now and past sessions">
+      <Card>
+        <h3 className="font-display font-semibold mb-3">Live Now</h3>
+        {live.length === 0 ? <p className="text-sm text-muted-foreground">No live streams.</p> : live.map((s) => (
+          <Link key={s.id} to={`/streams/${s.id}/analytics`} className="block py-2 border-b border-border/50 last:border-0 hover:bg-muted/40 px-2 rounded">
+            <p className="font-medium">{s.title}</p>
+            <p className="text-xs text-muted-foreground font-mono">{(s.creator_wallet || "").slice(0, 8)}… · {s.viewer_count} watching</p>
+          </Link>
+        ))}
+      </Card>
+      <Card>
+        <h3 className="font-display font-semibold mb-3">Past Streams</h3>
+        {past.length === 0 ? <p className="text-sm text-muted-foreground">No past streams.</p> : past.map((s) => (
+          <Link key={s.id} to={`/streams/${s.id}/analytics`} className="block py-2 border-b border-border/50 last:border-0 hover:bg-muted/40 px-2 rounded">
+            <p className="font-medium">{s.title}</p>
+            <p className="text-xs text-muted-foreground">{s.duration_minutes} min · {s.viewer_count} viewers</p>
+          </Link>
+        ))}
+      </Card>
+    </Page>
+  );
+};
+
+// Stream Analytics — per-stream metrics (watch time, boosts, subs, STREAMING earned)
+const StreamAnalytics = () => {
+  const { id } = useParams();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!id) return;
+    streamsAPI.analytics(id).then(setData).finally(() => setLoading(false));
+  }, [id]);
+  if (loading) return <Spinner />;
+  if (!data) return <Page title="Analytics"><p className="text-sm text-muted-foreground">Stream not found.</p></Page>;
+  return (
+    <Page title="Stream Analytics" subtitle={data.stream?.title}>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <Card><p className="text-xs text-muted-foreground">Concurrent Peak</p><p className="text-2xl font-display font-bold">{data.concurrentPeak}</p></Card>
+        <Card><p className="text-xs text-muted-foreground">Total Viewers</p><p className="text-2xl font-display font-bold">{data.totalViewers}</p></Card>
+        <Card><p className="text-xs text-muted-foreground">Watch Minutes</p><p className="text-2xl font-display font-bold">{data.watchMinutes}</p></Card>
+        <Card><p className="text-xs text-muted-foreground">$STREAMING Earned</p><p className="text-2xl font-display font-bold text-accent">{data.streamingEarned}</p></Card>
+        <Card><p className="text-xs text-muted-foreground">Boosts</p><p className="text-2xl font-display font-bold">{data.boostsCount}</p></Card>
+        <Card><p className="text-xs text-muted-foreground">Subscribers</p><p className="text-2xl font-display font-bold">{data.subsCount}</p></Card>
+      </div>
+      <Link to="/streams" className="text-primary hover:underline text-sm">← Back to all streams</Link>
+    </Page>
+  );
+};
+
 // ======================================================
 //  SIGN-UP (disappears once wallet connects)
 // ======================================================
@@ -658,6 +772,9 @@ function MainApp() {
         <Route path="/marketplace/add" element={<AddMarketplaceProduct />} />
         <Route path="/marketplace/products" element={<MarketplaceProducts />} />
         <Route path="/marketplace/sales" element={<MarketplaceSales />} />
+        <Route path="/go-live" element={<GoLive />} />
+        <Route path="/streams" element={<AllStreams />} />
+        <Route path="/streams/:id/analytics" element={<StreamAnalytics />} />
         <Route path="/stream" element={<StreamView />} />
         <Route path="/boost" element={<StreamBoost />} />
         <Route path="/subscriptions" element={<Subscriptions />} />
