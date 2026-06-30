@@ -4,7 +4,7 @@
 //  Every connector bound to a real Base44 backend function via base44.functions.invoke
 // ======================================================
 import React, { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Link, useParams, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useParams, useNavigate, Navigate } from "react-router-dom";
 import { Loader2, Send, CheckCircle2, Radio, Video, Zap } from "lucide-react";
 import { useCreator } from "@/hooks/web3/useCreator";
 import { PhantomIdentityProvider, useStreamingIdentity } from "@/lib/web3/streamingIdentity";
@@ -43,6 +43,7 @@ import Settings from "@/components/creator/pages/Settings";
 import Watch from "@/components/creator/pages/Watch";
 import Payouts from "@/components/creator/pages/Payouts";
 import SalesDashboard from "@/components/creator/pages/SalesDashboard";
+import Landing from "@/pages/Landing";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -623,10 +624,30 @@ const VerifyWallet = () => {
 // ======================================================
 function MainApp() {
   const { walletAddress, session } = useIdentity();
-  // Identity gate: a wallet must be connected AND cryptographically verified before any engine loads.
-  if (!walletAddress) return <MultiWalletLogin />;
-  if (!session) return <VerifyWallet />;
-  if (!session.onboarding_completed) return <Onboarding />;
+  const ready = !!(walletAddress && session && session.onboarding_completed);
+
+  // Public + pre-onboarding states: rendered in the router so the Landing CTAs work.
+  if (!ready) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          {!walletAddress ? (
+            <>
+              <Route path="/" element={<Landing />} />
+              <Route path="/enter" element={<MultiWalletLogin />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </>
+          ) : !session ? (
+            <Route path="*" element={<VerifyWallet />} />
+          ) : (
+            <Route path="*" element={<Onboarding />} />
+          )}
+        </Routes>
+      </BrowserRouter>
+    );
+  }
+
+  // Wallet connected, verified, and onboarded → Creator OS.
   return (
     <BrowserRouter>
       <Routes>
@@ -670,6 +691,7 @@ function MainApp() {
         <Route path="/payouts" element={<Payouts />} />
         <Route path="/sales" element={<SalesDashboard />} />
         </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

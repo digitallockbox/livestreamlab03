@@ -44,10 +44,10 @@ export default function LandingNav() {
 
         {/* Actions */}
         <div className="hidden md:flex items-center gap-3">
-          <Link to="/dashboard">
+          <Link to="/enter">
             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">Log In</Button>
           </Link>
-          <Link to="/onboarding">
+          <Link to="/enter">
             <Button size="sm" className="bg-primary hover:bg-primary/90 shadow-md shadow-primary/25 font-semibold gap-1.5">
               <Zap className="w-3.5 h-3.5" /> Get Started
             </Button>
@@ -69,8 +69,8 @@ export default function LandingNav() {
               : <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground py-1.5 font-medium">{l.label}</a>
           ))}
           <div className="flex gap-3 pt-2 border-t border-border">
-            <Link to="/dashboard" className="flex-1"><Button variant="outline" size="sm" className="w-full">Log In</Button></Link>
-            <Link to="/onboarding" className="flex-1"><Button size="sm" className="w-full bg-primary">Get Started</Button></Link>
+            <Link to="/enter" className="flex-1"><Button variant="outline" size="sm" className="w-full">Log In</Button></Link>
+            <Link to="/enter" className="flex-1"><Button size="sm" className="w-full bg-primary">Get Started</Button></Link>
           </div>
         </div>
       )}

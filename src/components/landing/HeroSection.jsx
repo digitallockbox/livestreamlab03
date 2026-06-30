@@ -54,7 +54,7 @@ export default function HeroSection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 mb-10">
-            <Link to="/onboarding">
+            <Link to="/enter">
               <Button size="lg" className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 px-7 font-semibold gap-2">
                 Start Creating Free <ArrowRight className="w-4 h-4" />
               </Button>

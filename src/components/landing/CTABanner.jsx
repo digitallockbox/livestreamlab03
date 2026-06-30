@@ -55,7 +55,7 @@ export default function CTABanner() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/onboarding">
+            <Link to="/enter">
               <Button size="lg" className="bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/40 px-9 font-bold text-base gap-2 h-13">
                 Start Creating Free <ArrowRight className="w-4 h-4" />
               </Button>
