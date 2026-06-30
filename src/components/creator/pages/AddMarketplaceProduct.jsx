@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useViewerWallet, Page, Card, Input } from "@/components/creator/os";
+import { useViewerWallet, marketplaceAPI, Page, Card, Input } from "@/components/creator/os";
 import { CATEGORIES } from "@/components/creator/store/AddProduct";
-import { useIdentity } from "@/lib/web3/identity";
 
 export default function AddMarketplaceProduct() {
   const wallet = useViewerWallet();
-  const { signedInvoke } = useIdentity();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", description: "", price: "", streamingPrice: "", category: "Other" });
   const [saving, setSaving] = useState(false);
@@ -16,7 +14,7 @@ export default function AddMarketplaceProduct() {
     if (!wallet || !form.name) return;
     setSaving(true);
     try {
-      await signedInvoke("web3Marketplace", { action: "add", creatorWallet: wallet, name: form.name, description: form.description, price: Number(form.price) || 0, streamingPrice: Number(form.streamingPrice) || 0, category: form.category });
+      await marketplaceAPI.add(wallet, { name: form.name, description: form.description, price: Number(form.price) || 0, streamingPrice: Number(form.streamingPrice) || 0, category: form.category });
       navigate("/marketplace/products");
     } finally { setSaving(false); }
   };

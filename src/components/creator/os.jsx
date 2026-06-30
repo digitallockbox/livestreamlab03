@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Loader2, Zap, CreditCard, UserPlus, UserMinus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { storeApi as engineStore } from "@/lib/tridentApi";
+import { storeApi as engineStore, marketplaceApi as engineMarketplace } from "@/lib/tridentApi";
 import { useIdentity } from "@/lib/web3/identity";
 
 const invoke = (name, payload) => base44.functions.invoke(name, payload).then((r) => r.data);
@@ -40,10 +40,10 @@ export const passportAPI = {
 };
 
 export const marketplaceAPI = {
-  add: (creatorWallet, data) => invoke("web3Marketplace", { action: "add", creatorWallet, ...data }),
-  list: (creatorWallet) => invoke("web3Marketplace", { action: "list", creatorWallet }),
-  sales: (creatorWallet) => invoke("web3Marketplace", { action: "sales", creatorWallet }),
-  purchase: (payload) => invoke("web3Marketplace", { action: "buy", ...payload }),
+  add: (creatorWallet, data) => engineMarketplace.add({ creatorWallet, ...data }),
+  list: (creatorWallet) => engineMarketplace.list({ creatorWallet }),
+  sales: (creatorWallet) => engineMarketplace.sales({ creatorWallet }),
+  purchase: (payload) => engineMarketplace.buy(payload),
 };
 
 export const watchAPI = {

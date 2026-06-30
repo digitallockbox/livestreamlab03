@@ -125,6 +125,14 @@ export const storeApi = {
   analytics:    (body) => call('/store/analytics', body),
 };
 
+// ─── Marketplace ─────────────────────────────────────────────────────────
+export const marketplaceApi = {
+  list:  (body) => call('/marketplace/products', body),
+  sales: (body) => call('/marketplace/sales', body),
+  add:   (body) => call('/marketplace/add', body),
+  buy:   (body) => call('/marketplace/buy', body),
+};
+
 // ─── Founder OS ───────────────────────────────────────────────────────────
 // Deprecated: use founderApi instead — kept for backwards compat
 export const engineApi = {
