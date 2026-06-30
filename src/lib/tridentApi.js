@@ -114,6 +114,17 @@ export const payoutsApi = {
   list: (body) => call('/payouts/list', body),
 };
 
+// ─── Store / Marketplace ─────────────────────────────────────────────────
+export const storeApi = {
+  list:         (body) => call('/store/products', body),
+  searchAmazon: (body) => call('/store/amazon/search', body),
+  addAmazon:    (body) => call('/store/amazon/add', body),
+  addCustom:    (body) => call('/store/custom/add', body),
+  storefront:   (body) => call('/store/storefront', body),
+  click:        (body) => call('/store/click', body),
+  analytics:    (body) => call('/store/analytics', body),
+};
+
 // ─── Founder OS ───────────────────────────────────────────────────────────
 // Deprecated: use founderApi instead — kept for backwards compat
 export const engineApi = {

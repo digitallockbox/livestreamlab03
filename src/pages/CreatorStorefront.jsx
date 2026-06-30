@@ -15,7 +15,7 @@ export default function CreatorStorefront() {
     if (!domain) return;
     setLoading(true);
     storeAPI.storefront(domain)
-      .then((r) => setData({ profile: r.profile, products: r.products || [] }))
+      .then((r) => setData({ profile: r.profile || r.store || null, products: r.products || r.items || [] }))
       .catch(() => setError("Storefront unavailable"))
       .finally(() => setLoading(false));
   }, [domain]);

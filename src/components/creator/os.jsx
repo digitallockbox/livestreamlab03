@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Loader2, Zap, CreditCard, UserPlus, UserMinus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { storeApi as engineStore } from "@/lib/tridentApi";
 import { useIdentity } from "@/lib/web3/identity";
 
 const invoke = (name, payload) => base44.functions.invoke(name, payload).then((r) => r.data);
@@ -110,10 +111,12 @@ export const domainsAPI = {
 };
 
 export const storeAPI = {
-  list: (creatorWallet) => invoke("web3Store", { action: "list", creatorWallet }),
-  searchAmazon: (searchTerm) => invoke("web3Store", { action: "searchAmazon", searchTerm }),
-  storefront: (domain) => invoke("web3Store", { action: "storefront", domain }),
-  click: (payload) => invoke("web3Store", { action: "click", ...payload }),
+  list: (creatorWallet) => engineStore.list({ creatorWallet }),
+  searchAmazon: (searchTerm) => engineStore.searchAmazon({ searchTerm }),
+  addAmazon: (payload) => engineStore.addAmazon(payload),
+  addCustom: (payload) => engineStore.addCustom(payload),
+  storefront: (domain) => engineStore.storefront({ domain }),
+  click: (payload) => engineStore.click(payload),
 };
 
 // ======================================================

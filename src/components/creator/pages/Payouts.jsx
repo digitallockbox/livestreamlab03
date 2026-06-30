@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { Link } from "react-router-dom";
 import { Loader2, ArrowDownToLine, Clock, CheckCircle2, XCircle, Users } from "lucide-react";
-import { base44 } from "@/api/base44Client";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
-import { economyAPI, Page, Card, Spinner, Input } from "@/components/creator/os";
+import { Page, Card, Spinner, Input } from "@/components/creator/os";
+import { payoutsApi, creatorApi } from "@/lib/tridentApi";
 
 const STATUS = {
   pending: { cls: "bg-muted text-muted-foreground", icon: Clock, label: "Pending" },
@@ -31,16 +31,16 @@ export default function Payouts() {
     setLoading(true);
     try {
       const [eco, list] = await Promise.all([
-        economyAPI.get().catch(() => ({})),
-        base44.entities.Payout.list("-created_date", 50).catch(() => []),
+        creatorApi.earnings({}).catch(() => ({})),
+        payoutsApi.list({}).catch(() => ({ payouts: [] })),
       ]);
       setEarnings(eco || {});
-      setPayouts(list || []);
+      setPayouts(list?.payouts || list || []);
     } finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);
 
-  const claimable = Number(earnings?.streaming_revenue || 0);
+  const claimable = Number(earnings?.streaming_revenue || earnings?.claimable || 0);
   const claimed = payouts.filter((p) => p.status === "completed").reduce((a, p) => a + Number(p.amount || 0), 0);
   const inProgress = payouts.filter((p) => p.status === "pending" || p.status === "processing").reduce((a, p) => a + Number(p.amount || 0), 0);
   const available = Math.max(0, claimable - claimed - inProgress);
@@ -71,7 +71,7 @@ export default function Payouts() {
     if (amt > available) { setError("Amount exceeds available balance"); return; }
     setBusy(true); setError("");
     try {
-      await base44.entities.Payout.create({ cycle: cycleLabel(), amount: amt, status: "pending" });
+      await payoutsApi.process({ cycle: cycleLabel(), amount: amt });
       setAmount("");
       load();
     } catch (e) {

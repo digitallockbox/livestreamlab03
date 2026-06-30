@@ -7,7 +7,7 @@ import { base44 } from "@/api/base44Client";
 export const CATEGORIES = ["Digital Download", "Course", "Membership", "Merch", "Music", "Art", "Software", "Bundle", "Other"];
 
 export default function AddProduct({ onAdded }) {
-  const { walletAddress, signedInvoke } = useIdentity();
+  const { walletAddress } = useIdentity();
 
   // Amazon search + ASIN import
   const [search, setSearch] = useState("");
@@ -49,9 +49,9 @@ export default function AddProduct({ onAdded }) {
     setAddingAsin(true);
     setStatus("");
     try {
-      const res = await signedInvoke("web3Store", { action: "addAmazon", creatorWallet: walletAddress, asin });
-      setStatus(res.success ? `Added: ${res.product?.name || "Amazon product"}` : "Failed to add Amazon product");
-      if (res.success) onAdded?.();
+      const res = await storeAPI.addAmazon({ creatorWallet: walletAddress, asin });
+      setStatus(`Added: ${res?.product?.name || res?.name || "Amazon product"}`);
+      onAdded?.();
     } catch {
       setStatus("Failed to add Amazon product");
     } finally {
@@ -80,8 +80,7 @@ export default function AddProduct({ onAdded }) {
     setAddingCustom(true);
     setStatus("");
     try {
-      const res = await signedInvoke("web3Store", {
-        action: "addCustom",
+      const res = await storeAPI.addCustom({
         creatorWallet: walletAddress,
         title: title.trim(),
         price,
@@ -90,11 +89,9 @@ export default function AddProduct({ onAdded }) {
         category,
         image_url: imageUrl,
       });
-      setStatus(res.success ? "Custom product added" : "Failed to add custom product");
-      if (res.success) {
-        setTitle(""); setPrice(""); setUrl(""); setDescription(""); setImageUrl("");
-        onAdded?.();
-      }
+      setStatus("Custom product added");
+      setTitle(""); setPrice(""); setUrl(""); setDescription(""); setImageUrl("");
+      onAdded?.();
     } catch {
       setStatus("Failed to add custom product");
     } finally {
