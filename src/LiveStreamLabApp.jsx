@@ -44,6 +44,7 @@ import Watch from "@/components/creator/pages/Watch";
 import Payouts from "@/components/creator/pages/Payouts";
 import SalesDashboard from "@/components/creator/pages/SalesDashboard";
 import Landing from "@/pages/Landing";
+import CreatorStorefront from "@/pages/CreatorStorefront";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -631,6 +632,7 @@ function MainApp() {
     return (
       <BrowserRouter>
         <Routes>
+          <Route path="/s/:domain" element={<CreatorStorefront />} />
           {!walletAddress ? (
             <>
               <Route path="/" element={<Landing />} />
@@ -651,6 +653,7 @@ function MainApp() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/s/:domain" element={<CreatorStorefront />} />
         <Route element={<SharedLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/login" element={<Web3Login />} />

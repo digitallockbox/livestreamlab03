@@ -85,6 +85,7 @@ Deno.serve(async (req) => {
       });
       await base44.asServiceRole.entities.Product.update(productId, {
         sales_count: (product.sales_count || 0) + 1,
+        conversions: (product.conversions || 0) + 1,
         revenue: (product.revenue || 0) + (product.price || 0)
       });
       return Response.json({ transaction });

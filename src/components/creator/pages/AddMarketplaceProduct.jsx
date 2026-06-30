@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useViewerWallet, Page, Card, Input } from "@/components/creator/os";
+import { CATEGORIES } from "@/components/creator/store/AddProduct";
 import { useIdentity } from "@/lib/web3/identity";
 
 export default function AddMarketplaceProduct() {
   const wallet = useViewerWallet();
   const { signedInvoke } = useIdentity();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", description: "", price: "", streamingPrice: "", category: "" });
+  const [form, setForm] = useState({ name: "", description: "", price: "", streamingPrice: "", category: "Other" });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -29,7 +30,9 @@ export default function AddMarketplaceProduct() {
           <Input value={form.price} onChange={set("price")} type="number" placeholder="Price USD" />
           <Input value={form.streamingPrice} onChange={set("streamingPrice")} type="number" placeholder="$STREAMING" />
         </div>
-        <Input value={form.category} onChange={set("category")} placeholder="Category" />
+        <select value={form.category} onChange={set("category")} className="w-full rounded-md border border-input bg-muted px-3 py-2">
+          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
         <button onClick={submit} disabled={saving} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">{saving ? "Saving..." : "Publish"}</button>
       </Card>
     </Page>

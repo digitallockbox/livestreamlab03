@@ -108,10 +108,16 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, product });
     }
 
-    // ---- CLICK: affiliate click tracking (open) ----
+    // ---- CLICK: product + affiliate click tracking (open) ----
     if (action === 'click') {
+      if (body.productId) {
+        try {
+          const p = await base44.asServiceRole.entities.Product.get(body.productId);
+          if (p) await base44.asServiceRole.entities.Product.update(body.productId, { clicks: (p.clicks || 0) + 1 });
+        } catch (e) { console.warn("Product click tracking failed:", e?.message || e); }
+      }
       const linkUrl = body.url || (body.asin ? affiliateUrl(body.asin) : "");
-      if (!linkUrl) return Response.json({ error: "Missing url" }, { status: 400 });
+      if (!linkUrl) return Response.json({ ok: true });
       try {
         const existing = await base44.asServiceRole.entities.AffiliateLink.filter({ url: linkUrl });
         if (existing && existing.length > 0) {
@@ -130,6 +136,27 @@ Deno.serve(async (req) => {
         console.warn("Click tracking failed:", e?.message || e);
       }
       return Response.json({ ok: true });
+    }
+
+    // ---- STOREFRONT: public creator storefront by bound domain ----
+    if (action === 'storefront') {
+      const domain = String(body.domain || "").trim().toLowerCase();
+      if (!domain) return Response.json({ error: "Missing domain" }, { status: 400 });
+      let profile = null;
+      try {
+        const profiles = await base44.asServiceRole.entities.Web3Profile.filter({ bound_domain: domain }, "-created_date", 5);
+        profile = (profiles && profiles[0]) || null;
+      } catch (e) { console.warn("Storefront profile lookup failed:", e?.message || e); }
+      let products = [];
+      if (profile?.wallet_address) {
+        try {
+          products = await base44.asServiceRole.entities.Product.filter(
+            { creator_wallet: profile.wallet_address, status: "published" },
+            "-created_date", 100
+          );
+        } catch (e) { console.warn("Storefront products failed:", e?.message || e); }
+      }
+      return Response.json({ profile, products: products || [] });
     }
 
     return Response.json({ error: "Unknown action" }, { status: 400 });

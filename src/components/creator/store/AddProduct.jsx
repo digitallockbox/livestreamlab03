@@ -4,6 +4,8 @@ import { useIdentity } from "@/lib/web3/identity";
 import { Card, Input, storeAPI } from "@/components/creator/os";
 import { base44 } from "@/api/base44Client";
 
+export const CATEGORIES = ["Digital Download", "Course", "Membership", "Merch", "Music", "Art", "Software", "Bundle", "Other"];
+
 export default function AddProduct({ onAdded }) {
   const { walletAddress, signedInvoke } = useIdentity();
 
@@ -19,6 +21,7 @@ export default function AddProduct({ onAdded }) {
   const [price, setPrice] = useState("");
   const [url, setUrl] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Other");
   const [imageUrl, setImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [addingCustom, setAddingCustom] = useState(false);
@@ -84,6 +87,7 @@ export default function AddProduct({ onAdded }) {
         price,
         url,
         description,
+        category,
         image_url: imageUrl,
       });
       setStatus(res.success ? "Custom product added" : "Failed to add custom product");
@@ -146,6 +150,9 @@ export default function AddProduct({ onAdded }) {
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Product title" />
           <Input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Price (USD)" type="number" min="0" step="0.01" />
           <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="External product URL (optional)" className="sm:col-span-2" />
+          <select value={category} onChange={(e) => setCategory(e.target.value)} className="sm:col-span-2 w-full rounded-md border border-input bg-muted px-3 py-2">
+            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Product description" className="sm:col-span-2 w-full rounded-md border border-input bg-muted px-3 py-2" />
           <div className="sm:col-span-2 flex flex-col sm:flex-row gap-3 items-start">
             <label className="flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-muted cursor-pointer text-sm hover:bg-secondary/40">

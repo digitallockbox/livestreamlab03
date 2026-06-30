@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { Link } from "react-router-dom";
 import { Loader2, ArrowDownToLine, Clock, CheckCircle2, XCircle, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -44,6 +45,26 @@ export default function Payouts() {
   const inProgress = payouts.filter((p) => p.status === "pending" || p.status === "processing").reduce((a, p) => a + Number(p.amount || 0), 0);
   const available = Math.max(0, claimable - claimed - inProgress);
 
+  const monthly = useMemo(() => {
+    const map = {};
+    payouts.forEach((p) => {
+      if (!p.created_date) return;
+      const d = new Date(p.created_date);
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      map[k] = (map[k] || 0) + Number(p.amount || 0);
+    });
+    return Object.entries(map)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-12)
+      .map(([k, v]) => ({ cycle: k, amount: v }));
+  }, [payouts]);
+
+  const statusBreakdown = useMemo(() => {
+    const counts = { pending: 0, processing: 0, completed: 0, failed: 0 };
+    payouts.forEach((p) => { if (counts[p.status] != null) counts[p.status]++; });
+    return counts;
+  }, [payouts]);
+
   const requestPayout = async () => {
     const amt = Number(amount);
     if (!amt || amt <= 0) { setError("Enter an amount greater than 0"); return; }
@@ -67,6 +88,42 @@ export default function Payouts() {
         <Card><p className="text-xs text-muted-foreground">Claimed</p><p className="text-xl sm:text-2xl font-display font-bold">{claimed.toLocaleString()} ◎</p></Card>
         <Card><p className="text-xs text-muted-foreground">In Progress</p><p className="text-xl sm:text-2xl font-display font-bold">{inProgress.toLocaleString()} ◎</p></Card>
         <Card className="bg-gradient-card"><p className="text-xs text-muted-foreground">Available</p><p className="text-xl sm:text-2xl font-display font-bold text-accent">{available.toLocaleString()} ◎</p></Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <h3 className="font-display font-semibold mb-3">Payouts by Month</h3>
+          {monthly.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No payout activity yet.</p>
+          ) : (
+            <div className="w-full h-[240px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthly} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="cycle" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "0.75rem", fontSize: 12 }} formatter={(v) => `${Number(v).toLocaleString()} ◎`} />
+                  <Bar dataKey="amount" name="Payout" fill="#34d399" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+        <Card className="space-y-3">
+          <h3 className="font-display font-semibold">Status Breakdown</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {Object.entries(statusBreakdown).map(([k, v]) => {
+              const s = STATUS[k] || STATUS.pending;
+              const Icon = s.icon;
+              return (
+                <div key={k} className="rounded-lg bg-muted p-3">
+                  <p className="text-xs text-muted-foreground inline-flex items-center gap-1 capitalize"><Icon className="w-3 h-3" /> {k}</p>
+                  <p className="text-xl font-display font-bold">{v}</p>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
       </div>
 
       <Card className="space-y-3 max-w-md">

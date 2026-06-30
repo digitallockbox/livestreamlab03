@@ -42,6 +42,16 @@
       "type": "number",
       "default": 0
     },
+    "clicks": {
+      "type": "number",
+      "default": 0,
+      "description": "Total view/affiliate clicks tracked for this product"
+    },
+    "conversions": {
+      "type": "number",
+      "default": 0,
+      "description": "Total recorded purchases/conversions for this product"
+    },
     "category": {
       "type": "string"
     },
