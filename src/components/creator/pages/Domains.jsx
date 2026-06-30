@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Loader2, Globe, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Loader2, Globe, CheckCircle2, Clock, XCircle, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useIdentity } from "@/lib/web3/identity";
 import { Page, Card, Spinner, Input, domainsAPI } from "@/components/creator/os";
 
@@ -75,6 +76,7 @@ export default function Domains() {
                     <p className="font-display font-semibold font-mono">{d.domain}</p>
                     <p className="text-xs text-muted-foreground">{d.chain} · {d.created_date ? new Date(d.created_date).toLocaleDateString() : ""}</p>
                     {d.tx_hash && <p className="text-xs font-mono text-muted-foreground mt-1 truncate max-w-xs">tx: {d.tx_hash}</p>}
+                    {d.status === "minted" && <Link to={`/s/${d.domain}`} className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1"><ExternalLink className="w-3 h-3" /> View Storefront</Link>}
                   </div>
                   <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${b.cls} shrink-0`}><Icon className="w-3 h-3" /> {b.label}</span>
                 </Card>

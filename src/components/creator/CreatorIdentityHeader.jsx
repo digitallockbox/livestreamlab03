@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Wallet, Globe, CheckCircle2, AlertCircle } from "lucide-react";
 import { useIdentity } from "@/lib/web3/identity";
 import { Web3NameBadge, VerificationBadge, CreatorBadge, PassportBadge, domainsAPI } from "@/components/creator/os";
@@ -48,9 +49,9 @@ export default function CreatorIdentityHeader({ profile }) {
             <span className="text-xs px-2 py-1 rounded-full bg-primary/15 text-primary capitalize">{chain}</span>
           )}
           {domain && (
-            <span className="text-xs px-2 py-1 rounded-full bg-accent/15 text-accent flex items-center gap-1">
+            <Link to={`/s/${domain}`} className="text-xs px-2 py-1 rounded-full bg-accent/15 text-accent flex items-center gap-1 hover:bg-accent/25 transition-colors">
               <Globe className="w-3 h-3" /> {domain}
-            </span>
+            </Link>
           )}
         </div>
         <span className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${activated ? "bg-accent/15 text-accent" : "bg-muted text-muted-foreground"}`}>
