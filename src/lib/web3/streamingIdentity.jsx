@@ -8,20 +8,25 @@ import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { getAssociatedTokenAddress, getAccount, createTransferInstruction } from "@solana/spl-token";
 
-// --- CONFIG: replace with your real values --------------------------------
-export const STREAMING_MINT = "STREAMING_MINT_PLACEHOLDER"; // <-- set the real SPL mint address
+// --- CONFIG -------------------------------------------------------------
+// The real $STREAMING SPL mint + decimals are fetched at runtime from the
+// `streamingConfig` backend function (backed by secrets), so they can be
+// updated without a frontend redeploy and are never hardcoded in the bundle.
 export const RPC_ENDPOINT = "https://api.mainnet-beta.solana.com";
 // -------------------------------------------------------------------------
 
 const IdentityContext = createContext(null);
 
-// Read real on-chain $STREAMING SPL balance for a wallet. Returns 0 if no ATA / invalid mint.
-async function readStreamingBalance(connection, walletPubkey) {
+// Read real on-chain $STREAMING SPL balance for a wallet.
+// `mint` must be a valid base58 mint pubkey. Returns display units (raw / 10^decimals).
+async function readStreamingBalance(connection, walletPubkey, mint, decimals) {
+  if (!mint) return 0;
   try {
-    const mint = new PublicKey(STREAMING_MINT);
-    const ata = await getAssociatedTokenAddress(mint, walletPubkey);
+    const mintPk = new PublicKey(mint);
+    const ata = await getAssociatedTokenAddress(mintPk, walletPubkey);
     const account = await getAccount(connection, ata);
-    return Number(account.amount);
+    const raw = Number(account.amount);
+    return decimals > 0 ? raw / Math.pow(10, decimals) : raw;
   } catch {
     return 0;
   }
@@ -33,18 +38,29 @@ function IdentityInner({ children }) {
   const [loadingBalance, setLoadingBalance] = useState(false);
   const [profile, setProfile] = useState(null);
   const [authenticating, setAuthenticating] = useState(false);
+  const [config, setConfig] = useState({ mint: null, decimals: 9 });
 
   const connection = useMemo(() => new Connection(RPC_ENDPOINT), []);
+
+  // Fetch the real mint + decimals once on mount from the backend config.
+  useEffect(() => {
+    base44.functions.invoke("streamingConfig", {})
+      .then((r) => r.data)
+      .then((cfg) => {
+        if (cfg?.mint) setConfig({ mint: cfg.mint, decimals: Number(cfg.decimals) || 9 });
+      })
+      .catch((e) => console.warn("streamingConfig load failed:", e?.message || e));
+  }, []);
 
   const refreshBalance = useCallback(async () => {
     if (!publicKey) { setBalance(0); return; }
     setLoadingBalance(true);
     try {
-      setBalance(await readStreamingBalance(connection, publicKey));
+      setBalance(await readStreamingBalance(connection, publicKey, config.mint, config.decimals));
     } finally {
       setLoadingBalance(false);
     }
-  }, [publicKey, connection]);
+  }, [publicKey, connection, config]);
 
   useEffect(() => { refreshBalance(); }, [refreshBalance]);
 
@@ -105,18 +121,22 @@ function IdentityInner({ children }) {
   }, [publicKey, sign]);
 
   // Real on-chain $STREAMING SPL transfer (Phantom signs, sent to RPC).
+  // `amount` is in display units; converted to raw using config.decimals.
   const sendStreaming = useCallback(async (recipientAddress, amount) => {
     if (!publicKey) throw new Error("Wallet not connected");
-    const mint = new PublicKey(STREAMING_MINT);
-    const senderATA = await getAssociatedTokenAddress(mint, publicKey);
+    if (!config.mint) throw new Error("Token config not loaded yet");
+    const mintPk = new PublicKey(config.mint);
+    const senderATA = await getAssociatedTokenAddress(mintPk, publicKey);
     const recipient = new PublicKey(recipientAddress);
-    const recipientATA = await getAssociatedTokenAddress(mint, recipient);
-    const ix = createTransferInstruction(senderATA, recipientATA, publicKey, Number(amount));
+    const recipientATA = await getAssociatedTokenAddress(mintPk, recipient);
+    const rawAmount = Math.round(Number(amount) * Math.pow(10, config.decimals));
+    if (!rawAmount || rawAmount <= 0) throw new Error("Amount must be greater than 0");
+    const ix = createTransferInstruction(senderATA, recipientATA, publicKey, rawAmount);
     const tx = new Transaction().add(ix);
     const signature = await sendTransaction(tx, connection);
     await connection.confirmTransaction(signature, "confirmed");
     return signature;
-  }, [publicKey, sendTransaction, connection]);
+  }, [publicKey, sendTransaction, connection, config]);
 
   const value = {
     connected: !!publicKey,
