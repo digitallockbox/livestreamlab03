@@ -48,6 +48,8 @@ import Landing from "@/pages/Landing";
 import CreatorStorefront from "@/pages/CreatorStorefront";
 import StoreProductList from "@/components/creator/store/StoreProductList";
 import ProductDetail from "@/pages/store/ProductDetail";
+import StoreDashboard from "@/pages/store/StoreDashboard";
+import AddProductPage from "@/pages/store/AddProductPage";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -668,7 +670,9 @@ function MainApp() {
         <Route path="/marketplace/add" element={<AddMarketplaceProduct />} />
         <Route path="/marketplace/products" element={<MarketplaceProducts />} />
         <Route path="/marketplace/sales" element={<MarketplaceSales />} />
-        <Route path="/store" element={<StoreProductList />} />
+        <Route path="/store" element={<StoreDashboard />} />
+        <Route path="/store/add" element={<AddProductPage />} />
+        <Route path="/store/catalog" element={<StoreProductList />} />
         <Route path="/store/:productId" element={<ProductDetail />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/domains" element={<Domains />} />
