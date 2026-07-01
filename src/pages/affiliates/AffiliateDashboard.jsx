@@ -7,6 +7,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import { useIdentity } from "@/lib/web3/identity";
 import AffiliatePerformanceChart from "@/components/creator/affiliate/AffiliatePerformanceChart";
+import AffiliateConversionTrend from "@/components/creator/affiliate/AffiliateConversionTrend";
 
 const usd = (n) => `$${Number(n || 0).toFixed(2)}`;
 const CATEGORY_COLORS = {
@@ -134,6 +135,7 @@ export default function AffiliateDashboard() {
       )}
 
       <AffiliatePerformanceChart wallet={walletAddress} />
+      <AffiliateConversionTrend wallet={walletAddress} links={links} />
 
       {/* Links table */}
       <div className="rounded-2xl border border-border bg-card p-5">
