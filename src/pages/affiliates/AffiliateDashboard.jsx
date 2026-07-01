@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   MousePointerClick, TrendingUp, DollarSign, Zap, Plus, Search, ExternalLink,
-  Copy, CheckCircle2, Loader2, Tag, Link2, ShoppingBag,
+  Copy, CheckCircle2, Loader2, Tag, Link2, ShoppingBag, Download,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useIdentity } from "@/lib/web3/identity";
@@ -56,6 +56,28 @@ export default function AffiliateDashboard() {
     setTimeout(() => setCopied(null), 1500);
   };
 
+  const handleExportCSV = () => {
+    const headers = ["Title", "URL", "Category", "Clicks", "Conversions", "Conv. Rate (%)", "Commission (USD)", "$STREAMING Bonus"];
+    const escape = (v) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows = links.map((l) => {
+      const rate = l.clicks ? ((l.conversions || 0) / l.clicks) * 100 : 0;
+      return [l.title, l.url, l.category, l.clicks || 0, l.conversions || 0, rate.toFixed(2), (l.commission_earned || 0).toFixed(2), l.streaming_bonus || 0].map(escape).join(",");
+    });
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `affiliate-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleOpen = (link) => {
     // Track the click locally so dashboard stats stay fresh.
     base44.entities.AffiliateLink.update(link.id, { clicks: (link.clicks || 0) + 1 }).catch(() => {});
@@ -84,9 +106,14 @@ export default function AffiliateDashboard() {
           <h1 className="font-display text-2xl font-bold">Affiliate Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Track clicks, conversion rates, and commission earned per referral link.</p>
         </div>
-        <Link to="/affiliates/add" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90 shrink-0">
-          <Plus className="w-4 h-4" /> Add Link
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={handleExportCSV} disabled={loading || links.length === 0} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-border text-sm hover:bg-muted disabled:opacity-50">
+            <Download className="w-4 h-4" /> Export CSV
+          </button>
+          <Link to="/affiliates/add" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90">
+            <Plus className="w-4 h-4" /> Add Link
+          </Link>
+        </div>
       </div>
 
       {/* KPI cards */}
