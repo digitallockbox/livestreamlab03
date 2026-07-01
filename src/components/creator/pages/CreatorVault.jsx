@@ -3,6 +3,7 @@ import { Zap, TrendingUp, Radio, Flame, Loader2, Crown, Store as StoreIcon, Link
 import { base44 } from "@/api/base44Client";
 import { useViewerWallet, Page, Card, Spinner, streamsAPI, boostsAPI } from "@/components/creator/os";
 import EarningsTrendChart from "@/components/creator/vault/EarningsTrendChart";
+import MonthlyEarningsBreakdown from "@/components/creator/vault/MonthlyEarningsBreakdown";
 import GlanceSummary from "@/components/creator/pages/GlanceSummary";
 
 const DAYS = 30;
@@ -257,6 +258,9 @@ export default function CreatorVault() {
         </div>
         <EarningsTrendChart series={series} days={DAYS} unit={chartUnit} />
       </Card>
+
+      {/* Monthly breakdown — streams / store / affiliate by month */}
+      <MonthlyEarningsBreakdown wallet={wallet} />
 
       {/* Top items for the active source */}
       <Card>
