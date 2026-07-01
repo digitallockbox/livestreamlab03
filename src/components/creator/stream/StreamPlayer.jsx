@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Users, Clock, Zap, Radio, StopCircle } from "lucide-react";
+import { Send, Users, Clock, Zap, Radio, StopCircle, Flame } from "lucide-react";
 import ClaimButton from "@/components/creator/stream/ClaimButton";
 import LiveLeaderboard from "@/components/creator/stream/LiveLeaderboard";
 
 // Responsive stream viewing layout: video player + metadata + live chat.
 // On desktop: player/metadata span 2 cols, chat sticks to the right.
 // On mobile: everything stacks (player → metadata → chat).
-export default function StreamPlayer({ stream, tokens, minutes, onStop, wallet, onClaimed }) {
+export default function StreamPlayer({ stream, tokens, minutes, streak, onStop, wallet, onClaimed }) {
   const [messages, setMessages] = useState([
     { id: 1, user: "alice", text: "Great stream! 🔥" },
     { id: 2, user: "bob", text: "Sending a boost" },
@@ -48,7 +48,12 @@ export default function StreamPlayer({ stream, tokens, minutes, onStop, wallet, 
               <p className="text-xs text-muted-foreground font-mono mt-1 break-all">{stream?.creator_wallet}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <ClaimButton viewerWallet={wallet} earned={tokens} onClaimed={onClaimed} />
+              {streak >= 3 && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-chart-3/15 text-chart-3 text-xs font-semibold border border-chart-3/30" title="Consecutive-day streak — bonus applies on claim">
+                  <Flame className="w-3.5 h-3.5" /> {streak}-day streak
+                </span>
+              )}
+              <ClaimButton viewerWallet={wallet} earned={tokens} streak={streak} onClaimed={onClaimed} />
               <button onClick={onStop} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-destructive/15 text-destructive text-sm hover:bg-destructive/25">
                 <StopCircle className="w-4 h-4" /> Stop
               </button>

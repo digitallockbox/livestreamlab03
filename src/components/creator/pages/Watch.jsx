@@ -11,6 +11,7 @@ export default function Watch() {
   const [session, setSession] = useState(null);
   const [tokens, setTokens] = useState(0);
   const [minutes, setMinutes] = useState(0);
+  const [streak, setStreak] = useState(0);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function Watch() {
     try {
       const res = await watchAPI.start(wallet, stream.creator_wallet);
       setSession(res.session);
+      setStreak(res.streak?.current_streak || 0);
       setTokens(0); setMinutes(0);
     } finally { setBusy(false); }
   };
@@ -57,9 +59,13 @@ export default function Watch() {
         stream={selected}
         tokens={tokens}
         minutes={minutes}
+        streak={streak}
         onStop={stop}
         wallet={wallet}
-        onClaimed={() => { setTokens(0); setMinutes(0); setSession(null); setSelected(null); }}
+        onClaimed={(claimed, bonus) => {
+          setTokens(0); setMinutes(0); setSession(null); setSelected(null);
+          if (bonus) setStreak(0);
+        }}
       />
       </Page>
     );

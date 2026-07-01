@@ -1,6 +1,43 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import jwt from 'npm:jsonwebtoken@9.0.2';
 
+// Streak reward: consecutive-day watchers earn an extra $STREAMING bonus on claim.
+// Bonus kicks in at a 3-day streak: bonus = min(streak * 2, 50) tokens.
+const STREAK_THRESHOLD = 3;
+const STREAK_BONUS_CAP = 50;
+const computeStreakBonus = (streak) =>
+  streak >= STREAK_THRESHOLD ? Math.min(streak * 2, STREAK_BONUS_CAP) : 0;
+
+// Record that a viewer watched today (UTC). Updates/creates their ViewerStreak.
+// Returns the current streak record.
+const recordDailyWatch = async (base44, viewerWallet) => {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
+  const existing = await base44.asServiceRole.entities.ViewerStreak
+    .filter({ viewer_wallet: viewerWallet }, '-created_date', 1)
+    .catch(() => []);
+  const prev = existing[0];
+  if (!prev) {
+    return base44.asServiceRole.entities.ViewerStreak.create({
+      viewer_wallet: viewerWallet,
+      current_streak: 1,
+      longest_streak: 1,
+      last_watch_date: today,
+      total_days_watched: 1
+    });
+  }
+  if (prev.last_watch_date === today) return prev; // already counted today
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const continued = prev.last_watch_date === yesterday;
+  const current = continued ? (prev.current_streak || 0) + 1 : 1;
+  const longest = Math.max(prev.longest_streak || 0, current);
+  return base44.asServiceRole.entities.ViewerStreak.update(prev.id, {
+    current_streak: current,
+    longest_streak: longest,
+    last_watch_date: today,
+    total_days_watched: (prev.total_days_watched || 0) + 1
+  });
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -28,7 +65,10 @@ Deno.serve(async (req) => {
         minutes_watched: 0,
         status: 'active'
       });
-      return Response.json({ session });
+      // Mark today as a watched day so the streak grows for consecutive-day viewers.
+      let streak = null;
+      try { streak = await recordDailyWatch(base44, viewerWallet); } catch (_e) { /* fail open */ }
+      return Response.json({ session, streak });
     }
 
     if (action === 'tick') {
@@ -76,8 +116,19 @@ Deno.serve(async (req) => {
       const sessions = await base44.asServiceRole.entities.WatchSession.filter(
         { viewer_wallet: viewerWallet, status: 'ended' }, '-created_date', 100
       );
-      const totalEarned = sessions.reduce((s, x) => s + (x.tokens_earned || 0), 0);
-      if (totalEarned <= 0) return Response.json({ error: 'No tokens available to claim' }, { status: 400 });
+      const baseEarned = sessions.reduce((s, x) => s + (x.tokens_earned || 0), 0);
+      if (baseEarned <= 0) return Response.json({ error: 'No tokens available to claim' }, { status: 400 });
+      // Streak reward: consecutive-day viewers get an extra bonus on claim.
+      let streakInfo = null;
+      let streakBonus = 0;
+      try {
+        const existing = await base44.asServiceRole.entities.ViewerStreak.filter(
+          { viewer_wallet: viewerWallet }, '-created_date', 1
+        );
+        streakInfo = existing[0] || null;
+        streakBonus = computeStreakBonus(streakInfo?.current_streak || 0);
+      } catch (_e) { /* fail open */ }
+      const totalEarned = baseEarned + streakBonus;
       let settle;
       try {
         const settleRes = await base44.functions.invoke('buildSettlementTx', {
@@ -94,7 +145,14 @@ Deno.serve(async (req) => {
       for (const s of sessions) {
         await base44.asServiceRole.entities.WatchSession.delete(s.id);
       }
-      return Response.json({ claimed: totalEarned, settlement: settle });
+      return Response.json({
+        claimed: totalEarned,
+        base_earned: baseEarned,
+        streak_bonus: streakBonus,
+        streak: streakInfo ? streakInfo.current_streak : 0,
+        longest_streak: streakInfo ? streakInfo.longest_streak : 0,
+        settlement: settle
+      });
     }
 
     if (action === 'leaderboard') {

@@ -1,0 +1,31 @@
+{
+  "name": "ViewerStreak",
+  "type": "object",
+  "properties": {
+    "viewer_wallet": {
+      "type": "string",
+      "description": "Wallet address of the viewer"
+    },
+    "current_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "Consecutive days watched"
+    },
+    "longest_streak": {
+      "type": "number",
+      "default": 0
+    },
+    "last_watch_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Most recent UTC date (YYYY-MM-DD) the viewer started a watch session"
+    },
+    "total_days_watched": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "viewer_wallet"
+  ]
+}
