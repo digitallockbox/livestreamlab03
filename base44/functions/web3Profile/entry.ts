@@ -26,15 +26,11 @@ Deno.serve(async (req) => {
 
     // Wallet-signed profile update.
     if (action === 'update') {
-      const v = await base44.functions.invoke('verifyWalletSignature', {
-        wallet_address: body.auth_wallet,
-        message: body.auth_message,
-        signature: body.auth_signature,
-        chain: body.chain,
-      });
-      const d = v?.data || v;
-      if (!d?.valid) return Response.json({ error: 'Wallet signature invalid' }, { status: 401 });
-      const profile = await byWallet(d.wallet_address);
+      if (!body.wallet_token) return Response.json({ error: 'wallet_token required' }, { status: 401 });
+      const ctxRes = await base44.functions.invoke('getAuthContext', { token: body.wallet_token });
+      const ctx = ctxRes?.data || ctxRes;
+      if (!ctx?.authenticated) return Response.json({ error: 'Wallet token invalid or expired' }, { status: 401 });
+      const profile = await byWallet(ctx.wallet);
       if (!profile) return Response.json({ error: 'Profile not found' }, { status: 404 });
       const patch = {};
       for (const k of EDITABLE) if (body[k] !== undefined) patch[k] = body[k];

@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Github, Twitter, Mail, Twitch, Zap, Unlink2, Link2, Save, X, Loader2 } from "lucide-react";
+import { Github, Twitter, Mail, Twitch, Zap, Unlink2, Link2, Save, X, Loader2, Wallet } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useIdentity } from "@/lib/web3/identity";
+import { useIdentity, getWalletToken } from "@/lib/web3/identity";
 
 const INITIAL_CONNECTED = [
   { id: "github", name: "GitHub", icon: Github, status: "connected", email: "dev@example.com", connected_at: "Mar 15, 2026" },
@@ -26,6 +26,25 @@ export default function ConnectedAccounts() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
+  const [linking, setLinking] = useState(false);
+  const [walletMerged, setWalletMerged] = useState(false);
+
+  const handleLinkWallet = async () => {
+    const token = getWalletToken();
+    if (!token) { setStatus("Wallet not authenticated — complete wallet login first"); return; }
+    if (!walletAddress) { setStatus("No wallet connected"); return; }
+    setLinking(true);
+    setStatus("");
+    try {
+      await base44.functions.invoke("linkWallet", { wallet_token: token });
+      setWalletMerged(true);
+      setStatus("Wallet linked to your account successfully");
+    } catch (error) {
+      setStatus(error?.message || "Failed to link wallet");
+    } finally {
+      setLinking(false);
+    }
+  };
 
   // Load connected accounts from backend
   useEffect(() => {
@@ -209,6 +228,38 @@ export default function ConnectedAccounts() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Wallet Identity */}
+      <div className="mb-12">
+        <h2 className="font-display font-semibold text-lg text-foreground mb-4">Wallet Identity</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-card border border-border rounded-xl">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Wallet className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Web3 Wallet</p>
+              <p className="text-xs text-muted-foreground font-mono">
+                {walletAddress ? `${walletAddress.slice(0, 8)}...${walletAddress.slice(-6)}` : "No wallet connected"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {walletMerged ? (
+              <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20">Linked to account</Badge>
+            ) : (
+              <Button
+                size="sm"
+                className="bg-primary hover:bg-primary/90 gap-1.5"
+                onClick={handleLinkWallet}
+                disabled={linking || !walletAddress}
+              >
+                {linking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link2 className="w-3.5 h-3.5" />} Link to account
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 

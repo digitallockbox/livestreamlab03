@@ -4,18 +4,17 @@ const TIER_PRICES = { basic: 4.99, plus: 9.99, premium: 19.99 };
 
 // Cryptographically prove the caller owns the wallet in the payload.
 const verifyOwnership = async (base44, body, requiredWallet) => {
+  if (!body.wallet_token) return { ok: false, status: 401, error: 'wallet_token required' };
   try {
-    const res = await base44.functions.invoke('verifyWalletSignature', {
-      wallet_address: body.auth_wallet, message: body.auth_message, signature: body.auth_signature, chain: body.chain
-    });
+    const res = await base44.functions.invoke('getAuthContext', { token: body.wallet_token });
     const d = res?.data || res;
-    if (!d?.valid) return { ok: false, status: 401, error: 'Wallet signature invalid' };
-    if (requiredWallet && d.wallet_address !== requiredWallet) {
+    if (!d?.authenticated) return { ok: false, status: 401, error: 'Wallet token invalid or expired' };
+    if (requiredWallet && d.wallet !== requiredWallet) {
       return { ok: false, status: 403, error: 'Wallet not authorized for this action' };
     }
-    return { ok: true, wallet_address: d.wallet_address };
+    return { ok: true, wallet_address: d.wallet, userId: d.userId || null };
   } catch (e) {
-    return { ok: false, status: 401, error: 'Wallet verification failed' };
+    return { ok: false, status: 401, error: 'Wallet token verification failed' };
   }
 };
 

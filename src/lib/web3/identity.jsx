@@ -150,11 +150,10 @@ export function IdentityProvider({ children }) {
   // The backend verifies the signature (Solana or EVM) before writing.
   const signedInvoke = useCallback(async (name, payload) => {
     if (!walletAddress) throw new Error("Wallet not connected");
-    const auth_message = `LiveStreamLab ${name} ts:${Date.now()}`;
-    const auth_signature = await signNonce(auth_message);
-    if (!auth_signature) throw new Error("Signature rejected");
-    return base44.functions.invoke(name, { ...payload, auth_wallet: walletAddress, chain, auth_message, auth_signature }).then((r) => r.data);
-  }, [walletAddress, chain, signNonce]);
+    const token = getWalletToken();
+    if (!token) throw new Error("Wallet not authenticated — please complete wallet login first");
+    return base44.functions.invoke(name, { ...payload, wallet_token: token }).then((r) => r.data);
+  }, [walletAddress]);
 
   return (
     <IdentityContext.Provider
