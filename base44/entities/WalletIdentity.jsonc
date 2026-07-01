@@ -1,0 +1,29 @@
+{
+  "name": "WalletIdentity",
+  "type": "object",
+  "properties": {
+    "wallet_address": {
+      "type": "string",
+      "description": "On-chain wallet address (normalized lowercase for EVM)"
+    },
+    "chain": {
+      "type": "string",
+      "enum": [
+        "solana",
+        "evm"
+      ],
+      "default": "solana"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "Linked Base44 user id when a Web2 account is merged"
+    },
+    "merged_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "wallet_address"
+  ]
+}

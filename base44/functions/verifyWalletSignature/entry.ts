@@ -2,13 +2,14 @@
 // personal_sign) signature was produced by the claimed wallet over the supplied
 // message, PLUS issuance of a wallet-native JWT auth token.
 //
-// Stateless replay protection via an embedded `ts:<ms>` timestamp in the message.
-// No Base44 session / auth.me() dependency — the wallet IS the identity.
+// Replay protection uses a single-use nonce stored in the Nonce entity: the
+// signed message must match an unexpired, unconsumed nonce, which is consumed
+// atomically after a valid signature. No Base44 session dependency.
 import nacl from 'npm:tweetnacl@1.0.3';
 import bs58 from 'npm:bs58@6.0.0';
 import { ethers } from 'npm:ethers@6.13.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-const FIVE_MIN = 5 * 60 * 1000;
 const TOKEN_TTL_SEC = 24 * 60 * 60; // 24 hours
 
 // Base64url (no padding) encoder for JWT segments.
@@ -73,16 +74,50 @@ Deno.serve(async (req) => {
     }
     if (!ok) return Response.json({ valid: false }, { status: 401 });
 
-    // Step 2 — replay protection: timestamp embedded in the signed message.
-    const tsMatch = String(message).match(/ts:(\d+)/) || String(message).match(/Timestamp: (\d+)/);
-    if (tsMatch && Math.abs(Date.now() - Number(tsMatch[1])) > FIVE_MIN) {
-      return Response.json({ valid: false, error: 'signature expired' }, { status: 401 });
+    // Step 2 — replay protection via single-use nonce lookup.
+    // The signed message must be an unexpired, unconsumed nonce record.
+    const base44 = createClientFromRequest(req);
+    const nonceRecords = await base44.asServiceRole.entities.Nonce.filter(
+      { nonce: String(message), consumed: false },
+      '-created_date',
+      5
+    );
+    const record = nonceRecords && nonceRecords[0];
+    if (!record) {
+      return Response.json({ valid: false, error: 'Nonce invalid or already used' }, { status: 401 });
     }
+    if (new Date(record.expires_at).getTime() < Date.now()) {
+      return Response.json({ valid: false, error: 'Nonce expired' }, { status: 401 });
+    }
+    // Consume the nonce immediately so it can never be replayed.
+    await base44.asServiceRole.entities.Nonce.update(record.id, { consumed: true });
 
-    // Step 3 — issue a wallet-native JWT. The wallet address is the identity.
+    // Step 3 — ensure / upsert a WalletIdentity record so this wallet is
+    // resolvable by getAuthContext for identity merging.
     const normalized = chain === 'evm'
       ? String(wallet_address).toLowerCase()
       : wallet_address;
+    try {
+      const existing = await base44.asServiceRole.entities.WalletIdentity.filter(
+        { wallet_address: normalized },
+        '-created_date',
+        1
+      );
+      if (existing && existing[0]) {
+        // already linked — nothing to update on login
+      } else {
+        await base44.asServiceRole.entities.WalletIdentity.create({
+          wallet_address: normalized,
+          chain: chain || 'solana',
+          merged_at: new Date().toISOString(),
+        });
+      }
+    } catch (e) {
+      // non-fatal — identity merge is best-effort on login
+      console.warn('verifyWalletSignature: WalletIdentity upsert skipped:', e?.message);
+    }
+
+    // Step 4 — issue a wallet-native JWT. The wallet address is the identity.
     const secret = Deno.env.get('CREATOR_JWT_SECRET');
     if (!secret) {
       console.error('verifyWalletSignature: CREATOR_JWT_SECRET not set');

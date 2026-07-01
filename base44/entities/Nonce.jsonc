@@ -1,0 +1,28 @@
+{
+  "name": "Nonce",
+  "type": "object",
+  "properties": {
+    "nonce": {
+      "type": "string",
+      "description": "Unique challenge string signed by the wallet"
+    },
+    "wallet_address": {
+      "type": "string",
+      "description": "Optional: wallet this nonce was issued to"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this nonce becomes invalid"
+    },
+    "consumed": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once a signature over this nonce has been verified"
+    }
+  },
+  "required": [
+    "nonce",
+    "expires_at"
+  ]
+}
