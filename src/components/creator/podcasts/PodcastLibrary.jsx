@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Headphones, Search, Play, Clock, Mic2, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import PodcastPlayer from "@/components/creator/podcasts/PodcastPlayer";
 
 // PodcastLibrary — public browse + play view for published episodes across
 // the network, with search and series filtering. Plays episodes inline via a
@@ -86,13 +87,8 @@ export default function PodcastLibrary() {
       {/* Sticky player */}
       {playing && (
         <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-sidebar/95 backdrop-blur px-4 py-3">
-          <div className="max-w-5xl mx-auto flex items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium truncate">{playing.title}</p>
-              <p className="text-xs text-muted-foreground truncate">{playing.series || "Uncategorized"}</p>
-            </div>
-            <audio key={playing.id} src={playing.audio_url} autoPlay controls className="max-w-md w-full" />
-            <button onClick={() => setPlaying(null)} className="text-xs text-muted-foreground hover:text-foreground px-2 shrink-0">✕</button>
+          <div className="max-w-5xl mx-auto">
+            <PodcastPlayer episode={playing} onClose={() => setPlaying(null)} />
           </div>
         </div>
       )}
