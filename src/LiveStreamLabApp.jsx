@@ -13,6 +13,7 @@ import BrandingSettings from "@/pages/settings/BrandingSettings";
 import SecuritySettings from "@/pages/settings/SecuritySettings";
 import NotificationSettings from "@/pages/settings/NotificationSettings";
 import ConnectedAccounts from "@/pages/settings/ConnectedAccounts";
+import BillingSettings from "@/pages/settings/BillingSettings";
 import SupabaseExplorer from "@/pages/SupabaseExplorer";
 import SharedLayout from "@/components/creator/SharedLayout";
 import MultiWalletLogin from "@/components/creator/MultiWalletLogin";
@@ -708,6 +709,7 @@ function MainApp() {
         <Route path="/settings/security" element={<SecuritySettings />} />
         <Route path="/settings/notifications" element={<NotificationSettings />} />
         <Route path="/settings/connected" element={<ConnectedAccounts />} />
+        <Route path="/settings/billing" element={<BillingSettings />} />
         <Route path="/supabase" element={<SupabaseExplorer />} />
         <Route path="/stream" element={<StreamView />} />
         <Route path="/boost" element={<StreamBoost />} />
