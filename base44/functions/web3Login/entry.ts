@@ -1,11 +1,9 @@
 // web3Login — Phantom wallet handshake (challenge → sign → verify → profile)
 // Actions: challenge | verify | (legacy) login-by-address
+// Crypto verification + nonce validation + JWT issuance are delegated to
+// verifyWalletSignature — this function handles challenge issuance and
+// Web3Profile provisioning only.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import nacl from 'npm:tweetnacl@1.0.3';
-import bs58 from 'npm:bs58@6.0.0';
-import { ethers } from 'npm:ethers@6.13.4';
-
-const FIVE_MIN = 5 * 60 * 1000;
 
 Deno.serve(async (req) => {
   try {
@@ -13,12 +11,19 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = body.action || 'login';
 
-    // Step 1 — issue a challenge the wallet must sign.
+    // Step 1 — issue a single-use nonce challenge stored in the Nonce entity.
+    // The raw nonce string IS the message the wallet signs; verifyWalletSignature
+    // looks it up and consumes it, giving true replay protection.
     if (action === 'challenge') {
-      const nonce = crypto.randomUUID();
-      const timestamp = Date.now();
-      const message = `Sign in to LiveStreamLab\nNonce: ${nonce}\nTimestamp: ${timestamp}`;
-      return Response.json({ nonce, timestamp, message });
+      const nonce = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+      await base44.asServiceRole.entities.Nonce.create({
+        nonce,
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        consumed: false,
+      });
+      return Response.json({ nonce, message: nonce });
     }
 
     // Step 2 — verify the Ed25519 signature against the claimed wallet address.
@@ -29,30 +34,8 @@ Deno.serve(async (req) => {
       }
       const normalized = chain === 'evm' ? String(wallet_address).toLowerCase() : wallet_address;
 
-      let ok = false;
-      try {
-        if (chain === 'evm') {
-          const recovered = ethers.verifyMessage(String(message), String(signature));
-          ok = recovered.toLowerCase() === normalized;
-        } else {
-          const msgBytes = new TextEncoder().encode(message);
-          const sigBytes = Uint8Array.from(atob(signature), (c) => c.charCodeAt(0));
-          const pubKeyBytes = bs58.decode(wallet_address);
-          ok = nacl.sign.detached.verify(msgBytes, sigBytes, pubKeyBytes);
-        }
-      } catch (e) {
-        return Response.json({ error: 'Signature verification failed: ' + e.message }, { status: 400 });
-      }
-      if (!ok) return Response.json({ error: 'Invalid signature' }, { status: 401 });
-
-      // Replay protection: timestamp embedded in the signed message must be recent.
-      const tsMatch = String(message).match(/Timestamp: (\d+)/);
-      if (!tsMatch) return Response.json({ error: 'Missing timestamp' }, { status: 400 });
-      if (Math.abs(Date.now() - Number(tsMatch[1])) > FIVE_MIN) {
-        return Response.json({ error: 'Nonce expired' }, { status: 401 });
-      }
-
-      // Issue a wallet-native JWT via the shared crypto verifier.
+      // Delegate signature verification + nonce validation + JWT issuance to
+      // verifyWalletSignature — the single source of truth for wallet auth.
       const verifyRes = await base44.functions.invoke('verifyWalletSignature', {
         wallet_address: normalized,
         message,
@@ -60,7 +43,10 @@ Deno.serve(async (req) => {
         chain,
       });
       const vData = verifyRes?.data || verifyRes;
-      const token = vData?.token || null;
+      if (!vData?.valid || !vData?.token) {
+        return Response.json({ error: vData?.error || 'Signature or nonce invalid' }, { status: 401 });
+      }
+      const token = vData.token;
 
       // Upsert the wallet's Web3Profile, marking it wallet-verified.
       const existing = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: normalized });

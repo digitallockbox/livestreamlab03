@@ -124,6 +124,28 @@ export function IdentityProvider({ children }) {
     }
   }, [walletAddress, session, login]);
 
+  // Silent token refresh — renews the wallet-native JWT every 12 hours so
+  // wallet-only creators stay authenticated without re-signing. The backend
+  // refreshToken function accepts a still-valid token and issues a fresh
+  // 24h one; if the token is expired the user must re-authenticate via login().
+  const refreshToken = useCallback(async () => {
+    const current = getWalletToken();
+    if (!current) return;
+    try {
+      const res = await base44.functions.invoke("refreshToken", { token: current }).then((r) => r.data);
+      if (res?.token) {
+        try { localStorage.setItem(WALLET_TOKEN_KEY, res.token); } catch {}
+      }
+    } catch (e) {
+      console.warn("Token refresh failed:", e?.message || e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(refreshToken, 12 * 60 * 60 * 1000); // 12 hours
+    return () => clearInterval(id);
+  }, [refreshToken]);
+
   // Sign an engine action with the connected wallet, then invoke the backend.
   // The backend verifies the signature (Solana or EVM) before writing.
   const signedInvoke = useCallback(async (name, payload) => {
