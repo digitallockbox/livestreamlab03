@@ -3,6 +3,7 @@ import { Zap, TrendingUp, Radio, Flame, Loader2, Crown } from "lucide-react";
 // EarningsTrendChart owns the chart rendering now.
 import { useViewerWallet, Page, Card, Spinner, streamsAPI, boostsAPI } from "@/components/creator/os";
 import EarningsTrendChart from "@/components/creator/vault/EarningsTrendChart";
+import GlanceSummary from "@/components/creator/pages/GlanceSummary";
 
 const DAYS = 30;
 
@@ -65,6 +66,7 @@ export default function CreatorVault() {
   }, [streams, boosts]);
 
   const totalStreaming = useMemo(() => events.reduce((s, e) => s + e.amount, 0), [events]);
+  const monetizedRate = streams.length ? (streams.filter((s) => (s.tips_earned || 0) > 0).length / streams.length) * 100 : 0;
   const series = useMemo(() => buildDailySeries(events), [events]);
   const last30 = useMemo(() => series.reduce((s, p) => s + p.tokens, 0), [series]);
   const growth = pctChange(series);
@@ -79,6 +81,14 @@ export default function CreatorVault() {
 
   return (
     <Page title="CreatorVault" subtitle="Total $STREAMING earned across all broadcasts">
+      <GlanceSummary
+        wallet={wallet}
+        earningsValue={`${totalStreaming.toLocaleString()} ◎`}
+        earningsSub="Total $STREAMING earned"
+        conversionRate={monetizedRate}
+        conversionSub="Tipped broadcasts"
+      />
+
       {/* Hero total */}
       <Card className="bg-gradient-card">
         <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wide">

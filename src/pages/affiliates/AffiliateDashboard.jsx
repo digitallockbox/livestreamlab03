@@ -8,6 +8,7 @@ import { base44 } from "@/api/base44Client";
 import { useIdentity } from "@/lib/web3/identity";
 import AffiliatePerformanceChart from "@/components/creator/affiliate/AffiliatePerformanceChart";
 import AffiliateConversionTrend from "@/components/creator/affiliate/AffiliateConversionTrend";
+import GlanceSummary from "@/components/creator/pages/GlanceSummary";
 
 const usd = (n) => `$${Number(n || 0).toFixed(2)}`;
 const CATEGORY_COLORS = {
@@ -118,6 +119,14 @@ export default function AffiliateDashboard() {
           </Link>
         </div>
       </div>
+
+      <GlanceSummary
+        wallet={walletAddress}
+        earningsValue={usd(totals.commission)}
+        earningsSub={`${totals.streaming} ◎ $STREAMING bonus`}
+        conversionRate={totals.rate}
+        conversionSub="Click → conversion"
+      />
 
       {/* KPI cards */}
       {loading ? (
