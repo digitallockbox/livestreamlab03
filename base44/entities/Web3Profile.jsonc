@@ -16,6 +16,10 @@
     "avatar_url": {
       "type": "string"
     },
+    "banner_url": {
+      "type": "string",
+      "description": "Channel banner image URL shown at the top of the public profile"
+    },
     "bio": {
       "type": "string"
     },
