@@ -1,21 +1,21 @@
 // buildSettlementTx — builds an unsigned Solana settlement transaction paying
-// $STREAMING (lamports placeholder for now) from the platform wallet to a
-// recipient. Used for:
-//   - watch_to_earn: viewer claims earned tokens
-//   - creator_payout: creator receives boost/subscription/tip revenue
-//   - subscription_mint: subscriber receives a subscription token
+// lamports (placeholder for now) from the platform wallet to a recipient.
+// Used for watch_to_earn, creator_payout, and subscription_mint settlement.
 //
 // The returned transaction is unsigned — the PLATFORM_WALLET must sign it
 // before broadcast. Full on-chain SPL settlement (real token transfers /
-// minting) requires the watch-to-earn / payout SPL programs (steps 36-40);
-// until then this emits a SystemProgram lamport transfer as a verifiable
-// placeholder so the full claim → build → sign → broadcast flow is wired.
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+// minting) requires the watch-to-earn / payout SPL programs; until then this
+// emits a SystemProgram lamport transfer as a verifiable placeholder so the
+// full claim → build → sign → broadcast flow is wired end-to-end.
+//
+// Auth: verifies the wallet-native JWT inline (same CREATOR_JWT_SECRET as
+// getAuthContext) to avoid the function-to-function invoke 403 that affects
+// inter-function getAuthContext calls.
+import jwt from 'npm:jsonwebtoken@9.0.2';
 import { Connection, PublicKey, Transaction, SystemProgram } from 'npm:@solana/web3.js@1.98.4';
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
     const wallet_token = body.wallet_token;
     const recipientWallet = body.recipientWallet;
@@ -26,16 +26,19 @@ Deno.serve(async (req) => {
     if (!wallet_token) return Response.json({ error: 'wallet_token required' }, { status: 400 });
     if (!recipientWallet) return Response.json({ error: 'recipientWallet required' }, { status: 400 });
 
-    // Authenticate the caller via wallet-native JWT (same pattern as web3Boosts).
-    let ctxRes;
-    try {
-      ctxRes = await base44.functions.invoke('getAuthContext', { token: wallet_token });
-    } catch (invokeErr) {
-      console.error('buildSettlementTx: getAuthContext invoke failed', invokeErr?.message || invokeErr);
-      return Response.json({ error: 'Auth service unavailable' }, { status: 503 });
+    // Verify the wallet-native JWT inline (mirrors getAuthContext).
+    const secret = Deno.env.get('CREATOR_JWT_SECRET');
+    if (!secret) {
+      console.error('buildSettlementTx: CREATOR_JWT_SECRET not set');
+      return Response.json({ error: 'Auth not configured' }, { status: 503 });
     }
-    const ctx = ctxRes?.data || ctxRes;
-    if (!ctx?.authenticated) return Response.json({ error: 'Invalid wallet token' }, { status: 401 });
+    let decoded;
+    try {
+      decoded = jwt.verify(wallet_token, secret);
+    } catch (e) {
+      return Response.json({ error: 'Invalid or expired wallet token' }, { status: 401 });
+    }
+    if (!decoded?.wallet) return Response.json({ error: 'Invalid wallet token' }, { status: 401 });
 
     const platformWallet = Deno.env.get('PLATFORM_WALLET');
     if (!platformWallet) {
