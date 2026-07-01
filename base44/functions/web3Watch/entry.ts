@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import jwt from 'npm:jsonwebtoken@9.0.2';
+import { Connection, PublicKey, Transaction, SystemProgram } from 'npm:@solana/web3.js@1.98.4';
 
 // Streak reward: consecutive-day watchers earn an extra $STREAMING bonus on claim.
 // Bonus kicks in at a 3-day streak: bonus = min(streak * 2, 50) tokens.
@@ -186,17 +187,44 @@ Deno.serve(async (req) => {
         streakBonus = computeStreakBonus(streakInfo?.current_streak || 0);
       } catch (_e) { /* fail open */ }
       const totalEarned = baseEarned + streakBonus;
+      // Build the unsigned settlement transaction inline (avoids cross-function
+      // buildSettlementTx 403). Mirrors buildSettlementTx: a SystemProgram lamport
+      // transfer from the platform wallet to the viewer, base64-serialized for the
+      // client to broadcast after the platform wallet signs.
       let settle;
       try {
-        const settleRes = await base44.functions.invoke('buildSettlementTx', {
-          wallet_token: body.wallet_token,
-          recipientWallet: viewerWallet,
-          amount: totalEarned,
+        const platformWallet = Deno.env.get('PLATFORM_WALLET');
+        if (!platformWallet) {
+          return Response.json({ error: 'PLATFORM_WALLET not configured — on-chain settlement unavailable', pending: 'spl_program' }, { status: 503 });
+        }
+        const rpc = Deno.env.get('SOLANA_RPC') || 'https://api.mainnet-beta.solana.com';
+        const connection = new Connection(rpc, 'confirmed');
+        const lamports = Math.max(1, Math.floor(Number(totalEarned) || 0));
+        const tx = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: new PublicKey(platformWallet),
+            toPubkey: new PublicKey(viewerWallet),
+            lamports,
+          })
+        );
+        tx.feePayer = new PublicKey(platformWallet);
+        const { blockhash } = await connection.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+        const bytes = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
+        let binary = '';
+        const CHUNK = 0x8000;
+        for (let i = 0; i < bytes.length; i += CHUNK) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+        }
+        settle = {
+          transaction: btoa(binary),
+          recipient: viewerWallet,
+          amount: lamports,
           type: 'watch_to_earn',
-        });
-        settle = settleRes?.data || settleRes;
+          note: 'Unsigned settlement transaction — platform wallet must sign before broadcast.'
+        };
       } catch (e) {
-        return Response.json({ error: 'Settlement service unavailable: ' + (e?.message || 'unknown') }, { status: 503 });
+        return Response.json({ error: 'Settlement build failed: ' + (e?.message || 'unknown') }, { status: 503 });
       }
       // Clear claimed sessions to prevent double-claiming.
       for (const s of sessions) {

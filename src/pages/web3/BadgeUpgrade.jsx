@@ -3,7 +3,7 @@ import { Loader2, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CreatorBadge from "@/components/web3/CreatorBadge";
 import { useCreator } from "@/hooks/web3/useCreator";
-import { badges } from "@/lib/web3/badges";
+import { useIdentity } from "@/lib/web3/identity";
 import { toast } from "sonner";
 
 const TIERS = ["bronze", "silver", "gold", "diamond"];
@@ -11,6 +11,7 @@ const COSTS = { bronze: 0, silver: 250, gold: 1000, diamond: 5000 };
 
 export default function BadgeUpgrade() {
   const { profile, loading, refresh } = useCreator();
+  const { signedInvoke } = useIdentity();
   const [busy, setBusy] = useState(null);
 
   if (loading) {
@@ -26,7 +27,7 @@ export default function BadgeUpgrade() {
   const upgrade = async (tier) => {
     setBusy(tier);
     try {
-      const res = await badges.upgrade(tier);
+      const res = await signedInvoke("web3Badges", { tier });
       toast.success(`Upgraded to ${res.new_tier}`);
       refresh();
     } catch (e) {

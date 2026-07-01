@@ -1,26 +1,34 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import jwt from 'npm:jsonwebtoken@9.0.2';
 
-// web3Badges — upgrade creator badge tier. Wallet-signed (no Base44 session required).
+// web3Badges — upgrade creator badge tier. Wallet-signed via wallet_token JWT
+// (avoids cross-function verifyWalletSignature 403).
 
 const TIERS = ['bronze', 'silver', 'gold', 'diamond'];
+
+const verifyOwnership = async (base44, body, requiredWallet) => {
+  if (!body.wallet_token) return { ok: false, status: 401, error: 'wallet_token required' };
+  const secret = Deno.env.get('CREATOR_JWT_SECRET');
+  if (!secret) return { ok: false, status: 503, error: 'Auth not configured' };
+  let decoded;
+  try { decoded = jwt.verify(body.wallet_token, secret); } catch (_e) {
+    return { ok: false, status: 401, error: 'Wallet token invalid or expired' };
+  }
+  if (!decoded?.wallet) return { ok: false, status: 401, error: 'Wallet token invalid' };
+  if (requiredWallet && decoded.wallet !== requiredWallet) {
+    return { ok: false, status: 403, error: 'Wallet not authorized for this action' };
+  }
+  return { ok: true, wallet_address: decoded.wallet };
+};
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-
-    const v = await base44.functions.invoke('verifyWalletSignature', {
-      wallet_address: body.auth_wallet,
-      message: body.auth_message,
-      signature: body.auth_signature,
-      chain: body.chain,
-    });
-    const d = v?.data || v;
-    if (!d?.valid) return Response.json({ error: 'Wallet signature invalid' }, { status: 401 });
-
-    const list = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: d.wallet_address });
+    const v = await verifyOwnership(base44, body);
+    if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
+    const list = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: v.wallet_address });
     if (!list[0]) return Response.json({ error: 'Profile not found' }, { status: 404 });
-
     const current = list[0].badge_tier || 'bronze';
     let next;
     if (body.tier && TIERS.includes(body.tier)) {

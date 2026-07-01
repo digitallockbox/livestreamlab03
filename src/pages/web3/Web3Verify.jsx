@@ -3,11 +3,12 @@ import { ShieldCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import VerificationBadge from "@/components/web3/VerificationBadge";
 import { useCreator } from "@/hooks/web3/useCreator";
-import { web3Verify } from "@/lib/web3/web3Verify";
+import { useIdentity } from "@/lib/web3/identity";
 import { toast } from "sonner";
 
 export default function Web3Verify() {
   const { profile, loading, refresh } = useCreator();
+  const { signedInvoke } = useIdentity();
   const [verifying, setVerifying] = useState(null);
 
   if (loading) {
@@ -21,7 +22,7 @@ export default function Web3Verify() {
   const verify = async (level) => {
     setVerifying(level);
     try {
-      await web3Verify(level);
+      await signedInvoke("web3Verify", { level });
       toast.success(`Verified as ${level}`);
       refresh();
     } catch (e) {
