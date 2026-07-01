@@ -43,6 +43,7 @@ import Settings from "@/components/creator/pages/Settings";
 import Watch from "@/components/creator/pages/Watch";
 import Payouts from "@/components/creator/pages/Payouts";
 import SalesDashboard from "@/components/creator/pages/SalesDashboard";
+import CreatorVault from "@/components/creator/pages/CreatorVault";
 import Landing from "@/pages/Landing";
 import CreatorStorefront from "@/pages/CreatorStorefront";
 
@@ -676,6 +677,7 @@ function MainApp() {
         <Route path="/videos/manager" element={<VideoManager />} />
         <Route path="/videos/analytics" element={<VideoAnalytics />} />
         <Route path="/analytics" element={<UnifiedAnalytics />} />
+        <Route path="/vault" element={<CreatorVault />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/settings/profile" element={<ProfileSettings />} />
         <Route path="/settings/branding" element={<BrandingSettings />} />
