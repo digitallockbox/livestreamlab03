@@ -52,6 +52,16 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Nonce expired' }, { status: 401 });
       }
 
+      // Issue a wallet-native JWT via the shared crypto verifier.
+      const verifyRes = await base44.functions.invoke('verifyWalletSignature', {
+        wallet_address: normalized,
+        message,
+        signature,
+        chain,
+      });
+      const vData = verifyRes?.data || verifyRes;
+      const token = vData?.token || null;
+
       // Upsert the wallet's Web3Profile, marking it wallet-verified.
       const existing = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: normalized });
       let profile = existing[0];
@@ -75,7 +85,7 @@ Deno.serve(async (req) => {
           verification_level: profile.verification_level === 'none' ? 'basic' : profile.verification_level,
         });
       }
-      return Response.json({ authenticated: true, profile });
+      return Response.json({ authenticated: true, profile, token });
     }
 
     // Legacy: create/return a profile by address only (no signature) — backward compat.

@@ -6,6 +6,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { base44 } from "@/api/base44Client";
+import session from "@/lib/session";
+
+const WALLET_TOKEN_KEY = "trident_wallet_token";
 
 const IdentityContext = createContext(null);
 
@@ -67,6 +70,11 @@ export function IdentityProvider({ children }) {
         signature,
       }).then((r) => r.data);
       setSession(res.profile);
+      // Persist the wallet-native JWT so engine/proxy calls can use it.
+      if (res?.token) {
+        try { localStorage.setItem(WALLET_TOKEN_KEY, res.token); } catch {}
+        session.create(res.profile, res.token);
+      }
       return res.profile;
     } catch (e) {
       const msg = e?.message || "Sign-in failed";
@@ -153,5 +161,14 @@ export function IdentityProvider({ children }) {
 export function useIdentity() {
   return useContext(IdentityContext);
 }
+
+// Retrieve the persisted wallet-native JWT (for Authorization headers in
+// proxy / engine calls). Wallet-only auth path — no Base44 session needed.
+export const getWalletToken = () => {
+  try { return localStorage.getItem(WALLET_TOKEN_KEY); } catch { return null; }
+};
+export const clearWalletToken = () => {
+  try { localStorage.removeItem(WALLET_TOKEN_KEY); } catch {}
+};
 
 export default IdentityProvider;
