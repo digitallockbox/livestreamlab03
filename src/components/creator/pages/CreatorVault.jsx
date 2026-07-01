@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Zap, TrendingUp, Radio, Flame, Loader2, Crown } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+// EarningsTrendChart owns the chart rendering now.
 import { useViewerWallet, Page, Card, Spinner, streamsAPI, boostsAPI } from "@/components/creator/os";
+import EarningsTrendChart from "@/components/creator/vault/EarningsTrendChart";
 
 const DAYS = 30;
 
@@ -114,27 +115,8 @@ export default function CreatorVault() {
       <Card>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display font-semibold">Earnings Growth — Last {DAYS} Days</h2>
-          <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Flame className="w-3 h-3 text-chart-3" /> Daily $STREAMING</span>
         </div>
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart data={series} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="g_vault" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#34D399" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#34D399" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2d3148" vertical={false} />
-            <XAxis dataKey="day" stroke="#4B5563" tick={{ fontSize: 11 }} interval={Math.floor(DAYS / 6)} />
-            <YAxis stroke="#4B5563" tick={{ fontSize: 11 }} />
-            <Tooltip
-              contentStyle={{ background: "#1a1d2e", border: "1px solid #2d3148", borderRadius: 8, fontSize: 12 }}
-              labelStyle={{ color: "#9ca3af" }}
-              formatter={(v) => [`${Number(v).toLocaleString()} ◎`, "Earned"]}
-            />
-            <Area type="monotone" dataKey="tokens" stroke="#34D399" strokeWidth={2} fill="url(#g_vault)" name="Earned" />
-          </AreaChart>
-        </ResponsiveContainer>
+        <EarningsTrendChart series={series} days={DAYS} />
       </Card>
 
       {/* Top broadcasts */}
