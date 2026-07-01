@@ -17,13 +17,23 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { wallet_token, recipientWallet, amount, type, sessionId } = body;
+    const wallet_token = body.wallet_token;
+    const recipientWallet = body.recipientWallet;
+    const amount = body.amount;
+    const type = body.type;
+    const sessionId = body.sessionId;
 
     if (!wallet_token) return Response.json({ error: 'wallet_token required' }, { status: 400 });
     if (!recipientWallet) return Response.json({ error: 'recipientWallet required' }, { status: 400 });
 
-    // Authenticate the caller via wallet-native JWT.
-    const ctxRes = await base44.functions.invoke('getAuthContext', { token: wallet_token });
+    // Authenticate the caller via wallet-native JWT (same pattern as web3Boosts).
+    let ctxRes;
+    try {
+      ctxRes = await base44.functions.invoke('getAuthContext', { token: wallet_token });
+    } catch (invokeErr) {
+      console.error('buildSettlementTx: getAuthContext invoke failed', invokeErr?.message || invokeErr);
+      return Response.json({ error: 'Auth service unavailable' }, { status: 503 });
+    }
     const ctx = ctxRes?.data || ctxRes;
     if (!ctx?.authenticated) return Response.json({ error: 'Invalid wallet token' }, { status: 401 });
 
@@ -36,7 +46,7 @@ Deno.serve(async (req) => {
     }
 
     const lamports = Math.max(1, Math.floor(Number(amount) || 0));
-    const rpc = 'https://api.mainnet-beta.solana.com';
+    const rpc = Deno.env.get('SOLANA_RPC') || 'https://api.mainnet-beta.solana.com';
     const connection = new Connection(rpc, 'confirmed');
 
     const tx = new Transaction().add(

@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     if (!mint) return Response.json({ allowed: true, balance: 0, warning: 'STREAMING_MINT not configured — gating skipped' });
     if (requiredAmount <= 0) return Response.json({ allowed: true, balance: 0, warning: 'no token requirement' });
 
-    const rpc = 'https://api.mainnet-beta.solana.com';
+    const rpc = Deno.env.get('SOLANA_RPC') || 'https://api.mainnet-beta.solana.com';
     const connection = new Connection(rpc, 'confirmed');
 
     let balance = 0;
