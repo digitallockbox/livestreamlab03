@@ -39,6 +39,10 @@
     },
     "show_notes": {
       "type": "string"
+    },
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet of the creator who owns this episode"
     }
   },
   "required": [
