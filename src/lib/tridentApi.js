@@ -5,11 +5,21 @@
  */
 
 const BASE_URL = 'https://api.livestreamlab.live';
+const WALLET_TOKEN_KEY = 'trident_wallet_token';
+
+// Retrieve the wallet-native JWT issued on wallet login. Injected as a
+// Bearer token so wallet-only creators authenticate without a Web2 session.
+function getWalletToken() {
+  try { return localStorage.getItem(WALLET_TOKEN_KEY); } catch { return null; }
+}
 
 async function call(path, body = {}, method = 'POST', includeCredentials = false) {
+  const headers = { 'Content-Type': 'application/json' };
+  const walletToken = getWalletToken();
+  if (walletToken) headers['Authorization'] = `Bearer ${walletToken}`;
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: method !== 'GET' ? JSON.stringify(body) : undefined,
     credentials: includeCredentials ? 'include' : 'omit',
   });

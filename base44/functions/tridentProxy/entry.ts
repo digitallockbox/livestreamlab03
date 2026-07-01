@@ -60,20 +60,24 @@ const getRequiredSessionType = (path) => {
   return 'creator'; // Default to creator for other paths
 };
 
+// Resolve a wallet-native JWT (issued by verifyWalletSignature) into a wallet
+// identity context. Returns { wallet, chain } on success, null otherwise.
+// This lets wallet-only creators authenticate WITHOUT a Base44 session.
+const resolveWalletToken = (token) => {
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, Deno.env.get('CREATOR_JWT_SECRET') || 'creator-secret');
+    if (!decoded?.wallet) return null;
+    return { wallet: decoded.wallet, chain: decoded.chain || 'solana' };
+  } catch {
+    return null;
+  }
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    
-    // First check Base44 authentication
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ 
-        success: false, 
-        error: 'Unauthorized: Base44 authentication required' 
-      }, { status: 401 });
-    }
-
-    const { method, path, body, session_token, formData } = await req.json();
+    const { method, path, body, session_token, wallet_token, formData } = await req.json();
 
     if (!path || !path.startsWith("/")) {
       return Response.json({ error: "Invalid path" }, { status: 400 });
@@ -86,55 +90,60 @@ Deno.serve(async (req) => {
     // Determine required session type
     const requiredSession = getRequiredSessionType(path);
 
-    // Validate session token based on path requirements
+    // --- Wallet-native auth path (no Base44 session required) ---
+    // Wallet-only creators pass a wallet_token JWT; resolve it into a wallet
+    // identity and accept it as a valid creator-level session.
+    let walletCtx = null;
+    if (wallet_token) {
+      walletCtx = await resolveWalletToken(wallet_token);
+    }
+    let user = null;
+    try { user = await base44.auth.me(); } catch {}
+
+    // Admin paths still require a traditional admin session (wallet tokens
+    // never grant admin privileges).
     if (requiredSession === 'admin') {
       const validation = validateAdminSession(session_token);
       if (!validation.valid) {
-        return Response.json({ 
-          success: false, 
-          error: validation.error 
-        }, { status: 401 });
+        return Response.json({ success: false, error: validation.error }, { status: 401 });
       }
-      
-      // Additional founder-only path check
       if (FOUNDER_ONLY_PATHS.some(p => path.startsWith(p) || path === p)) {
-        // Enforce admin email lock - only Livestreamlab@livestreamlab.live
         if (validation.user.email !== 'livestreamlab@livestreamlab.live') {
-          return Response.json({ 
-            success: false, 
-            error: 'Admin access restricted to platform owner' 
-          }, { status: 403 });
+          return Response.json({ success: false, error: 'Admin access restricted to platform owner' }, { status: 403 });
         }
-
         if (validation.user.role !== 'founder') {
-          return Response.json({ 
-            success: false, 
-            error: 'Forbidden: Founder privileges required' 
-          }, { status: 403 });
+          return Response.json({ success: false, error: 'Forbidden: Founder privileges required' }, { status: 403 });
         }
       }
-      
       req.admin = validation.user;
     } else {
-      const validation = validateCreatorSession(session_token);
-      if (!validation.valid) {
-        return Response.json({ 
-          success: false, 
-          error: validation.error 
-        }, { status: 401 });
+      // Creator path: accept wallet JWT first, fall back to traditional session.
+      if (!walletCtx && !session_token) {
+        return Response.json({ success: false, error: 'Authentication required (wallet token or session)' }, { status: 401 });
       }
-      req.creator = validation.user;
+      if (!walletCtx) {
+        const validation = validateCreatorSession(session_token);
+        if (!validation.valid) {
+          return Response.json({ success: false, error: validation.error }, { status: 401 });
+        }
+        req.creator = validation.user;
+      }
     }
 
     // Build headers with session context and domain lock
-    const headers = { 
+    const headers = {
       "X-Session-Type": requiredSession,
-      "X-User-ID": user.id,
-      "X-User-Email": user.email,
       "X-Domain": "livestreamlab.live"
     };
-    
-    // Don't set Content-Type for FormData - browser will set it with boundary
+    if (user) {
+      headers["X-User-ID"] = user.id;
+      headers["X-User-Email"] = user.email;
+    }
+    if (walletCtx) {
+      headers["X-Wallet-Address"] = walletCtx.wallet;
+      headers["X-Wallet-Chain"] = walletCtx.chain;
+    }
+
     if (!isFormData) {
       headers["Content-Type"] = "application/json";
     }
@@ -158,9 +167,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('TridentProxy error:', error);
-    return Response.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 });
+    return Response.json({ success: false, error: error.message }, { status: 500 });
   }
 });
