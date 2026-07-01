@@ -1,0 +1,30 @@
+{
+  "name": "AffiliateEvent",
+  "type": "object",
+  "properties": {
+    "link_id": {
+      "type": "string",
+      "description": "Id of the AffiliateLink this event relates to"
+    },
+    "link_title": {
+      "type": "string",
+      "description": "Snapshot of the link title at event time for display"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "click",
+        "conversion"
+      ],
+      "description": "Whether this event was a link click or a recorded conversion"
+    },
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet of the creator who owns the link"
+    }
+  },
+  "required": [
+    "link_id",
+    "event_type"
+  ]
+}

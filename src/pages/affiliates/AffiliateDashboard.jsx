@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useIdentity } from "@/lib/web3/identity";
+import AffiliatePerformanceChart from "@/components/creator/affiliate/AffiliatePerformanceChart";
 
 const usd = (n) => `$${Number(n || 0).toFixed(2)}`;
 const CATEGORY_COLORS = {
@@ -81,6 +82,7 @@ export default function AffiliateDashboard() {
   const handleOpen = (link) => {
     // Track the click locally so dashboard stats stay fresh.
     base44.entities.AffiliateLink.update(link.id, { clicks: (link.clicks || 0) + 1 }).catch(() => {});
+    base44.entities.AffiliateEvent.create({ link_id: link.id, link_title: link.title, event_type: "click", creator_wallet: walletAddress }).catch(() => {});
     setLinks((prev) => prev.map((l) => l.id === link.id ? { ...l, clicks: (l.clicks || 0) + 1 } : l));
     window.open(link.url, "_blank", "noopener,noreferrer");
   };
@@ -130,6 +132,8 @@ export default function AffiliateDashboard() {
           ))}
         </div>
       )}
+
+      <AffiliatePerformanceChart wallet={walletAddress} />
 
       {/* Links table */}
       <div className="rounded-2xl border border-border bg-card p-5">
