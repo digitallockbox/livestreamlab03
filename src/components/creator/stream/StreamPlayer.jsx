@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Users, Clock, Zap, Radio, StopCircle } from "lucide-react";
 import ClaimButton from "@/components/creator/stream/ClaimButton";
+import LiveLeaderboard from "@/components/creator/stream/LiveLeaderboard";
 
 // Responsive stream viewing layout: video player + metadata + live chat.
 // On desktop: player/metadata span 2 cols, chat sticks to the right.
@@ -70,9 +71,11 @@ export default function StreamPlayer({ stream, tokens, minutes, onStop, wallet, 
         </div>
       </div>
 
-      {/* Chat */}
-      <div className="lg:col-span-1">
-        <div className="rounded-2xl border border-border bg-card flex flex-col h-[380px] lg:h-[calc(100vh-9rem)] lg:sticky lg:top-20">
+      {/* Sidebar: leaderboard + chat */}
+      <div className="lg:col-span-1 space-y-4">
+        <LiveLeaderboard streamId={stream?.id} creatorWallet={stream?.creator_wallet} />
+
+        <div className="rounded-2xl border border-border bg-card flex flex-col h-[380px] lg:h-[calc(100vh-16rem)] lg:sticky lg:top-20">
           <div className="px-4 py-3 border-b border-border">
             <h3 className="font-display font-semibold text-sm">Live Chat</h3>
           </div>

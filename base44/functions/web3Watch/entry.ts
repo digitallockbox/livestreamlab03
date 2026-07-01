@@ -97,6 +97,30 @@ Deno.serve(async (req) => {
       return Response.json({ claimed: totalEarned, settlement: settle });
     }
 
+    if (action === 'leaderboard') {
+      // Aggregate top earners across active watch sessions for a given stream.
+      const streamId = (body.streamId || '').trim();
+      const creatorWallet = (body.creatorWallet || '').trim();
+      const filter = { status: 'active' };
+      if (streamId) filter.stream_id = streamId;
+      if (creatorWallet) filter.creator_wallet = creatorWallet;
+      const sessions = await base44.asServiceRole.entities.WatchSession.filter(filter, '-tokens_earned', 100);
+      // Merge by viewer wallet (a viewer may have one active session; sum defensively).
+      const byWallet = new Map();
+      for (const s of sessions) {
+        const w = s.viewer_wallet;
+        if (!w) continue;
+        const prev = byWallet.get(w) || { viewer_wallet: w, tokens_earned: 0, minutes_watched: 0 };
+        prev.tokens_earned += (s.tokens_earned || 0);
+        prev.minutes_watched += (s.minutes_watched || 0);
+        byWallet.set(w, prev);
+      }
+      const leaders = Array.from(byWallet.values())
+        .sort((a, b) => (b.tokens_earned || 0) - (a.tokens_earned || 0))
+        .slice(0, 10);
+      return Response.json({ leaders, generated_at: Date.now() });
+    }
+
     return Response.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
