@@ -1,65 +1,104 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  CreditCard, Zap, ShoppingCart, CheckCircle2, Lock,
-  Package, ArrowLeft, ChevronDown, Shield
+  ArrowLeft, Package, Zap, CheckCircle2, Loader2, ShieldCheck, Wallet, AlertCircle,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useMockDataHydration } from "@/hooks/useMockDataHydration";
-import MockDataPanel from "@/components/dashboard/MockDataPanel";
+import { base44 } from "@/api/base44Client";
+import { useIdentity } from "@/lib/web3/identity";
+import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 
-const CART_ITEMS = [
-  { id: 1, name: "Preset Pack v2", price: 24.99, streamingPrice: 120 },
-  { id: 2, name: "Audio Samples Pack", price: 14.99, streamingPrice: 80 },
-];
-
+// Checkout — viewers purchase a $STREAMING-priced digital product.
+// Confirms the transaction via the web3Store 'purchase' action, which records
+// a store_sale Transaction and increments the creator's product earnings.
 export default function Checkout() {
-  const [paymentMethod, setPaymentMethod] = useState("card");
-  const [success, setSuccess] = useState(false);
-  const { processingTransactions, simulateTransaction } = useMockDataHydration();
+  const { productId } = useParams();
+  const navigate = useNavigate();
+  const { walletAddress, signedInvoke } = useIdentity();
+  const { wallet, balance, refreshBalance } = useStreamingIdentity();
 
-  const subtotal = CART_ITEMS.reduce((s, i) => s + i.price, 0);
-  const streamingTotal = CART_ITEMS.reduce((s, i) => s + i.streamingPrice, 0);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(null);
 
-  const handleCheckout = () => {
-    const itemName = CART_ITEMS.map(i => i.name).join(" + ");
-    const amount = paymentMethod === "streaming" ? streamingTotal : subtotal;
-    simulateTransaction(itemName, amount, paymentMethod);
-    setTimeout(() => setSuccess(true), 1500);
+  useEffect(() => {
+    if (!productId) return;
+    let active = true;
+    setLoading(true);
+    base44.entities.Product.get(productId)
+      .then((p) => { if (!active) return; if (!p) setNotFound(true); else setProduct(p); })
+      .catch(() => { if (active) setNotFound(true); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [productId]);
+
+  const price = Number(product?.streaming_price || 0);
+  const insufficient = walletAddress && balance < price;
+
+  const handlePurchase = async () => {
+    if (!walletAddress) { setError("Connect your wallet to purchase."); return; }
+    if (price <= 0) { setError("This product isn't available for $STREAMING purchase."); return; }
+    if (insufficient) { setError(`Insufficient $STREAMING balance. You need ${price} ◎ but have ${balance} ◎.`); return; }
+    setPurchasing(true);
+    setError("");
+    try {
+      const res = await signedInvoke("web3Store", { action: "purchase", productId });
+      setSuccess({ transaction: res.transaction, product: res.product, price_streaming: res.price_streaming });
+      refreshBalance?.();
+    } catch (e) {
+      setError(e?.response?.data?.error || e?.message || "Purchase failed. Please try again.");
+    } finally {
+      setPurchasing(false);
+    }
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto p-4 py-20 flex justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (notFound || !product) {
+    return (
+      <div className="max-w-2xl mx-auto p-4 py-20 text-center space-y-3">
+        <Package className="w-10 h-10 mx-auto text-muted-foreground/40" />
+        <p className="text-sm text-muted-foreground">Product not found.</p>
+        <Link to="/store/catalog" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+          <ArrowLeft className="w-4 h-4" /> Back to catalog
+        </Link>
+      </div>
+    );
+  }
+
+  // Confirmation screen after successful purchase.
   if (success) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <div className="w-20 h-20 rounded-3xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-10 h-10 text-accent" />
+      <div className="max-w-md mx-auto p-4 py-12">
+        <div className="rounded-2xl border border-accent/30 bg-card p-8 text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-accent/15 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-9 h-9 text-accent" />
           </div>
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Purchase Complete!</h1>
-          <p className="text-muted-foreground mb-2">Your order has been processed successfully.</p>
-          <p className="text-sm text-muted-foreground mb-6">Download links have been sent to your email. Check your CreatorVault for digital files.</p>
-          <div className="bg-card border border-border rounded-2xl p-4 mb-6 text-left space-y-2">
-            {CART_ITEMS.map(item => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span className="text-foreground">{item.name}</span>
-                <span className="text-muted-foreground">{paymentMethod === "streaming" ? `${item.streamingPrice} $S` : `$${item.price}`}</span>
-              </div>
-            ))}
-            <div className="border-t border-border pt-2 flex justify-between font-semibold text-foreground">
-              <span>Total</span>
-              <span>{paymentMethod === "streaming" ? `${streamingTotal} $STREAMING` : `$${subtotal.toFixed(2)}`}</span>
-            </div>
+          <div>
+            <h1 className="font-display text-xl font-bold">Purchase Confirmed</h1>
+            <p className="text-sm text-muted-foreground mt-1">Your transaction has been recorded.</p>
           </div>
-          <div className="flex gap-3">
-            <Link to="/store/products" className="flex-1">
-              <Button variant="outline" className="w-full border-border">Back to Store</Button>
-            </Link>
-            <Link to="/dashboard" className="flex-1">
-              <Button className="w-full bg-primary hover:bg-primary/90">Go to Dashboard</Button>
-            </Link>
+          <div className="rounded-lg bg-muted p-4 space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">Product</span><span className="font-medium truncate max-w-[60%] text-right">{success.product?.name || product.name}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Amount</span><span className="font-medium text-accent inline-flex items-center gap-1"><Zap className="w-3.5 h-3.5" /> {success.price_streaming} $STREAMING</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span className="font-medium text-accent">Completed</span></div>
+          </div>
+          {product.file_url && (
+            <a href={product.file_url} target="_blank" rel="noopener noreferrer" className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
+              <Package className="w-4 h-4" /> Download Your File
+            </a>
+          )}
+          <div className="flex gap-2">
+            <Link to={`/store/${productId}`} className="flex-1 h-11 inline-flex items-center justify-center rounded-md border border-border text-sm hover:bg-muted">View Product</Link>
+            <Link to="/store/catalog" className="flex-1 h-11 inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground text-sm hover:bg-secondary/80">Back to Catalog</Link>
           </div>
         </div>
       </div>
@@ -67,193 +106,80 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 py-8 lg:px-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link to="/store/products">
-            <Button variant="ghost" size="icon" className="text-muted-foreground">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="font-display text-2xl font-bold text-foreground">Checkout</h1>
-            <p className="text-sm text-muted-foreground">Complete your purchase securely</p>
+    <div className="max-w-2xl mx-auto p-4 lg:p-8 space-y-6">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Link to={`/store/${productId}`} className="hover:text-foreground transition-colors inline-flex items-center gap-1">
+          <ArrowLeft className="w-3.5 h-3.5" /> {product.name}
+        </Link>
+      </div>
+
+      <h1 className="font-display text-2xl font-bold">Checkout</h1>
+
+      {/* Order summary */}
+      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+        <div className="flex gap-4">
+          <div className="w-24 h-24 rounded-lg bg-muted overflow-hidden flex items-center justify-center shrink-0">
+            {product.image_url ? <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" /> : <Package className="w-8 h-8 text-muted-foreground/40" />}
           </div>
-          <div className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Lock className="w-3.5 h-3.5" />
-            <span>Secure checkout</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-display font-semibold">{product.name}</p>
+            {product.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{product.description}</p>}
+            <p className="text-xs text-muted-foreground mt-1 capitalize">{product.source || "own"} · {product.category || "uncategorized"}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Payment Form */}
-          <div className="lg:col-span-3 space-y-5">
-
-            {/* Payment Method */}
-            <div className="bg-card border border-border rounded-2xl p-5">
-              <h3 className="font-display font-semibold text-foreground mb-4">Payment Method</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => setPaymentMethod("card")}
-                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${paymentMethod === "card" ? "border-primary/50 bg-primary/10" : "border-border bg-secondary hover:border-primary/30"}`}>
-                  <CreditCard className={`w-5 h-5 ${paymentMethod === "card" ? "text-primary" : "text-muted-foreground"}`} />
-                  <div className="text-left">
-                    <p className={`text-sm font-medium ${paymentMethod === "card" ? "text-primary" : "text-foreground"}`}>Credit Card</p>
-                    <p className="text-xs text-muted-foreground">Visa, Mastercard</p>
-                  </div>
-                </button>
-                <button onClick={() => setPaymentMethod("streaming")}
-                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${paymentMethod === "streaming" ? "border-accent/50 bg-accent/10" : "border-border bg-secondary hover:border-accent/30"}`}>
-                  <Zap className={`w-5 h-5 ${paymentMethod === "streaming" ? "text-accent" : "text-muted-foreground"}`} />
-                  <div className="text-left">
-                    <p className={`text-sm font-medium ${paymentMethod === "streaming" ? "text-accent" : "text-foreground"}`}>$STREAMING</p>
-                    <p className="text-xs text-muted-foreground">Token payment</p>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Card Details */}
-            {paymentMethod === "card" && (
-              <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
-                <h3 className="font-display font-semibold text-foreground">Card Details</h3>
-                <div>
-                  <Label className="mb-1.5 block">Card Number</Label>
-                  <Input placeholder="1234 5678 9012 3456" className="bg-secondary border-border font-mono" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="mb-1.5 block">Expiry</Label>
-                    <Input placeholder="MM / YY" className="bg-secondary border-border font-mono" />
-                  </div>
-                  <div>
-                    <Label className="mb-1.5 block">CVV</Label>
-                    <Input placeholder="•••" type="password" className="bg-secondary border-border font-mono" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* $STREAMING wallet */}
-            {paymentMethod === "streaming" && (
-              <div className="bg-card border border-accent/20 rounded-2xl p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-accent" />
-                  <h3 className="font-display font-semibold text-foreground">$STREAMING Wallet</h3>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-accent/5 rounded-xl border border-accent/20">
-                  <span className="text-sm text-muted-foreground">Available balance</span>
-                  <span className="text-sm font-bold text-accent">4,250 $STREAMING</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-xl">
-                  <span className="text-sm text-muted-foreground">Order total</span>
-                  <span className="text-sm font-bold text-foreground">{streamingTotal} $STREAMING</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-accent/5 rounded-xl border border-accent/20">
-                  <span className="text-sm text-muted-foreground">Balance after</span>
-                  <span className="text-sm font-bold text-accent">{4250 - streamingTotal} $STREAMING</span>
-                </div>
-              </div>
-            )}
-
-            {/* Billing Info */}
-            <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
-              <h3 className="font-display font-semibold text-foreground">Billing Information</h3>
-              <div>
-                <Label className="mb-1.5 block">Email</Label>
-                <Input placeholder="email@example.com" className="bg-secondary border-border" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="mb-1.5 block">First Name</Label>
-                  <Input placeholder="Sam" className="bg-secondary border-border" />
-                </div>
-                <div>
-                  <Label className="mb-1.5 block">Last Name</Label>
-                  <Input placeholder="Creator" className="bg-secondary border-border" />
-                </div>
-              </div>
-              <div>
-                <Label className="mb-1.5 block">Country</Label>
-                <div className="relative">
-                  <select className="w-full h-9 px-3 rounded-md border border-input bg-secondary text-sm text-foreground appearance-none focus:outline-none focus:ring-1 focus:ring-ring">
-                    <option>United States</option>
-                    <option>United Kingdom</option>
-                    <option>Canada</option>
-                    <option>Australia</option>
-                    <option>Other</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-muted-foreground absolute right-3 top-2.5 pointer-events-none" />
-                </div>
-              </div>
-            </div>
-
-            {/* CTA */}
-            <Button onClick={handleCheckout} className="w-full h-13 text-base gap-2 bg-primary hover:bg-primary/90 py-4">
-              <ShoppingCart className="w-5 h-5" />
-              Complete Purchase — {paymentMethod === "streaming" ? `${streamingTotal} $STREAMING` : `$${subtotal.toFixed(2)}`}
-            </Button>
-            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-              <Shield className="w-3.5 h-3.5" />
-              <span>Protected by CreatorVault · Secure &amp; Encrypted</span>
-            </div>
+        <div className="border-t border-border pt-4 space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Price</span>
+            <span className="font-medium inline-flex items-center gap-1.5 text-accent"><Zap className="w-4 h-4" /> {price} $STREAMING</span>
           </div>
-
-          {/* Order Summary */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="bg-card border border-border rounded-2xl p-5 sticky top-6">
-              <h3 className="font-display font-semibold text-foreground mb-4">Order Summary</h3>
-
-              <div className="space-y-3 mb-4">
-                {CART_ITEMS.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50">
-                    <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                      <Package className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">Digital download</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-foreground">{paymentMethod === "streaming" ? `${item.streamingPrice} $S` : `$${item.price}`}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="border-t border-border pt-4 space-y-2">
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span>{paymentMethod === "streaming" ? `${streamingTotal} $S` : `$${subtotal.toFixed(2)}`}</span>
-                </div>
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Processing fee</span>
-                  <span className="text-accent">Free</span>
-                </div>
-                <div className="flex justify-between font-bold text-foreground text-base pt-2 border-t border-border">
-                  <span>Total</span>
-                  <span>{paymentMethod === "streaming" ? `${streamingTotal} $STREAMING` : `$${subtotal.toFixed(2)}`}</span>
-                </div>
-              </div>
-
-              <div className="mt-4 p-3 rounded-xl bg-accent/5 border border-accent/20">
-                <div className="flex items-center gap-2 text-xs text-accent">
-                  <Zap className="w-3.5 h-3.5" />
-                  <span className="font-medium">CreatorVault routing active</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Revenue automatically split via TridentAutoSplit</p>
-              </div>
-            </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Network fee</span>
+            <span className="text-muted-foreground">Included</span>
+          </div>
+          <div className="flex justify-between pt-2 border-t border-border">
+            <span className="font-medium">Total</span>
+            <span className="font-display font-bold text-lg inline-flex items-center gap-1.5 text-accent"><Zap className="w-5 h-5" /> {price} $STREAMING</span>
           </div>
         </div>
       </div>
 
-      {/* Mock Transaction Monitor */}
-      {processingTransactions.length > 0 && (
-        <div className="max-w-5xl mx-auto px-4 py-8 lg:px-8 border-t border-border pt-8">
-          <MockDataPanel transactions={processingTransactions} />
+      {/* Payment method + balance */}
+      <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+        <h3 className="font-display font-semibold flex items-center gap-2"><Wallet className="w-4 h-4 text-primary" /> Payment Method</h3>
+        <div className="rounded-lg bg-muted p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center"><Zap className="w-4 h-4 text-accent" /></div>
+            <div>
+              <p className="text-sm font-medium">$STREAMING Balance</p>
+              <p className="text-xs text-muted-foreground">{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "Wallet not connected"}</p>
+            </div>
+          </div>
+          <span className={`text-sm font-display font-bold ${insufficient ? "text-destructive" : "text-accent"}`}>{Number(balance).toFixed(2)} ◎</span>
+        </div>
+        {insufficient && (
+          <p className="text-xs text-destructive flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5" /> Insufficient balance — you need {price} ◎ to complete this purchase.</p>
+        )}
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /> <span>{error}</span>
         </div>
       )}
+
+      {/* Confirm */}
+      <button
+        onClick={handlePurchase}
+        disabled={purchasing || !walletAddress || insufficient || price <= 0}
+        className="w-full h-12 inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground text-sm font-medium hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {purchasing ? <><Loader2 className="w-5 h-5 animate-spin" /> Processing…</> : <><ShieldCheck className="w-5 h-5" /> Confirm Purchase · {price} ◎</>}
+      </button>
+
+      <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
+        <ShieldCheck className="w-3.5 h-3.5" /> Secure transaction · Creator earnings update instantly
+      </p>
     </div>
   );
 }

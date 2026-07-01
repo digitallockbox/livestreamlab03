@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import jwt from 'npm:jsonwebtoken@9.0.2';
 
 // web3Store — Unified commerce engine for the Creator OS Store.
 // Wallet-only creators have no Base44 session: reads are open, writes are wallet-signed.
@@ -136,6 +137,76 @@ Deno.serve(async (req) => {
         console.warn("Click tracking failed:", e?.message || e);
       }
       return Response.json({ ok: true });
+    }
+
+    // ---- PURCHASE: viewer buys a $STREAMING-priced digital product ----
+    // Verifies the viewer's wallet token, validates the product, records a
+    // store_sale Transaction, and increments the product's sales/revenue/conversions.
+    // Creator earnings are reflected via the Transaction ledger (recipient_wallet).
+    if (action === 'purchase') {
+      const productId = (body.productId || '').trim();
+      if (!productId) return Response.json({ error: 'productId required' }, { status: 400 });
+      if (!body.wallet_token) return Response.json({ error: 'wallet_token required' }, { status: 401 });
+
+      // Inline JWT verification (avoids inter-function getAuthContext 403).
+      const secret = Deno.env.get('CREATOR_JWT_SECRET');
+      if (!secret) return Response.json({ error: 'Auth not configured' }, { status: 503 });
+      let viewerWallet;
+      try {
+        const decoded = jwt.verify(body.wallet_token, secret);
+        if (!decoded?.wallet) return Response.json({ error: 'Invalid wallet token' }, { status: 401 });
+        viewerWallet = decoded.wallet;
+      } catch (_e) {
+        return Response.json({ error: 'Invalid or expired wallet token' }, { status: 401 });
+      }
+
+      let product;
+      try {
+        product = await base44.asServiceRole.entities.Product.get(productId);
+      } catch (e) {
+        return Response.json({ error: 'Product not found' }, { status: 404 });
+      }
+      if (!product) return Response.json({ error: 'Product not found' }, { status: 404 });
+
+      const streamingPrice = Number(product.streaming_price || 0);
+      if (streamingPrice <= 0) {
+        return Response.json({ error: 'This product is not available for $STREAMING purchase' }, { status: 400 });
+      }
+      if (!product.creator_wallet) {
+        return Response.json({ error: 'Product has no linked creator' }, { status: 400 });
+      }
+      // Self-purchase guard.
+      if (product.creator_wallet === viewerWallet) {
+        return Response.json({ error: 'You cannot purchase your own product' }, { status: 400 });
+      }
+
+      // Record the sale transaction (creator earnings ledger).
+      const txn = await base44.asServiceRole.entities.Transaction.create({
+        type: 'store_sale',
+        amount: Number(product.price || 0),
+        streaming_amount: streamingPrice,
+        description: `Store purchase: ${product.name}`,
+        status: 'completed',
+        source: 'storefront',
+        sender_wallet: viewerWallet,
+        recipient_wallet: product.creator_wallet,
+      });
+
+      // Increment product performance counters (creator earnings update automatically
+      // via the Transaction ledger; sales_count/revenue give the catalog its stats).
+      await base44.asServiceRole.entities.Product.update(productId, {
+        sales_count: (product.sales_count || 0) + 1,
+        conversions: (product.conversions || 0) + 1,
+        revenue: (product.revenue || 0) + Number(product.price || 0),
+      });
+
+      return Response.json({
+        success: true,
+        transaction: txn,
+        product: { id: product.id, name: product.name },
+        price_streaming: streamingPrice,
+        creator_wallet: product.creator_wallet,
+      });
     }
 
     // ---- STOREFRONT: public creator storefront by bound domain ----

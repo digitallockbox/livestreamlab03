@@ -169,9 +169,9 @@ export default function ProductDetail() {
                 </button>
               )}
               {isOwn && !hasExternal && (product.file_url || hasStreaming) && (
-                <button className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90">
+                <Link to={`/store/${product.id}/checkout`} className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90">
                   {product.file_url ? <><Download className="w-4 h-4" /> Download</> : <><ShoppingCart className="w-4 h-4" /> Buy with $STREAMING</>}
-                </button>
+                </Link>
               )}
               {!isOwn && hasExternal && (
                 <button onClick={openExternal} className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90">

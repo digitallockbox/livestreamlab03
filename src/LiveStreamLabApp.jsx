@@ -50,6 +50,7 @@ import StoreProductList from "@/components/creator/store/StoreProductList";
 import ProductDetail from "@/pages/store/ProductDetail";
 import StoreDashboard from "@/pages/store/StoreDashboard";
 import AddProductPage from "@/pages/store/AddProductPage";
+import Checkout from "@/pages/store/Checkout";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -673,6 +674,7 @@ function MainApp() {
         <Route path="/store" element={<StoreDashboard />} />
         <Route path="/store/add" element={<AddProductPage />} />
         <Route path="/store/catalog" element={<StoreProductList />} />
+        <Route path="/store/:productId/checkout" element={<Checkout />} />
         <Route path="/store/:productId" element={<ProductDetail />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/domains" element={<Domains />} />
