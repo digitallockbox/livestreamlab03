@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { streamsAPI, watchAPI, Page, Card, Spinner } from "@/components/creator/os";
 import StreamPlayer from "@/components/creator/stream/StreamPlayer";
+import StreakTracker from "@/components/creator/stream/StreakTracker";
 
 export default function Watch() {
   const { wallet } = useStreamingIdentity();
@@ -73,6 +74,8 @@ export default function Watch() {
 
   return (
     <Page title="Watch-to-Earn" subtitle="Earn $STREAMING for every minute you watch">
+      {wallet && <StreakTracker wallet={wallet} />}
+      <div className="h-2" />
       {loading ? <Spinner /> : liveStreams.length === 0 ? (
         <Card><p className="text-sm text-muted-foreground">No live streams right now.</p></Card>
       ) : (

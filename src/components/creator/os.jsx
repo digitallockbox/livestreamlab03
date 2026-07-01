@@ -51,6 +51,7 @@ export const watchAPI = {
   tick: (sessionId) => invoke("web3Watch", { action: "tick", sessionId }),
   end: (sessionId) => invoke("web3Watch", { action: "end", sessionId }),
   leaderboard: (streamId, creatorWallet) => invoke("web3Watch", { action: "leaderboard", streamId, creatorWallet }),
+  streak: (wallet) => invoke("web3Watch", { action: "streak", wallet }),
 };
 
 export const boostsAPI = {

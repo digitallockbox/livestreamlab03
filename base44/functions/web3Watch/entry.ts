@@ -155,6 +155,17 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === 'streak') {
+      const wallet = (body.wallet || body.viewerWallet || '').trim();
+      if (!wallet) return Response.json({ error: 'wallet required' }, { status: 400 });
+      const existing = await base44.asServiceRole.entities.ViewerStreak.filter(
+        { viewer_wallet: wallet }, '-created_date', 1
+      );
+      const streak = existing[0] || null;
+      if (!streak) return Response.json({ streak: { current_streak: 0, longest_streak: 0, total_days_watched: 0 } });
+      return Response.json({ streak });
+    }
+
     if (action === 'leaderboard') {
       // Aggregate top earners across active watch sessions for a given stream.
       const streamId = (body.streamId || '').trim();
