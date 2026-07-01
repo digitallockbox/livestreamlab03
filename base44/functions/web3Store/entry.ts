@@ -30,17 +30,17 @@ Deno.serve(async (req) => {
     // Verify the caller owns the wallet in the payload.
     const verifyOwner = async (requiredWallet) => {
       if (!body.wallet_token) return { ok: false, status: 401, error: 'wallet_token required' };
-      try {
-        const res = await base44.functions.invoke('getAuthContext', { token: body.wallet_token });
-        const d = res?.data || res;
-        if (!d?.authenticated) return { ok: false, status: 401, error: 'Wallet token invalid or expired' };
-        if (requiredWallet && d.wallet !== requiredWallet) {
-          return { ok: false, status: 403, error: 'Wallet not authorized for this action' };
-        }
-        return { ok: true, wallet: d.wallet };
-      } catch (e) {
-        return { ok: false, status: 401, error: 'Wallet token verification failed' };
+      const secret = Deno.env.get('CREATOR_JWT_SECRET');
+      if (!secret) return { ok: false, status: 503, error: 'Auth not configured' };
+      let decoded;
+      try { decoded = jwt.verify(body.wallet_token, secret); } catch (_e) {
+        return { ok: false, status: 401, error: 'Wallet token invalid or expired' };
       }
+      if (!decoded?.wallet) return { ok: false, status: 401, error: 'Wallet token invalid' };
+      if (requiredWallet && decoded.wallet !== requiredWallet) {
+        return { ok: false, status: 403, error: 'Wallet not authorized for this action' };
+      }
+      return { ok: true, wallet: decoded.wallet };
     };
 
     // ---- LIST: creator's saved inventory (open read) ----

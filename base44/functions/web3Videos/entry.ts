@@ -1,19 +1,27 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import jwt from 'npm:jsonwebtoken@9.0.2';
 
 // Cryptographically prove the caller owns the wallet in the payload.
 const verifyOwnership = async (base44, body, requiredWallet) => {
   if (!body.wallet_token) return { ok: false, status: 401, error: 'wallet_token required' };
-  try {
-    const res = await base44.functions.invoke('getAuthContext', { token: body.wallet_token });
-    const d = res?.data || res;
-    if (!d?.authenticated) return { ok: false, status: 401, error: 'Wallet token invalid or expired' };
-    if (requiredWallet && d.wallet !== requiredWallet) {
-      return { ok: false, status: 403, error: 'Wallet not authorized for this action' };
-    }
-    return { ok: true, wallet_address: d.wallet, userId: d.userId || null };
-  } catch (e) {
-    return { ok: false, status: 401, error: 'Wallet token verification failed' };
+  const secret = Deno.env.get('CREATOR_JWT_SECRET');
+  if (!secret) return { ok: false, status: 503, error: 'Auth not configured' };
+  let decoded;
+  try { decoded = jwt.verify(body.wallet_token, secret); } catch (_e) {
+    return { ok: false, status: 401, error: 'Wallet token invalid or expired' };
   }
+  if (!decoded?.wallet) return { ok: false, status: 401, error: 'Wallet token invalid' };
+  if (requiredWallet && decoded.wallet !== requiredWallet) {
+    return { ok: false, status: 403, error: 'Wallet not authorized for this action' };
+  }
+  let userId = decoded.userId || null;
+  if (!userId) {
+    try {
+      const links = await base44.asServiceRole.entities.WalletIdentity.filter({ wallet_address: decoded.wallet }, '-created_date', 1);
+      if (links && links[0]?.user_id) userId = links[0].user_id;
+    } catch (_e) { /* non-fatal */ }
+  }
+  return { ok: true, wallet_address: decoded.wallet, userId };
 };
 
 Deno.serve(async (req) => {

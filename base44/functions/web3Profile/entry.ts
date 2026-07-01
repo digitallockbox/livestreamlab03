@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import jwt from 'npm:jsonwebtoken@9.0.2';
 
 // web3Profile — wallet-owned creator profile reads/updates.
 // Wallet-only creators have no Base44 session, so auth is via wallet signature,
@@ -27,10 +28,14 @@ Deno.serve(async (req) => {
     // Wallet-signed profile update.
     if (action === 'update') {
       if (!body.wallet_token) return Response.json({ error: 'wallet_token required' }, { status: 401 });
-      const ctxRes = await base44.functions.invoke('getAuthContext', { token: body.wallet_token });
-      const ctx = ctxRes?.data || ctxRes;
-      if (!ctx?.authenticated) return Response.json({ error: 'Wallet token invalid or expired' }, { status: 401 });
-      const profile = await byWallet(ctx.wallet);
+      const secret = Deno.env.get('CREATOR_JWT_SECRET');
+      if (!secret) return Response.json({ error: 'Auth not configured' }, { status: 503 });
+      let decodedCtx;
+      try { decodedCtx = jwt.verify(body.wallet_token, secret); } catch (_e) {
+        return Response.json({ error: 'Wallet token invalid or expired' }, { status: 401 });
+      }
+      if (!decodedCtx?.wallet) return Response.json({ error: 'Wallet token invalid' }, { status: 401 });
+      const profile = await byWallet(decodedCtx.wallet);
       if (!profile) return Response.json({ error: 'Profile not found' }, { status: 404 });
       const patch = {};
       for (const k of EDITABLE) if (body[k] !== undefined) patch[k] = body[k];
