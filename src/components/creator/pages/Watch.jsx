@@ -3,6 +3,7 @@ import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { streamsAPI, watchAPI, Page, Card, Spinner } from "@/components/creator/os";
 import StreamPlayer from "@/components/creator/stream/StreamPlayer";
 import StreakTracker from "@/components/creator/stream/StreakTracker";
+import StreakNotifications from "@/components/creator/stream/StreakNotifications";
 
 export default function Watch() {
   const { wallet } = useStreamingIdentity();
@@ -75,6 +76,7 @@ export default function Watch() {
 
   return (
     <Page title="Watch-to-Earn" subtitle="Earn $STREAMING for every minute you watch">
+      <div className="flex justify-end mb-2">{wallet && <StreakNotifications />}</div>
       {wallet && <StreakTracker wallet={wallet} />}
       <div className="h-2" />
       {loading ? <Spinner /> : liveStreams.length === 0 ? (

@@ -10,6 +10,7 @@
       "type": "string",
       "enum": [
         "streak_milestone",
+        "token_milestone",
         "system"
       ],
       "default": "streak_milestone"
@@ -23,7 +24,7 @@
     "milestone": {
       "type": "number",
       "default": 0,
-      "description": "Streak day count that triggered this milestone notification"
+      "description": "Streak day count or token threshold that triggered this milestone notification"
     },
     "read": {
       "type": "boolean",

@@ -110,6 +110,35 @@ Deno.serve(async (req) => {
         minutes_watched: minutes,
         tokens_earned: tokens
       });
+      // High-token earnings milestone: when a viewer's lifetime earned
+      // $STREAMING crosses a configured threshold, fire an in-app notification.
+      // Duplicates are avoided by checking existing token_milestone alerts.
+      try {
+        const viewer = session.viewer_wallet;
+        if (viewer) {
+          const all = await base44.asServiceRole.entities.WatchSession.filter(
+            { viewer_wallet: viewer }, '-created_date', 500
+          );
+          const lifetime = all.reduce((s, x) => s + (x.tokens_earned || 0), 0);
+          const thresholds = [100, 500, 1000, 5000];
+          const existing = await base44.asServiceRole.entities.Notification.filter(
+            { wallet_address: viewer, type: 'token_milestone' }, '-created_date', 50
+          );
+          const hit = new Set(existing.map((n) => Number(n.milestone)));
+          for (const t of thresholds) {
+            if (lifetime >= t && !hit.has(t)) {
+              await base44.asServiceRole.entities.Notification.create({
+                wallet_address: viewer,
+                type: 'token_milestone',
+                title: `${t.toLocaleString()} $STREAMING Earned!`,
+                message: `You've earned ${t.toLocaleString()} $STREAMING through watch-to-earn. Keep it up!`,
+                milestone: t,
+                read: false
+              });
+            }
+          }
+        }
+      } catch (_e) { /* fail open */ }
       return Response.json({ session: updated });
     }
 
