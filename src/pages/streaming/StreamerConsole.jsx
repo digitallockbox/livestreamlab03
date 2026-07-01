@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Radio, Users, Zap, Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff, Send, Gift, Wifi, Loader2 } from "lucide-react";
 import StreamManager from "@/components/streaming/StreamManager";
+import LiveLeaderboard from "@/components/creator/stream/LiveLeaderboard";
 import { contentApi } from "@/lib/creatorApi";
 
 
@@ -201,6 +202,11 @@ export default function StreamerConsole() {
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* Top Earners Leaderboard */}
+          <div className="px-4 py-3 flex-shrink-0 border-b border-border">
+            <LiveLeaderboard streamId={streamId} creatorWallet={liveStats?.creator_wallet} />
           </div>
 
           {/* Tips Panel */}
