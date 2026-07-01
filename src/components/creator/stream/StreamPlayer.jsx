@@ -6,7 +6,11 @@ import LiveLeaderboard from "@/components/creator/stream/LiveLeaderboard";
 // Responsive stream viewing layout: video player + metadata + live chat.
 // On desktop: player/metadata span 2 cols, chat sticks to the right.
 // On mobile: everything stacks (player → metadata → chat).
+const computeStreakBonus = (streak) => (streak >= 3 ? Math.min(streak * 2, 50) : 0);
+
 export default function StreamPlayer({ stream, tokens, minutes, streak, onStop, wallet, onClaimed }) {
+  const streakBonus = computeStreakBonus(streak || 0);
+  const totalClaimable = (tokens || 0) + streakBonus;
   const [messages, setMessages] = useState([
     { id: 1, user: "alice", text: "Great stream! 🔥" },
     { id: 2, user: "bob", text: "Sending a boost" },
@@ -70,7 +74,10 @@ export default function StreamPlayer({ stream, tokens, minutes, streak, onStop, 
             </div>
             <div className="rounded-lg bg-muted p-3">
               <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><Zap className="w-3 h-3" /> Earned</p>
-              <p className="font-display font-bold text-sm sm:text-base mt-0.5 text-accent">{tokens} ◎</p>
+              <p className="font-display font-bold text-sm sm:text-base mt-0.5 text-accent">{totalClaimable} ◎</p>
+              {streakBonus > 0 && (
+                <p className="text-[10px] text-chart-3 mt-0.5">+{streakBonus} streak</p>
+              )}
             </div>
           </div>
         </div>

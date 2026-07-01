@@ -64,8 +64,9 @@ export default function Watch() {
         onStop={stop}
         wallet={wallet}
         onClaimed={(claimed, bonus) => {
+          // Reset the session-only earnings; the streak is a daily metric
+          // and persists across claims — do NOT zero it out here.
           setTokens(0); setMinutes(0); setSession(null); setSelected(null);
-          if (bonus) setStreak(0);
         }}
       />
       </Page>
