@@ -46,6 +46,8 @@ import SalesDashboard from "@/components/creator/pages/SalesDashboard";
 import CreatorVault from "@/components/creator/pages/CreatorVault";
 import Landing from "@/pages/Landing";
 import CreatorStorefront from "@/pages/CreatorStorefront";
+import StoreProductList from "@/components/creator/store/StoreProductList";
+import ProductDetail from "@/pages/store/ProductDetail";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -666,6 +668,8 @@ function MainApp() {
         <Route path="/marketplace/add" element={<AddMarketplaceProduct />} />
         <Route path="/marketplace/products" element={<MarketplaceProducts />} />
         <Route path="/marketplace/sales" element={<MarketplaceSales />} />
+        <Route path="/store" element={<StoreProductList />} />
+        <Route path="/store/:productId" element={<ProductDetail />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/domains" element={<Domains />} />
         <Route path="/go-live" element={<GoLive />} />
