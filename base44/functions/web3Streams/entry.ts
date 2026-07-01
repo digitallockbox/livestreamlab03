@@ -29,6 +29,13 @@ Deno.serve(async (req) => {
       }
       const v = await verifyOwnership(base44, body, creatorWallet);
       if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
+      let streamGateBlocked = false;
+      try {
+        const gate = await base44.functions.invoke('checkTokenGate', { wallet: creatorWallet, requiredAmount: 100 });
+        const gd = gate?.data || gate;
+        if (gd?.allowed === false) streamGateBlocked = true;
+      } catch (_e) { /* fail open — gate unavailable */ }
+      if (streamGateBlocked) return Response.json({ error: 'Insufficient $STREAMING to start a stream (requires 100)' }, { status: 403 });
       const streamKey = crypto.randomUUID();
       const stream = await base44.asServiceRole.entities.Stream.create({
         title,

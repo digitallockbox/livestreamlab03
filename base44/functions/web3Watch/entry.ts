@@ -12,6 +12,13 @@ Deno.serve(async (req) => {
       if (!viewerWallet || !creatorWallet) {
         return Response.json({ error: 'viewerWallet and creatorWallet are required' }, { status: 400 });
       }
+      let watchGateBlocked = false;
+      try {
+        const gate = await base44.functions.invoke('checkTokenGate', { wallet: viewerWallet, requiredAmount: 1 });
+        const gd = gate?.data || gate;
+        if (gd?.allowed === false) watchGateBlocked = true;
+      } catch (_e) { /* fail open — gate unavailable */ }
+      if (watchGateBlocked) return Response.json({ error: 'Insufficient $STREAMING to watch (requires 1)' }, { status: 403 });
       const session = await base44.asServiceRole.entities.WatchSession.create({
         viewer_wallet: viewerWallet,
         creator_wallet: creatorWallet,
@@ -42,6 +49,29 @@ Deno.serve(async (req) => {
       if (!sessionId) return Response.json({ error: 'sessionId required' }, { status: 400 });
       const updated = await base44.asServiceRole.entities.WatchSession.update(sessionId, { status: 'ended' });
       return Response.json({ session: updated });
+    }
+
+    if (action === 'claim') {
+      if (!body.wallet_token) return Response.json({ error: 'wallet_token required' }, { status: 400 });
+      const viewerWallet = (body.viewerWallet || '').trim();
+      if (!viewerWallet) return Response.json({ error: 'viewerWallet required' }, { status: 400 });
+      const ctxRes = await base44.functions.invoke('getAuthContext', { token: body.wallet_token });
+      const ctx = ctxRes?.data || ctxRes;
+      if (!ctx?.authenticated) return Response.json({ error: 'Invalid wallet token' }, { status: 401 });
+      if (ctx.wallet !== viewerWallet) return Response.json({ error: 'Wallet not authorized' }, { status: 403 });
+      const sessions = await base44.asServiceRole.entities.WatchSession.filter(
+        { viewer_wallet: viewerWallet, status: 'ended' }, '-created_date', 100
+      );
+      const totalEarned = sessions.reduce((s, x) => s + (x.tokens_earned || 0), 0);
+      if (totalEarned <= 0) return Response.json({ error: 'No tokens available to claim' }, { status: 400 });
+      const settleRes = await base44.functions.invoke('buildSettlementTx', {
+        wallet_token: body.wallet_token,
+        recipientWallet: viewerWallet,
+        amount: totalEarned,
+        type: 'watch_to_earn',
+      });
+      const settle = settleRes?.data || settleRes;
+      return Response.json({ claimed: totalEarned, settlement: settle });
     }
 
     return Response.json({ error: 'Unknown action' }, { status: 400 });

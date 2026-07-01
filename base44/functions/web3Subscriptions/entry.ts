@@ -36,6 +36,14 @@ Deno.serve(async (req) => {
       }
       const v = await verifyOwnership(base44, body, subscriberWallet);
       if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
+      const TIER_GATE = { basic: 10, plus: 50, premium: 100 };
+      let subGateBlocked = false;
+      try {
+        const gate = await base44.functions.invoke('checkTokenGate', { wallet: subscriberWallet, requiredAmount: TIER_GATE[tier] || 10 });
+        const gd = gate?.data || gate;
+        if (gd?.allowed === false) subGateBlocked = true;
+      } catch (_e) { /* fail open — gate unavailable */ }
+      if (subGateBlocked) return Response.json({ error: 'Insufficient $STREAMING for ' + tier + ' subscription (requires ' + (TIER_GATE[tier] || 10) + ')' }, { status: 403 });
       const price = TIER_PRICES[tier];
       const renewsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       const subscription = await base44.asServiceRole.entities.Subscription.create({

@@ -31,6 +31,13 @@ Deno.serve(async (req) => {
       }
       const v = await verifyOwnership(base44, body, viewerWallet);
       if (!v.ok) return Response.json({ error: v.error }, { status: v.status });
+      let boostGateBlocked = false;
+      try {
+        const gate = await base44.functions.invoke('checkTokenGate', { wallet: viewerWallet, requiredAmount: 5 });
+        const gd = gate?.data || gate;
+        if (gd?.allowed === false) boostGateBlocked = true;
+      } catch (_e) { /* fail open — gate unavailable */ }
+      if (boostGateBlocked) return Response.json({ error: 'Insufficient $STREAMING to boost (requires 5)' }, { status: 403 });
       const boost = await base44.asServiceRole.entities.Boost.create({
         viewer_wallet: viewerWallet,
         creator_wallet: creatorWallet,
