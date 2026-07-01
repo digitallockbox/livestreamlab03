@@ -8,6 +8,7 @@ import { User, Bookmark, ShoppingBag, Crown, Edit2, Check, X } from "lucide-reac
 import WatchlistTab from "@/components/viewer/WatchlistTab";
 import PurchaseHistoryTab from "@/components/viewer/PurchaseHistoryTab";
 import SubscriptionsTab from "@/components/viewer/SubscriptionsTab";
+import MilestoneBadge from "@/components/creator/stream/MilestoneBadge";
 
 export default function ViewerProfilePage() {
   const [user, setUser] = useState(null);
@@ -93,6 +94,9 @@ export default function ViewerProfilePage() {
                 </div>
                 <p className="text-sm text-muted-foreground mb-3">{user?.email}</p>
                 {profile?.bio && <p className="text-sm text-foreground/80">{profile.bio}</p>}
+                <div className="mt-3">
+                  <MilestoneBadge />
+                </div>
               </>
             )}
           </div>
