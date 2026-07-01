@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Store as StoreIcon, Radio, Link2, Loader2, TrendingUp } from "lucide-react";
+import { Store as StoreIcon, Radio, Link2, Loader2, TrendingUp, Download } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useIdentity } from "@/lib/web3/identity";
 
@@ -12,6 +12,11 @@ const BUCKETS = {
   store: { label: "Store", icon: StoreIcon, types: ["store_sale", "video_unlock"], color: "text-chart-4", bg: "bg-chart-4/10", ring: "border-chart-4/20" },
   streaming: { label: "Streaming", icon: Radio, types: ["stream_tip", "audio_boost", "subscription", "podcast"], color: "text-accent", bg: "bg-accent/10", ring: "border-accent/20" },
   affiliate: { label: "Affiliate", icon: Link2, types: ["affiliate"], color: "text-chart-3", bg: "bg-chart-3/10", ring: "border-chart-3/20" },
+};
+
+const typeToSource = (t) => {
+  for (const [k, b] of Object.entries(BUCKETS)) if (b.types.includes(t)) return b.label;
+  return "Other";
 };
 
 export default function EarningsSummary() {
@@ -49,6 +54,40 @@ export default function EarningsSummary() {
     return { totals, grand };
   }, [rows]);
 
+  const handleExport = () => {
+    const escape = (v) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const headers = ["Date", "Source", "Type", "Amount (USD)", "$STREAMING", "Status", "Description"];
+    const lines = rows.map((t) => [
+      (t.created_date || "").slice(0, 10),
+      typeToSource(t.type),
+      t.type || "",
+      (Number(t.amount) || 0).toFixed(2),
+      Number(t.streaming_amount) || 0,
+      t.status || "",
+      t.description || "",
+    ].map(escape).join(","));
+    lines.push("");
+    lines.push(["Summary (Last 30 Days)", "", "", "", "", "", ""].join(","));
+    Object.entries(BUCKETS).forEach(([k, b]) => {
+      const t = summary.totals[k];
+      lines.push([`${b.label} total`, "", "", t.usd.toFixed(2), t.streaming.toFixed(2), `${t.count} txn`, ""].map(escape).join(","));
+    });
+    lines.push(["GRAND TOTAL", "", "", summary.grand.usd.toFixed(2), summary.grand.streaming.toFixed(2), `${summary.grand.count} txn`, ""].map(escape).join(","));
+    const csv = [headers.join(","), ...lines].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `earnings-summary-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
   }
@@ -60,10 +99,15 @@ export default function EarningsSummary() {
           <h2 className="font-display font-bold text-lg flex items-center gap-2"><TrendingUp className="w-5 h-5 text-primary" /> Last 30 Days</h2>
           <p className="text-xs text-muted-foreground">Aggregated earnings across your store, streams, and affiliate links.</p>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground">Total earnings</p>
-          <p className="text-2xl font-display font-bold text-gradient-brand">${summary.grand.usd.toFixed(2)}</p>
-          <p className="text-xs text-accent font-medium">{summary.grand.streaming.toFixed(2)} ◎ $STREAMING</p>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Total earnings</p>
+            <p className="text-2xl font-display font-bold text-gradient-brand">${summary.grand.usd.toFixed(2)}</p>
+            <p className="text-xs text-accent font-medium">{summary.grand.streaming.toFixed(2)} ◎ $STREAMING</p>
+          </div>
+          <button onClick={handleExport} disabled={rows.length === 0} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs hover:bg-muted disabled:opacity-50 shrink-0">
+            <Download className="w-3.5 h-3.5" /> Export to Sheet
+          </button>
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
