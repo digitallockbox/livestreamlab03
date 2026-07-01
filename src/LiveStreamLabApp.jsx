@@ -52,6 +52,8 @@ import StoreDashboard from "@/pages/store/StoreDashboard";
 import AddProductPage from "@/pages/store/AddProductPage";
 import Checkout from "@/pages/store/Checkout";
 import OrderHistory from "@/pages/store/OrderHistory";
+import AffiliateDashboard from "@/pages/affiliates/AffiliateDashboard";
+import AddAffiliateLink from "@/pages/affiliates/AddAffiliateLink";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -678,6 +680,8 @@ function MainApp() {
         <Route path="/store/catalog" element={<StoreProductList />} />
         <Route path="/store/:productId/checkout" element={<Checkout />} />
         <Route path="/store/:productId" element={<ProductDetail />} />
+        <Route path="/affiliates" element={<AffiliateDashboard />} />
+        <Route path="/affiliates/add" element={<AddAffiliateLink />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/domains" element={<Domains />} />
         <Route path="/go-live" element={<GoLive />} />

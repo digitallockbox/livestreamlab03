@@ -11,6 +11,10 @@
     "category": {
       "type": "string"
     },
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet of the creator who owns this affiliate link"
+    },
     "clicks": {
       "type": "number",
       "default": 0
