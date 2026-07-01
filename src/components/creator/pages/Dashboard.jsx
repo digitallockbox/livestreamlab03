@@ -10,6 +10,7 @@ import Domains from "@/components/creator/pages/Domains";
 import Settings from "@/components/creator/pages/Settings";
 import Store from "@/components/creator/pages/Store";
 import StreakNotifications from "@/components/creator/stream/StreakNotifications";
+import EarningsSummary from "@/components/creator/pages/EarningsSummary";
 
 const MODULES = [
   { key: "streams", label: "Streams", icon: Radio, Component: Streams },
@@ -104,6 +105,7 @@ export default function Dashboard() {
         </aside>
         <div className="space-y-4 min-w-0">
           <IdentityHeader />
+          <EarningsSummary />
           <ActiveComponent />
         </div>
       </div>
