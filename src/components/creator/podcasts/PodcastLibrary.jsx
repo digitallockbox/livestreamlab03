@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Headphones, Search, Play, Clock, Mic2, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Headphones, Search, Play, Clock, Mic2, Loader2, BarChart3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PodcastPlayer from "@/components/creator/podcasts/PodcastPlayer";
 
@@ -39,9 +40,14 @@ export default function PodcastLibrary() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 lg:p-8 space-y-6 pb-28">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Podcast Library</h1>
-        <p className="text-sm text-muted-foreground mt-1">Browse and play published episodes from across the network.</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Podcast Library</h1>
+          <p className="text-sm text-muted-foreground mt-1">Browse and play published episodes from across the network.</p>
+        </div>
+        <Link to="/podcasts/analytics" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-secondary text-secondary-foreground text-sm hover:bg-secondary/80">
+          <BarChart3 className="w-4 h-4" /> Analytics
+        </Link>
       </div>
 
       {/* Filters */}

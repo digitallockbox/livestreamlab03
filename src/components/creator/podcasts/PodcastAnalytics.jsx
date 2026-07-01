@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Headphones, DollarSign, Mic2, TrendingUp, Loader2, BarChart3, ArrowLeft } from "lucide-react";
+import { Headphones, DollarSign, Mic2, TrendingUp, Loader2, BarChart3, ArrowLeft, Crown } from "lucide-react";
 import { BarChart, Bar, Line, ComposedChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { base44 } from "@/api/base44Client";
 import { useIdentity } from "@/lib/web3/identity";
@@ -52,6 +52,22 @@ export default function PodcastAnalytics() {
     () => [...episodes].map((e) => ({ name: (e.title || "Untitled").slice(0, 20), listens: e.listens || 0, revenue: e.revenue || 0 })).sort((a, b) => b.listens - a.listens),
     [episodes]
   );
+
+  // Per-series aggregate so the creator can see which series perform best.
+  const seriesStats = useMemo(() => {
+    const map = new Map();
+    for (const e of episodes) {
+      const key = e.series || "Uncategorized";
+      if (!map.has(key)) map.set(key, { series: key, listens: 0, revenue: 0, episodes: 0 });
+      const s = map.get(key);
+      s.listens += (e.listens || 0);
+      s.revenue += (e.revenue || 0);
+      s.episodes += 1;
+    }
+    return Array.from(map.values()).sort((a, b) => b.listens - a.listens);
+  }, [episodes]);
+
+  const maxSeriesListens = useMemo(() => seriesStats.reduce((m, s) => Math.max(m, s.listens), 0) || 1, [seriesStats]);
 
   const kpis = [
     { label: "Total Listens", value: totalListens.toLocaleString(), icon: Headphones, color: "text-chart-4", bg: "bg-chart-4/10" },
@@ -116,6 +132,38 @@ export default function PodcastAnalytics() {
                 <Line yAxisId="r" type="monotone" dataKey="revenue" stroke="hsl(var(--accent))" strokeWidth={2.5} dot={false} name="Revenue" />
               </ComposedChart>
             </ResponsiveContainer>
+          </div>
+
+          {/* Top performing series */}
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <h2 className="font-display font-semibold mb-4 flex items-center gap-2"><Crown className="w-4 h-4 text-chart-3" /> Top Performing Series</h2>
+            {seriesStats.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No series data yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {seriesStats.map((s, i) => {
+                  const pct = Math.round((s.listens / maxSeriesListens) * 100);
+                  return (
+                    <div key={s.series} className="py-1">
+                      <div className="flex items-center justify-between gap-3 mb-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`text-xs font-mono w-5 shrink-0 ${i < 3 ? "text-chart-3 font-bold" : "text-muted-foreground"}`}>#{i + 1}</span>
+                          <span className="text-sm font-medium truncate">{s.series}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">{s.episodes} ep</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs shrink-0">
+                          <span className="flex items-center gap-1 text-chart-4"><Headphones className="w-3 h-3" /> {s.listens.toLocaleString()}</span>
+                          <span className="text-accent font-medium">{usd(s.revenue)}</span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden ml-7">
+                        <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Per-episode listens */}
