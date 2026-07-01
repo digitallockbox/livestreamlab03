@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Mic2, Loader2, Plus, Trash2, Eye, EyeOff, Save, Play } from "lucide-react";
+import { Mic2, Loader2, Plus, Trash2, Eye, EyeOff, Save, Play, BarChart3 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useIdentity } from "@/lib/web3/identity";
 
@@ -70,9 +71,14 @@ export default function PodcastManager() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 lg:p-8 space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Podcast Manager</h1>
-        <p className="text-sm text-muted-foreground mt-1">Upload episodes, add descriptions, and organize them into series.</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Podcast Manager</h1>
+          <p className="text-sm text-muted-foreground mt-1">Upload episodes, add descriptions, and organize them into series.</p>
+        </div>
+        <Link to="/podcasts/analytics" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-secondary text-secondary-foreground text-sm hover:bg-secondary/80">
+          <BarChart3 className="w-4 h-4" /> Analytics
+        </Link>
       </div>
 
       {/* Upload form */}
