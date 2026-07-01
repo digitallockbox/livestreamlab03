@@ -1,0 +1,45 @@
+{
+  "name": "ContentPlan",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Planned date for this content item"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "stream",
+        "video",
+        "podcast",
+        "social",
+        "post"
+      ],
+      "default": "stream"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "active",
+        "done"
+      ],
+      "default": "planned"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet of the creator who owns this plan item"
+    }
+  },
+  "required": [
+    "title",
+    "date"
+  ]
+}

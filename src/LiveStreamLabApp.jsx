@@ -57,6 +57,7 @@ import AddAffiliateLink from "@/pages/affiliates/AddAffiliateLink";
 import PodcastManager from "@/components/creator/podcasts/PodcastManager";
 import PodcastLibrary from "@/components/creator/podcasts/PodcastLibrary";
 import PodcastAnalytics from "@/components/creator/podcasts/PodcastAnalytics";
+import WarRoom from "@/components/creator/warroom/WarRoom";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -688,6 +689,7 @@ function MainApp() {
         <Route path="/podcasts" element={<PodcastLibrary />} />
         <Route path="/podcasts/manage" element={<PodcastManager />} />
         <Route path="/podcasts/analytics" element={<PodcastAnalytics />} />
+        <Route path="/war-room" element={<WarRoom />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/domains" element={<Domains />} />
         <Route path="/go-live" element={<GoLive />} />

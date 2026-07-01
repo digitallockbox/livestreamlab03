@@ -1,0 +1,30 @@
+{
+  "name": "CreatorGoal",
+  "type": "object",
+  "properties": {
+    "month": {
+      "type": "string",
+      "description": "Target month in YYYY-MM format"
+    },
+    "target_streams": {
+      "type": "number",
+      "default": 0
+    },
+    "target_listens": {
+      "type": "number",
+      "default": 0
+    },
+    "target_revenue": {
+      "type": "number",
+      "default": 0
+    },
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet of the creator this goal belongs to"
+    }
+  },
+  "required": [
+    "month",
+    "creator_wallet"
+  ]
+}

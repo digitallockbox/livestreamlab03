@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { Home, Radio, Eye, Video, ShoppingBag, Wallet, CreditCard, BarChart3, Newspaper, MessageSquare, Settings as SettingsIcon, Globe, Vault, Store as StoreIcon, Link2, Mic2 } from "lucide-react";
+import { Home, Radio, Eye, Video, ShoppingBag, Wallet, CreditCard, BarChart3, Newspaper, MessageSquare, Settings as SettingsIcon, Globe, Vault, Store as StoreIcon, Link2, Mic2, Rocket } from "lucide-react";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { useIdentity } from "@/lib/web3/identity";
 
@@ -10,6 +10,7 @@ const NAV = [
   { to: "/watch", label: "Watch", icon: Eye },
   { to: "/videos", label: "Videos", icon: Video },
   { to: "/podcasts", label: "Podcasts", icon: Mic2 },
+  { to: "/war-room", label: "War Room", icon: Rocket },
   { to: "/store", label: "Store", icon: StoreIcon },
   { to: "/affiliates", label: "Affiliates", icon: Link2 },
   { to: "/marketplace", label: "Market", icon: ShoppingBag },
