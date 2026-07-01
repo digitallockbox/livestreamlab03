@@ -9,6 +9,7 @@ import Economy from "@/components/creator/pages/Economy";
 import Domains from "@/components/creator/pages/Domains";
 import Settings from "@/components/creator/pages/Settings";
 import Store from "@/components/creator/pages/Store";
+import StreakNotifications from "@/components/creator/stream/StreakNotifications";
 
 const MODULES = [
   { key: "streams", label: "Streams", icon: Radio, Component: Streams },
@@ -35,9 +36,12 @@ function IdentityHeader() {
     <Card className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h2 className="font-display font-bold text-lg">Creator Identity</h2>
-        <span className={`text-xs px-2 py-0.5 rounded-full ${complete ? "bg-accent/15 text-accent" : "bg-muted text-muted-foreground"}`}>
-          {complete ? "Onboarding Complete" : "Pending Domain Verification"}
-        </span>
+        <div className="flex items-center gap-2">
+          <StreakNotifications />
+          <span className={`text-xs px-2 py-0.5 rounded-full ${complete ? "bg-accent/15 text-accent" : "bg-muted text-muted-foreground"}`}>
+            {complete ? "Onboarding Complete" : "Pending Domain Verification"}
+          </span>
+        </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
         <div className="min-w-0">

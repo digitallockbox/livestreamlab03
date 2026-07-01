@@ -8,8 +8,12 @@ const STREAK_BONUS_CAP = 50;
 const computeStreakBonus = (streak) =>
   streak >= STREAK_THRESHOLD ? Math.min(streak * 2, STREAK_BONUS_CAP) : 0;
 
+// Watch-streak milestones: every 7 consecutive days triggers a notification.
+const MILESTONE = 7;
+
 // Record that a viewer watched today (UTC). Updates/creates their ViewerStreak.
-// Returns the current streak record.
+// Returns { streak, milestoneHit } — milestoneHit is true only when the streak
+// just crossed a 7-day boundary on this update.
 const recordDailyWatch = async (base44, viewerWallet) => {
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
   const existing = await base44.asServiceRole.entities.ViewerStreak
@@ -17,25 +21,31 @@ const recordDailyWatch = async (base44, viewerWallet) => {
     .catch(() => []);
   const prev = existing[0];
   if (!prev) {
-    return base44.asServiceRole.entities.ViewerStreak.create({
+    const streak = await base44.asServiceRole.entities.ViewerStreak.create({
       viewer_wallet: viewerWallet,
       current_streak: 1,
       longest_streak: 1,
       last_watch_date: today,
       total_days_watched: 1
     });
+    return { streak, milestoneHit: false };
   }
-  if (prev.last_watch_date === today) return prev; // already counted today
+  if (prev.last_watch_date === today) {
+    return { streak: prev, milestoneHit: false }; // already counted today
+  }
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
   const continued = prev.last_watch_date === yesterday;
   const current = continued ? (prev.current_streak || 0) + 1 : 1;
   const longest = Math.max(prev.longest_streak || 0, current);
-  return base44.asServiceRole.entities.ViewerStreak.update(prev.id, {
+  const streak = await base44.asServiceRole.entities.ViewerStreak.update(prev.id, {
     current_streak: current,
     longest_streak: longest,
     last_watch_date: today,
     total_days_watched: (prev.total_days_watched || 0) + 1
   });
+  // Milestone hit: new streak is a multiple of MILESTONE AND previous wasn't.
+  const milestoneHit = current % MILESTONE === 0 && (prev.current_streak || 0) % MILESTONE !== 0;
+  return { streak, milestoneHit };
 };
 
 Deno.serve(async (req) => {
@@ -67,8 +77,26 @@ Deno.serve(async (req) => {
       });
       // Mark today as a watched day so the streak grows for consecutive-day viewers.
       let streak = null;
-      try { streak = await recordDailyWatch(base44, viewerWallet); } catch (_e) { /* fail open */ }
-      return Response.json({ session, streak });
+      let milestoneHit = false;
+      try {
+        const r = await recordDailyWatch(base44, viewerWallet);
+        streak = r.streak;
+        milestoneHit = r.milestoneHit;
+      } catch (_e) { /* fail open */ }
+      // Fire an in-app milestone notification when a 7-day boundary is crossed.
+      if (milestoneHit && streak?.current_streak) {
+        try {
+          await base44.asServiceRole.entities.Notification.create({
+            wallet_address: viewerWallet,
+            type: 'streak_milestone',
+            title: `${streak.current_streak}-Day Watch Streak!`,
+            message: `You've watched ${streak.current_streak} days in a row. Keep your streak alive to earn bonus $STREAMING on every claim.`,
+            milestone: streak.current_streak,
+            read: false
+          });
+        } catch (_e) { /* fail open */ }
+      }
+      return Response.json({ session, streak, milestoneHit });
     }
 
     if (action === 'tick') {
@@ -153,6 +181,28 @@ Deno.serve(async (req) => {
         longest_streak: streakInfo ? streakInfo.longest_streak : 0,
         settlement: settle
       });
+    }
+
+    if (action === 'notifications') {
+      const wallet = (body.wallet || body.viewerWallet || '').trim();
+      if (!wallet) return Response.json({ error: 'wallet required' }, { status: 400 });
+      const notifications = await base44.asServiceRole.entities.Notification.filter(
+        { wallet_address: wallet }, '-created_date', 50
+      );
+      const unread = notifications.filter((n) => !n.read).length;
+      return Response.json({ notifications, unread });
+    }
+
+    if (action === 'markRead') {
+      const wallet = (body.wallet || body.viewerWallet || '').trim();
+      if (!wallet) return Response.json({ error: 'wallet required' }, { status: 400 });
+      const notifications = await base44.asServiceRole.entities.Notification.filter(
+        { wallet_address: wallet, read: false }, '-created_date', 100
+      );
+      await base44.asServiceRole.entities.Notification.bulkUpdate(
+        notifications.map((n) => ({ id: n.id, read: true }))
+      );
+      return Response.json({ marked: notifications.length });
     }
 
     if (action === 'streak') {

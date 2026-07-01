@@ -1,0 +1,38 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "wallet_address": {
+      "type": "string",
+      "description": "Wallet address of the notification recipient"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "streak_milestone",
+        "system"
+      ],
+      "default": "streak_milestone"
+    },
+    "title": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "milestone": {
+      "type": "number",
+      "default": 0,
+      "description": "Streak day count that triggered this milestone notification"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "wallet_address",
+    "title",
+    "message"
+  ]
+}
