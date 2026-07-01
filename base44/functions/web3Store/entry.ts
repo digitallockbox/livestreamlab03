@@ -190,6 +190,7 @@ Deno.serve(async (req) => {
         source: 'storefront',
         sender_wallet: viewerWallet,
         recipient_wallet: product.creator_wallet,
+        product_id: productId,
       });
 
       // Increment product performance counters (creator earnings update automatically

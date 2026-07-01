@@ -51,6 +51,10 @@
     "checkout_id": {
       "type": "string",
       "description": "Wix checkout session id, used to match the order-approved webhook to a pending topup"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "Product id for store_sale transactions, used to link order history back to the purchased item"
     }
   },
   "required": [

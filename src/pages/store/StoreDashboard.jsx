@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Package, Plus, BarChart3, ShoppingBag, Zap, TrendingUp, MousePointerClick,
-  DollarSign, ArrowRight, ExternalLink, Star, Store as StoreIcon,
+  DollarSign, ArrowRight, ExternalLink, Star, Store as StoreIcon, Receipt,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useIdentity } from "@/lib/web3/identity";
@@ -52,7 +52,7 @@ export default function StoreDashboard() {
   return (
     <Page title="Storefront" subtitle="List and manage your digital assets for sale">
       {/* Quick actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Link to="/store/add" className="group">
           <Card className="h-full hover:border-primary/40 transition-colors flex items-center gap-3">
             <div className="p-3 rounded-lg bg-primary/15 text-primary"><Plus className="w-5 h-5" /></div>
@@ -79,6 +79,16 @@ export default function StoreDashboard() {
             <div className="flex-1">
               <p className="font-display font-semibold text-sm">Sales Analytics</p>
               <p className="text-xs text-muted-foreground">Revenue & conversions</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+          </Card>
+        </Link>
+        <Link to="/store/orders" className="group">
+          <Card className="h-full hover:border-primary/40 transition-colors flex items-center gap-3">
+            <div className="p-3 rounded-lg bg-primary/15 text-primary"><Receipt className="w-5 h-5" /></div>
+            <div className="flex-1">
+              <p className="font-display font-semibold text-sm">Order History</p>
+              <p className="text-xs text-muted-foreground">Past purchases & downloads</p>
             </div>
             <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
           </Card>
