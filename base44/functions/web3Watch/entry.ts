@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import jwt from 'npm:jsonwebtoken@9.0.2';
 
 Deno.serve(async (req) => {
   try {
@@ -55,22 +56,44 @@ Deno.serve(async (req) => {
       if (!body.wallet_token) return Response.json({ error: 'wallet_token required' }, { status: 400 });
       const viewerWallet = (body.viewerWallet || '').trim();
       if (!viewerWallet) return Response.json({ error: 'viewerWallet required' }, { status: 400 });
-      const ctxRes = await base44.functions.invoke('getAuthContext', { token: body.wallet_token });
-      const ctx = ctxRes?.data || ctxRes;
-      if (!ctx?.authenticated) return Response.json({ error: 'Invalid wallet token' }, { status: 401 });
-      if (ctx.wallet !== viewerWallet) return Response.json({ error: 'Wallet not authorized' }, { status: 403 });
+      // Inline JWT verification (avoids cross-function getAuthContext 403).
+      const secret = Deno.env.get('CREATOR_JWT_SECRET');
+      if (!secret) return Response.json({ error: 'Auth not configured' }, { status: 503 });
+      let decoded;
+      try { decoded = jwt.verify(body.wallet_token, secret); } catch (_e) {
+        return Response.json({ error: 'Invalid or expired wallet token' }, { status: 401 });
+      }
+      if (!decoded?.wallet || decoded.wallet !== viewerWallet) {
+        return Response.json({ error: 'Wallet not authorized' }, { status: 403 });
+      }
+      // End any active session so current earnings become claimable instantly.
+      const active = await base44.asServiceRole.entities.WatchSession.filter(
+        { viewer_wallet: viewerWallet, status: 'active' }, '-created_date', 50
+      );
+      for (const s of active) {
+        await base44.asServiceRole.entities.WatchSession.update(s.id, { status: 'ended' });
+      }
       const sessions = await base44.asServiceRole.entities.WatchSession.filter(
         { viewer_wallet: viewerWallet, status: 'ended' }, '-created_date', 100
       );
       const totalEarned = sessions.reduce((s, x) => s + (x.tokens_earned || 0), 0);
       if (totalEarned <= 0) return Response.json({ error: 'No tokens available to claim' }, { status: 400 });
-      const settleRes = await base44.functions.invoke('buildSettlementTx', {
-        wallet_token: body.wallet_token,
-        recipientWallet: viewerWallet,
-        amount: totalEarned,
-        type: 'watch_to_earn',
-      });
-      const settle = settleRes?.data || settleRes;
+      let settle;
+      try {
+        const settleRes = await base44.functions.invoke('buildSettlementTx', {
+          wallet_token: body.wallet_token,
+          recipientWallet: viewerWallet,
+          amount: totalEarned,
+          type: 'watch_to_earn',
+        });
+        settle = settleRes?.data || settleRes;
+      } catch (e) {
+        return Response.json({ error: 'Settlement service unavailable: ' + (e?.message || 'unknown') }, { status: 503 });
+      }
+      // Clear claimed sessions to prevent double-claiming.
+      for (const s of sessions) {
+        await base44.asServiceRole.entities.WatchSession.delete(s.id);
+      }
       return Response.json({ claimed: totalEarned, settlement: settle });
     }
 

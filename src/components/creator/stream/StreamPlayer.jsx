@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Users, Clock, Zap, Radio, StopCircle } from "lucide-react";
+import ClaimButton from "@/components/creator/stream/ClaimButton";
 
 // Responsive stream viewing layout: video player + metadata + live chat.
 // On desktop: player/metadata span 2 cols, chat sticks to the right.
 // On mobile: everything stacks (player → metadata → chat).
-export default function StreamPlayer({ stream, tokens, minutes, onStop }) {
+export default function StreamPlayer({ stream, tokens, minutes, onStop, wallet, onClaimed }) {
   const [messages, setMessages] = useState([
     { id: 1, user: "alice", text: "Great stream! 🔥" },
     { id: 2, user: "bob", text: "Sending a boost" },
@@ -45,9 +46,12 @@ export default function StreamPlayer({ stream, tokens, minutes, onStop }) {
               <h1 className="font-display text-lg sm:text-xl font-bold leading-tight">{stream?.title}</h1>
               <p className="text-xs text-muted-foreground font-mono mt-1 break-all">{stream?.creator_wallet}</p>
             </div>
-            <button onClick={onStop} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-destructive/15 text-destructive text-sm hover:bg-destructive/25 shrink-0">
-              <StopCircle className="w-4 h-4" /> Stop &amp; claim
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <ClaimButton viewerWallet={wallet} earned={tokens} onClaimed={onClaimed} />
+              <button onClick={onStop} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-destructive/15 text-destructive text-sm hover:bg-destructive/25">
+                <StopCircle className="w-4 h-4" /> Stop
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg bg-muted p-3">

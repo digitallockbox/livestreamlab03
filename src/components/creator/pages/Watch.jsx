@@ -53,7 +53,14 @@ export default function Watch() {
   if (session && selected) {
     return (
       <Page title="Watch-to-Earn" subtitle="Earn $STREAMING for every minute you watch">
-        <StreamPlayer stream={selected} tokens={tokens} minutes={minutes} onStop={stop} />
+        <StreamPlayer
+        stream={selected}
+        tokens={tokens}
+        minutes={minutes}
+        onStop={stop}
+        wallet={wallet}
+        onClaimed={() => { setTokens(0); setMinutes(0); setSession(null); setSelected(null); }}
+      />
       </Page>
     );
   }
