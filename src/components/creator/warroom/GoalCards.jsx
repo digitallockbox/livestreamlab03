@@ -63,7 +63,8 @@ export default function GoalCards({ wallet, month }) {
     <div className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {cards.map((c) => {
-          const pct = c.target > 0 ? Math.min(100, Math.round((c.actual / c.target) * 100)) : 0;
+          const t = Number(targets[c.key] || 0);
+          const pct = t > 0 ? Math.min(100, Math.round((c.actual / t) * 100)) : 0;
           const Icon = c.icon;
           return (
             <div key={c.key} className="rounded-2xl border border-border bg-card p-4">
