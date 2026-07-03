@@ -33,12 +33,18 @@ export default function SalesDashboard() {
       setLoading(true);
       try {
         const [storeSales, affiliateSales, prods, affs] = await Promise.all([
-          base44.asServiceRole.entities.Transaction.filter({ type: "store_sale" }, "-created_date", 200).catch(() => []),
-          base44.asServiceRole.entities.Transaction.filter({ type: "affiliate" }, "-created_date", 200).catch(() => []),
           walletAddress
-            ? base44.asServiceRole.entities.Product.filter({ creator_wallet: walletAddress }, "-revenue", 50).catch(() => [])
+            ? base44.entities.Transaction.filter({ recipient_wallet: walletAddress, type: "store_sale" }, "-created_date", 200).catch(() => [])
             : [],
-          base44.asServiceRole.entities.AffiliateLink.list("-commission_earned", 50).catch(() => []),
+          walletAddress
+            ? base44.entities.Transaction.filter({ recipient_wallet: walletAddress, type: "affiliate" }, "-created_date", 200).catch(() => [])
+            : [],
+          walletAddress
+            ? base44.entities.Product.filter({ creator_wallet: walletAddress }, "-revenue", 50).catch(() => [])
+            : [],
+          walletAddress
+            ? base44.entities.AffiliateLink.filter({ creator_wallet: walletAddress }, "-commission_earned", 50).catch(() => [])
+            : [],
         ]);
         setTx([...(storeSales || []), ...(affiliateSales || [])]);
         setProducts(prods || []);
