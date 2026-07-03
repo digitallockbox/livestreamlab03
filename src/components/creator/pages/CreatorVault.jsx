@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useViewerWallet, Page, Card, Spinner, streamsAPI, boostsAPI } from "@/components/creator/os";
 import EarningsTrendChart from "@/components/creator/vault/EarningsTrendChart";
 import MonthlyEarningsBreakdown from "@/components/creator/vault/MonthlyEarningsBreakdown";
+import StreakTrendChart from "@/components/creator/vault/StreakTrendChart";
 import GlanceSummary from "@/components/creator/pages/GlanceSummary";
 
 const DAYS = 30;
@@ -257,6 +258,17 @@ export default function CreatorVault() {
           <span className="text-xs text-muted-foreground">Showing: {FILTERS.find((f) => f.key === filter).label}</span>
         </div>
         <EarningsTrendChart series={series} days={DAYS} unit={chartUnit} />
+      </Card>
+
+      {/* Viewer streak engagement — daily active viewers + avg streak length */}
+      <Card>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h2 className="font-display font-semibold">Viewer Streak Engagement</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Daily active viewers and average streak length — spot your best days to go live</p>
+          </div>
+        </div>
+        <StreakTrendChart wallet={wallet} />
       </Card>
 
       {/* Monthly breakdown — streams / store / affiliate by month */}
