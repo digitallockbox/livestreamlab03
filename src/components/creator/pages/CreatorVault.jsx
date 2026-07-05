@@ -3,6 +3,7 @@ import { Zap, TrendingUp, Radio, Flame, Loader2, Crown, Store as StoreIcon, Link
 import { base44 } from "@/api/base44Client";
 import { useViewerWallet, Page, Card, Spinner, streamsAPI, boostsAPI } from "@/components/creator/os";
 import EarningsTrendChart from "@/components/creator/vault/EarningsTrendChart";
+import MultiSourceTrendChart from "@/components/creator/vault/MultiSourceTrendChart";
 import MonthlyEarningsBreakdown from "@/components/creator/vault/MonthlyEarningsBreakdown";
 import StreakTrendChart from "@/components/creator/vault/StreakTrendChart";
 import GlanceSummary from "@/components/creator/pages/GlanceSummary";
@@ -129,6 +130,19 @@ export default function CreatorVault() {
       .filter((t) => s.types.includes(t.type))
       .map((t) => ({ date: t.created_date, amount: s.unit === "◎" ? (Number(t.streaming_amount) || 0) : (Number(t.amount) || 0) }));
   }, [filter, incoming, streams, boosts]);
+
+  // Per-source daily series for the multi-source growth trend chart.
+  const multiSourceSeries = useMemo(() => {
+    const build = (types, unit) => incoming
+      .filter((t) => types.includes(t.type))
+      .map((t) => ({ date: t.created_date, amount: unit === "◎" ? (Number(t.streaming_amount) || 0) : (Number(t.amount) || 0) }))
+      .map((e) => ({ day: e.date?.slice(0, 10), total: e.amount }));
+    return {
+      streams: build(SOURCES.streams.types, "◎"),
+      store: build(SOURCES.store.types, "$"),
+      affiliate: build(SOURCES.affiliate.types, "$"),
+    };
+  }, [incoming]);
 
   const chartUnit = filter === "all" || filter === "streams" ? "◎" : "$";
 
@@ -258,6 +272,17 @@ export default function CreatorVault() {
           <span className="text-xs text-muted-foreground">Showing: {FILTERS.find((f) => f.key === filter).label}</span>
         </div>
         <EarningsTrendChart series={series} days={DAYS} unit={chartUnit} />
+      </Card>
+
+      {/* Multi-source growth trend — all three channels on one chart */}
+      <Card>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h2 className="font-display font-semibold">Channel Growth Trends</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Revenue shifts across streams, store, and affiliate — spot which channels are climbing</p>
+          </div>
+        </div>
+        <MultiSourceTrendChart series={multiSourceSeries} />
       </Card>
 
       {/* Viewer streak engagement — daily active viewers + avg streak length */}
