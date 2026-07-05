@@ -84,15 +84,18 @@ Deno.serve(async (req) => {
         streak = r.streak;
         milestoneHit = r.milestoneHit;
       } catch (_e) { /* fail open */ }
-      // Fire an in-app milestone notification when a 7-day boundary is crossed.
+      // Fire a personalized in-app milestone notification when a 7-day boundary is crossed.
       if (milestoneHit && streak?.current_streak) {
+        const shortViewer = viewerWallet.length >= 10 ? `${viewerWallet.slice(0, 4)}…${viewerWallet.slice(-4)}` : viewerWallet;
+        const shortCreator = creatorWallet.length >= 10 ? `${creatorWallet.slice(0, 4)}…${creatorWallet.slice(-4)}` : creatorWallet;
         try {
           await base44.asServiceRole.entities.Notification.create({
             wallet_address: viewerWallet,
             type: 'streak_milestone',
-            title: `${streak.current_streak}-Day Watch Streak!`,
-            message: `You've watched ${streak.current_streak} days in a row. Keep your streak alive to earn bonus $STREAMING on every claim.`,
+            title: `🎉 ${streak.current_streak}-day streak — nice run, ${shortViewer}!`,
+            message: `You've shown up ${streak.current_streak} days straight on channel ${shortCreator}. That kind of loyalty earns bonus $STREAMING on every claim — keep the streak alive and watch your rewards compound!`,
             milestone: streak.current_streak,
+            viewer_wallet: viewerWallet,
             read: false
           });
         } catch (_e) { /* fail open */ }
