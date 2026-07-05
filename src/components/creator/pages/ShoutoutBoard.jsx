@@ -12,6 +12,8 @@ export default function ShoutoutBoard() {
   const [shoutouts, setShoutouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [shoutingOut, setShoutingOut] = useState(null);
+  const [shouted, setShouted] = useState({});
 
   const load = async (w) => {
     if (!w) { setLoading(false); return; }
@@ -23,6 +25,15 @@ export default function ShoutoutBoard() {
   };
 
   useEffect(() => { load(wallet); }, [wallet]);
+
+  const handleShoutout = async (viewerWallet, notifId) => {
+    if (!wallet || !viewerWallet) return;
+    setShoutingOut(notifId);
+    try {
+      await watchAPI.shoutoutViewer(wallet, viewerWallet);
+      setShouted((s) => ({ ...s, [notifId]: true }));
+    } finally { setShoutingOut(null); }
+  };
 
   const markAllRead = async () => {
     if (!wallet) return;
@@ -110,8 +121,18 @@ export default function ShoutoutBoard() {
                     )}
                   </div>
                 </div>
-                <span className="text-lg font-display font-bold text-chart-3 shrink-0">{Number(n.milestone) || 7}d</span>
-                {!n.read && <span className="w-2 h-2 rounded-full bg-chart-3 shrink-0" />}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleShoutout(n.viewer_wallet, n.id)}
+                    disabled={shoutingOut === n.id || shouted[n.id]}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-chart-3/15 text-chart-3 text-xs font-medium border border-chart-3/30 hover:bg-chart-3/25 disabled:opacity-50 transition-colors"
+                  >
+                    {shoutingOut === n.id ? <Loader2 className="w-3 h-3 animate-spin" /> : shouted[n.id] ? <CheckCheck className="w-3 h-3" /> : <Megaphone className="w-3 h-3" />}
+                    {shouted[n.id] ? "Sent" : "Shoutout"}
+                  </button>
+                  <span className="text-lg font-display font-bold text-chart-3">{Number(n.milestone) || 7}d</span>
+                  {!n.read && <span className="w-2 h-2 rounded-full bg-chart-3" />}
+                </div>
               </div>
             ))}
           </div>

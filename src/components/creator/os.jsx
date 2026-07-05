@@ -56,6 +56,7 @@ export const watchAPI = {
   markRead: (wallet) => invoke("web3Watch", { action: "markRead", wallet }),
   shoutouts: (wallet) => invoke("web3Watch", { action: "shoutouts", wallet }),
   markShoutoutsRead: (wallet) => invoke("web3Watch", { action: "markShoutoutsRead", wallet }),
+  shoutoutViewer: (creatorWallet, viewerWallet) => invoke("web3Watch", { action: "sendShoutout", creatorWallet, viewerWallet }),
 };
 
 export const boostsAPI = {

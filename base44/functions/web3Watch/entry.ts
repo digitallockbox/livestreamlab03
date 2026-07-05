@@ -263,6 +263,20 @@ Deno.serve(async (req) => {
       return Response.json({ shoutouts: notifications, unread });
     }
 
+    if (action === 'sendShoutout') {
+      const creatorWallet = (body.creatorWallet || '').trim();
+      const viewerWallet = (body.viewerWallet || '').trim();
+      if (!creatorWallet || !viewerWallet) return Response.json({ error: 'creatorWallet and viewerWallet required' }, { status: 400 });
+      await base44.asServiceRole.entities.Notification.create({
+        wallet_address: viewerWallet,
+        type: 'system',
+        title: 'You got a shoutout! 🎉',
+        message: 'The creator just gave you a shoutout on stream for your watch streak. Keep it going to earn bonus $STREAMING!',
+        read: false
+      });
+      return Response.json({ sent: true });
+    }
+
     if (action === 'notifications') {
       const wallet = (body.wallet || body.viewerWallet || '').trim();
       if (!wallet) return Response.json({ error: 'wallet required' }, { status: 400 });
