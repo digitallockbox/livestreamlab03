@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Zap, TrendingUp, Radio, Flame, Loader2, Crown, Store as StoreIcon, Link2, Trophy } from "lucide-react";
+import { Zap, TrendingUp, Radio, Flame, Loader2, Crown, Store as StoreIcon, Link2, Trophy, Package } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useViewerWallet, Page, Card, Spinner, streamsAPI, boostsAPI } from "@/components/creator/os";
 import EarningsTrendChart from "@/components/creator/vault/EarningsTrendChart";
 import MultiSourceTrendChart from "@/components/creator/vault/MultiSourceTrendChart";
 import MonthlyEarningsBreakdown from "@/components/creator/vault/MonthlyEarningsBreakdown";
 import StreakTrendChart from "@/components/creator/vault/StreakTrendChart";
+import ProductPerformanceTable from "@/components/creator/vault/ProductPerformanceTable";
 import GlanceSummary from "@/components/creator/pages/GlanceSummary";
 
 const DAYS = 30;
@@ -298,6 +299,18 @@ export default function CreatorVault() {
 
       {/* Monthly breakdown — streams / store / affiliate by month */}
       <MonthlyEarningsBreakdown wallet={wallet} />
+
+      {/* Store product performance — ranked by total sales revenue */}
+      <Card>
+        <div className="flex items-center gap-2 mb-4">
+          <Package className="w-4 h-4 text-chart-4" />
+          <div>
+            <h2 className="font-display font-semibold">Store Product Performance</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">All products ranked by total sales revenue</p>
+          </div>
+        </div>
+        <ProductPerformanceTable products={products} txns={incoming} />
+      </Card>
 
       {/* Top items for the active source */}
       <Card>
