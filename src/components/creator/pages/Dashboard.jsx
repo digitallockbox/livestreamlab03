@@ -10,6 +10,7 @@ import Domains from "@/components/creator/pages/Domains";
 import Settings from "@/components/creator/pages/Settings";
 import Store from "@/components/creator/pages/Store";
 import StreakNotifications from "@/components/creator/stream/StreakNotifications";
+import ShoutoutAlerts from "@/components/creator/stream/ShoutoutAlerts";
 import EarningsSummary from "@/components/creator/pages/EarningsSummary";
 
 const MODULES = [
@@ -39,6 +40,7 @@ function IdentityHeader() {
         <h2 className="font-display font-bold text-lg">Creator Identity</h2>
         <div className="flex items-center gap-2">
           <StreakNotifications />
+          <ShoutoutAlerts />
           <span className={`text-xs px-2 py-0.5 rounded-full ${complete ? "bg-accent/15 text-accent" : "bg-muted text-muted-foreground"}`}>
             {complete ? "Onboarding Complete" : "Pending Domain Verification"}
           </span>

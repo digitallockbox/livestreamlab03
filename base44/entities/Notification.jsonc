@@ -11,6 +11,7 @@
       "enum": [
         "streak_milestone",
         "token_milestone",
+        "viewer_streak",
         "system"
       ],
       "default": "streak_milestone"
@@ -25,6 +26,10 @@
       "type": "number",
       "default": 0,
       "description": "Streak day count or token threshold that triggered this milestone notification"
+    },
+    "viewer_wallet": {
+      "type": "string",
+      "description": "For viewer_streak type: the wallet of the viewer who hit the streak (for shoutout linking)"
     },
     "read": {
       "type": "boolean",

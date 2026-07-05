@@ -54,6 +54,8 @@ export const watchAPI = {
   streak: (wallet) => invoke("web3Watch", { action: "streak", wallet }),
   notifications: (wallet) => invoke("web3Watch", { action: "notifications", wallet }),
   markRead: (wallet) => invoke("web3Watch", { action: "markRead", wallet }),
+  shoutouts: (wallet) => invoke("web3Watch", { action: "shoutouts", wallet }),
+  markShoutoutsRead: (wallet) => invoke("web3Watch", { action: "markShoutoutsRead", wallet }),
 };
 
 export const boostsAPI = {

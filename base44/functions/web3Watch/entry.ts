@@ -96,6 +96,19 @@ Deno.serve(async (req) => {
             read: false
           });
         } catch (_e) { /* fail open */ }
+        // Also notify the CREATOR so they can shout out the viewer on their
+        // next stream. Uses viewer_streak type + viewer_wallet for linking.
+        try {
+          await base44.asServiceRole.entities.Notification.create({
+            wallet_address: creatorWallet,
+            type: 'viewer_streak',
+            title: `Viewer hit ${streak.current_streak}-day streak!`,
+            message: `A loyal viewer just reached a ${streak.current_streak}-day watch streak on your channel. Give them a shoutout on your next stream!`,
+            milestone: streak.current_streak,
+            viewer_wallet: viewerWallet,
+            read: false
+          });
+        } catch (_e) { /* fail open */ }
       }
       return Response.json({ session, streak, milestoneHit });
     }
@@ -240,6 +253,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === 'shoutouts') {
+      const wallet = (body.wallet || body.creatorWallet || '').trim();
+      if (!wallet) return Response.json({ error: 'wallet required' }, { status: 400 });
+      const notifications = await base44.asServiceRole.entities.Notification.filter(
+        { wallet_address: wallet, type: 'viewer_streak' }, '-created_date', 50
+      );
+      const unread = notifications.filter((n) => !n.read).length;
+      return Response.json({ shoutouts: notifications, unread });
+    }
+
     if (action === 'notifications') {
       const wallet = (body.wallet || body.viewerWallet || '').trim();
       if (!wallet) return Response.json({ error: 'wallet required' }, { status: 400 });
@@ -255,6 +278,18 @@ Deno.serve(async (req) => {
       if (!wallet) return Response.json({ error: 'wallet required' }, { status: 400 });
       const notifications = await base44.asServiceRole.entities.Notification.filter(
         { wallet_address: wallet, read: false }, '-created_date', 100
+      );
+      await base44.asServiceRole.entities.Notification.bulkUpdate(
+        notifications.map((n) => ({ id: n.id, read: true }))
+      );
+      return Response.json({ marked: notifications.length });
+    }
+
+    if (action === 'markShoutoutsRead') {
+      const wallet = (body.wallet || body.creatorWallet || '').trim();
+      if (!wallet) return Response.json({ error: 'wallet required' }, { status: 400 });
+      const notifications = await base44.asServiceRole.entities.Notification.filter(
+        { wallet_address: wallet, type: 'viewer_streak', read: false }, '-created_date', 100
       );
       await base44.asServiceRole.entities.Notification.bulkUpdate(
         notifications.map((n) => ({ id: n.id, read: true }))
