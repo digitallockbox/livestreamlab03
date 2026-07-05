@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Radio, ShoppingBag, Store as StoreIcon, BarChart3, Globe, Settings as SettingsIcon } from "lucide-react";
+import { Radio, ShoppingBag, Store as StoreIcon, BarChart3, Globe, Settings as SettingsIcon, Megaphone } from "lucide-react";
 import { useIdentity } from "@/lib/web3/identity";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { Card, streamsAPI } from "@/components/creator/os";
@@ -9,6 +9,7 @@ import Economy from "@/components/creator/pages/Economy";
 import Domains from "@/components/creator/pages/Domains";
 import Settings from "@/components/creator/pages/Settings";
 import Store from "@/components/creator/pages/Store";
+import ShoutoutBoard from "@/components/creator/pages/ShoutoutBoard";
 import StreakNotifications from "@/components/creator/stream/StreakNotifications";
 import ShoutoutAlerts from "@/components/creator/stream/ShoutoutAlerts";
 import EarningsSummary from "@/components/creator/pages/EarningsSummary";
@@ -18,6 +19,7 @@ const MODULES = [
   { key: "marketplace", label: "Marketplace", icon: ShoppingBag, Component: Marketplace },
   { key: "store", label: "Store", icon: StoreIcon, Component: Store },
   { key: "earnings", label: "Earnings", icon: BarChart3, Component: Economy },
+  { key: "shoutouts", label: "Shoutouts", icon: Megaphone, Component: ShoutoutBoard },
   { key: "domain", label: "Domain", icon: Globe, Component: Domains },
   { key: "settings", label: "Settings", icon: SettingsIcon, Component: Settings },
 ];
