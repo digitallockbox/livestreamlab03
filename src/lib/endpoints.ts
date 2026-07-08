@@ -8,7 +8,7 @@ export const getMe = () => api.get("/user/me");
 
 // Creator profile
 export const getCreator = (id: string | number) =>
-  api.get(\/creator/\\);
+  api.get(`/creator/${id}`);
 
 // Upload (mock)
 export const uploadFile = (filename: string) =>
