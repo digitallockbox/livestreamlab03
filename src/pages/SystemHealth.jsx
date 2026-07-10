@@ -6,10 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
 import PlatformRoutingStatus from '@/components/creator/platform/PlatformRoutingStatus';
 import IdentityExplorer from '@/components/creator/platform/IdentityExplorer';
+import GlobalAnalyticsDashboard from '@/components/creator/platform/GlobalAnalyticsDashboard';
 import { 
   Activity, Server, Database, Shield, Wifi, WifiOff, 
   CheckCircle2, XCircle, AlertCircle, RefreshCw, Clock,
-  ArrowRight, Lock, Users, Zap, Fingerprint
+  ArrowRight, Lock, Users, Zap, Fingerprint, BarChart3
 } from 'lucide-react';
 
 const ENDPOINTS = [
@@ -238,6 +239,17 @@ export default function SystemHealth() {
               <h2 className="font-display font-semibold text-lg">Global Identity Index</h2>
             </div>
             <IdentityExplorer />
+          </CardContent>
+        </Card>
+
+        {/* Global Creator Analytics */}
+        <Card className="border-border bg-card">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-primary" />
+              <h2 className="font-display font-semibold text-lg">Global Creator Analytics</h2>
+            </div>
+            <GlobalAnalyticsDashboard />
           </CardContent>
         </Card>
 

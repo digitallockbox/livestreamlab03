@@ -194,6 +194,10 @@ export const base44Api = {
   identityLookup: (id) => call(`/api/platform/identity/lookup?id=${encodeURIComponent(id)}`, {}, 'GET'),
   identityList:   ()    => call('/api/platform/identity/list', {}, 'GET'),
   identitySearch: (q)   => call(`/api/platform/identity/search?q=${encodeURIComponent(q)}`, {}, 'GET'),
+  // Module K — Global Creator Analytics Engine
+  globalOverview:    ()      => call('/api/platform/analytics/overview', {}, 'GET'),
+  globalLeaderboard: (type)  => call(`/api/platform/analytics/leaderboard?type=${type || 'earnings'}`, {}, 'GET'),
+  globalTrends:      (days)   => call(`/api/platform/analytics/trends?days=${days || 30}`, {}, 'GET'),
 };
 
 // ─── Founder OS (privileged) ──────────────────────────────────────────────
