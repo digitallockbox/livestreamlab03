@@ -5,10 +5,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
 import PlatformRoutingStatus from '@/components/creator/platform/PlatformRoutingStatus';
+import IdentityExplorer from '@/components/creator/platform/IdentityExplorer';
 import { 
   Activity, Server, Database, Shield, Wifi, WifiOff, 
   CheckCircle2, XCircle, AlertCircle, RefreshCw, Clock,
-  ArrowRight, Lock, Users, Zap
+  ArrowRight, Lock, Users, Zap, Fingerprint
 } from 'lucide-react';
 
 const ENDPOINTS = [
@@ -226,6 +227,17 @@ export default function SystemHealth() {
               <h2 className="font-display font-semibold text-lg">Platform Routing Engine</h2>
             </div>
             <PlatformRoutingStatus />
+          </CardContent>
+        </Card>
+
+        {/* Global Identity Index */}
+        <Card className="border-border bg-card">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Fingerprint className="w-5 h-5 text-primary" />
+              <h2 className="font-display font-semibold text-lg">Global Identity Index</h2>
+            </div>
+            <IdentityExplorer />
           </CardContent>
         </Card>
 

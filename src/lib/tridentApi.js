@@ -205,6 +205,10 @@ export const base44Api = {
   // Module J — Platform Routing Engine
   platformHealth: () => call('/api/platform/health', {}, 'GET'),
   platformRoutes: () => call('/api/platform/routes', {}, 'GET'),
+  // Module I — Global Identity Index
+  identityLookup: (id) => call(`/api/platform/identity/lookup?id=${encodeURIComponent(id)}`, {}, 'GET'),
+  identityList:   ()    => call('/api/platform/identity/list', {}, 'GET'),
+  identitySearch: (q)   => call(`/api/platform/identity/search?q=${encodeURIComponent(q)}`, {}, 'GET'),
 };
 
 // ─── Founder OS (privileged) ──────────────────────────────────────────────
