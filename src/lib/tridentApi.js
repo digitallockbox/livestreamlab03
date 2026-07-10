@@ -197,6 +197,9 @@ export const base44Api = {
   // Module G — Autosplit Engine
   autosplitPreview: (body)  => call('/api/autosplit/preview', body),
   autosplitExecute: (body)  => call('/api/autosplit/execute', body),
+  // Module H — Token Analytics Engine
+  tokenAnalytics:    (days)  => call(`/api/token/analytics?days=${days || 30}`, {}, 'GET'),
+  tokenLedger:       ()      => call('/api/token/ledger', {}, 'GET'),
 };
 
 // ─── Founder OS (privileged) ──────────────────────────────────────────────

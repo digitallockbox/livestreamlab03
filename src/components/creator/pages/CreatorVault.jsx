@@ -7,6 +7,7 @@ import MultiSourceTrendChart from "@/components/creator/vault/MultiSourceTrendCh
 import MonthlyEarningsBreakdown from "@/components/creator/vault/MonthlyEarningsBreakdown";
 import StreakTrendChart from "@/components/creator/vault/StreakTrendChart";
 import ProductPerformanceTable from "@/components/creator/vault/ProductPerformanceTable";
+import TokenAnalyticsDashboard from "@/components/creator/vault/TokenAnalyticsDashboard";
 import GlanceSummary from "@/components/creator/pages/GlanceSummary";
 
 const DAYS = 30;
@@ -311,6 +312,9 @@ export default function CreatorVault() {
         </div>
         <ProductPerformanceTable products={products} txns={incoming} />
       </Card>
+
+      {/* $STREAMING token analytics — balance, flows, earnings, ledger */}
+      <TokenAnalyticsDashboard />
 
       {/* Top items for the active source */}
       <Card>
