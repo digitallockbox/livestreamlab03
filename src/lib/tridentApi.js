@@ -179,6 +179,16 @@ export const explorerApi = {
   transaction: (hash) => call('/explorer/transaction/' + hash, {}, 'GET'),
 };
 
+// ─── Base44 Identity Packets ───────────────────────────────────────────────
+// Base44 transport: { w, s, n, v } — compact wallet-signed identity packet.
+// The backend (PowerShot) decodes Base58, verifies Ed25519, and returns a session.
+export const base44Api = {
+  login:           (packet) => call('/auth/web3/login', packet),
+  creatorInfo:     ()       => call('/api/creator/info', {}, 'GET'),
+  autosplitInfo:   ()       => call('/api/autosplit/info', {}, 'GET'),
+  updateAutosplit: (body)   => call('/api/autosplit/update', body),
+};
+
 // ─── Founder OS (privileged) ──────────────────────────────────────────────
 export const founderApi = {
   // Engine
