@@ -9,6 +9,7 @@ import IdentityExplorer from '@/components/creator/platform/IdentityExplorer';
 import GlobalAnalyticsDashboard from '@/components/creator/platform/GlobalAnalyticsDashboard';
 import ProductionHealthChecker from '@/components/creator/platform/ProductionHealthChecker';
 import DeploymentChecklist from '@/components/creator/platform/DeploymentChecklist';
+import TridentOSPanel from '@/components/trident/TridentOSPanel';
 import { 
   Activity, Server, Database, Shield, Wifi, WifiOff, 
   CheckCircle2, XCircle, AlertCircle, RefreshCw, Clock,
@@ -227,6 +228,9 @@ export default function SystemHealth() {
           <ProductionHealthChecker />
           <DeploymentChecklist />
         </div>
+
+        {/* Trident OS SDK */}
+        <TridentOSPanel />
 
         {/* Platform Routing Engine */}
         <Card className="border-border bg-card">

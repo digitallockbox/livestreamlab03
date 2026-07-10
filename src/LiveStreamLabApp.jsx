@@ -4,7 +4,7 @@
 //  Every connector bound to a real Base44 backend function via base44.functions.invoke
 // ======================================================
 import React, { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Link, useParams, useNavigate, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useParams, useNavigate, Navigate, useLocation } from "react-router-dom";
 import { Loader2, Send, CheckCircle2, Radio, Video, Zap } from "lucide-react";
 import { useCreator } from "@/hooks/web3/useCreator";
 import { PhantomIdentityProvider, useStreamingIdentity } from "@/lib/web3/streamingIdentity";
@@ -21,6 +21,7 @@ import Onboarding from "@/components/creator/Onboarding";
 import CreatorIdentityHeader from "@/components/creator/CreatorIdentityHeader";
 import ErrorBoundary from "@/components/creator/ErrorBoundary";
 import { IdentityProvider, useIdentity } from "@/lib/web3/identity";
+import { trackEvent, identify } from "@/lib/tridentOS";
 import {
   Page, Card, Spinner, Input, useViewerWallet,
   web3LoginAPI, web3ProfileAPI, verificationAPI, badgesAPI, passportAPI,
@@ -637,14 +638,29 @@ const VerifyWallet = () => {
 // ======================================================
 //  ROUTER (all pages merged) + wallet gate
 // ======================================================
+// Trident OS SDK — fires page_view events on route changes (rendered inside BrowserRouter)
+function TridentRouteTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    trackEvent("page_view", { path: location.pathname, search: location.search });
+  }, [location.pathname, location.search]);
+  return null;
+}
+
 function MainApp() {
   const { walletAddress, session } = useIdentity();
   const ready = !!(walletAddress && session && session.onboarding_completed);
+
+  // Trident OS SDK — identify wallet when connected
+  useEffect(() => {
+    if (walletAddress) identify(walletAddress, { chain: session?.chain || "solana" });
+  }, [walletAddress, session?.chain]);
 
   // Public + pre-onboarding states: rendered in the router so the Landing CTAs work.
   if (!ready) {
     return (
       <BrowserRouter>
+        <TridentRouteTracker />
         <Routes>
           <Route path="/s/:domain" element={<CreatorStorefront />} />
           {!walletAddress ? (
@@ -666,6 +682,7 @@ function MainApp() {
   // Wallet connected, verified, and onboarded → Creator OS.
   return (
     <BrowserRouter>
+      <TridentRouteTracker />
       <Routes>
         <Route path="/s/:domain" element={<CreatorStorefront />} />
         <Route element={<SharedLayout />}>
