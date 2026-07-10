@@ -7,6 +7,8 @@ import { base44 } from '@/api/base44Client';
 import PlatformRoutingStatus from '@/components/creator/platform/PlatformRoutingStatus';
 import IdentityExplorer from '@/components/creator/platform/IdentityExplorer';
 import GlobalAnalyticsDashboard from '@/components/creator/platform/GlobalAnalyticsDashboard';
+import ProductionHealthChecker from '@/components/creator/platform/ProductionHealthChecker';
+import DeploymentChecklist from '@/components/creator/platform/DeploymentChecklist';
 import { 
   Activity, Server, Database, Shield, Wifi, WifiOff, 
   CheckCircle2, XCircle, AlertCircle, RefreshCw, Clock,
@@ -219,6 +221,12 @@ export default function SystemHealth() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Production Routing Layer */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ProductionHealthChecker />
+          <DeploymentChecklist />
+        </div>
 
         {/* Platform Routing Engine */}
         <Card className="border-border bg-card">
