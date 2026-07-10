@@ -13,6 +13,7 @@
  * provides the local fallback aggregator when the backend is unavailable.
  */
 import { getTokenAnalytics, initializeTokenLedger } from "@/lib/web3/tokenAnalytics";
+import { base44Api } from "@/lib/tridentApi";
 
 /**
  * Default permissions every creator has on their own dashboard.
@@ -38,6 +39,8 @@ const DEFAULT_PERMISSIONS = {
  * @param {array}  [params.autosplitHistory] — loaded history (defaults to [])
  * @param {object} [params.tokenLedgerState] — {token, ledger, stats} (defaults to empty)
  * @param {number} [params.analyticsDays]    — window size (default 30)
+ * @param {object} [params.identityIndex]    — the creator's entry in the Global Identity Index (Module I)
+ * @param {object} [params.platformRoutes]   — the platform route map for this creator (Module J)
  */
 export function buildCreatorDashboard({
   creator,
@@ -50,6 +53,8 @@ export function buildCreatorDashboard({
   autosplitHistory,
   tokenLedgerState,
   analyticsDays = 30,
+  identityIndex,
+  platformRoutes,
 }) {
   const ledgerState = tokenLedgerState || initializeTokenLedger();
   const tokenAnalytics = getTokenAnalytics(ledgerState, analyticsDays);
@@ -92,6 +97,37 @@ export function buildCreatorDashboard({
       wallet: wallet || null,
       session_token: sessionToken || null,
       permissions: { ...DEFAULT_PERMISSIONS },
+      index_entry: identityIndex || null,
+      indexed: !!(identityIndex?.type || identityIndex?.identity),
+    },
+
+    platform: {
+      routes: platformRoutes || null,
+      health: platformRoutes?.status || null,
     },
   };
+}
+
+/**
+ * Fetch the creator's entry in the Global Identity Index (Module I).
+ * Looks up the wallet address and returns the matching identity record.
+ */
+export async function fetchIdentityIndexEntry(wallet) {
+  if (!wallet) return null;
+  try {
+    return await base44Api.identityLookup(wallet);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch the platform route map (Module J) for this creator's namespace.
+ */
+export async function fetchPlatformRoutes() {
+  try {
+    return await base44Api.platformRoutes();
+  } catch {
+    return null;
+  }
 }

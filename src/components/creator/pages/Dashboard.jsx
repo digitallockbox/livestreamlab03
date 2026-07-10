@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Radio, ShoppingBag, Store as StoreIcon, BarChart3, Globe, Settings as SettingsIcon, Megaphone } from "lucide-react";
 import { useIdentity } from "@/lib/web3/identity";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
+import { useCreatorDashboard } from "@/hooks/web3/useCreatorDashboard";
 import { Card, streamsAPI } from "@/components/creator/os";
+import { Fingerprint, Route as RouteIcon, CheckCircle2, XCircle } from "lucide-react";
 import Streams from "@/components/creator/pages/Streams";
 import Marketplace from "@/components/creator/pages/Marketplace";
 import Economy from "@/components/creator/pages/Economy";
@@ -27,6 +29,7 @@ const MODULES = [
 function IdentityHeader() {
   const { walletAddress, chain, session } = useIdentity();
   const { balance, loadingBalance, refreshBalance } = useStreamingIdentity();
+  const { dashboard } = useCreatorDashboard();
   const [liveCount, setLiveCount] = useState(0);
 
   useEffect(() => {
@@ -35,6 +38,9 @@ function IdentityHeader() {
 
   const domain = session?.bound_domain;
   const complete = session?.onboarding_completed;
+  const indexed = dashboard?.identity?.indexed;
+  const indexType = dashboard?.identity?.index_entry?.type;
+  const platformHealth = dashboard?.platform?.health;
 
   return (
     <Card className="space-y-4">
@@ -76,6 +82,29 @@ function IdentityHeader() {
         <div className="rounded-lg bg-muted p-3 col-span-2 sm:col-span-1">
           <p className="text-xs text-muted-foreground">Status</p>
           <p className="text-sm font-medium mt-1">{complete ? "Ready" : "Finish onboarding"}</p>
+        </div>
+      </div>
+      {/* Identity Index + Platform Route status — wired from the unified dashboard */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-lg border border-border bg-secondary/30 p-3 flex items-center gap-3">
+          <Fingerprint className={`w-4 h-4 ${indexed ? "text-accent" : "text-muted-foreground"}`} />
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Identity Index</p>
+            <div className="flex items-center gap-1.5">
+              {indexed ? (
+                <><CheckCircle2 className="w-3.5 h-3.5 text-accent" /><span className="text-sm font-medium">Indexed{indexType ? ` · ${indexType}` : ""}</span></>
+              ) : (
+                <><XCircle className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-sm text-muted-foreground">Not indexed</span></>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-border bg-secondary/30 p-3 flex items-center gap-3">
+          <RouteIcon className={`w-4 h-4 ${platformHealth === "operational" ? "text-accent" : "text-muted-foreground"}`} />
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Platform Routes</p>
+            <p className="text-sm font-medium capitalize">{platformHealth || "No route data"}</p>
+          </div>
         </div>
       </div>
     </Card>

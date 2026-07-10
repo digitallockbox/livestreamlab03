@@ -14,7 +14,7 @@ import { getCreatorIdentity } from "@/lib/web3/creatorIdentity";
 import { getAutoSplitIdentity } from "@/lib/web3/autosplitIdentity";
 import { getTokenIdentity } from "@/lib/web3/tokenIdentity";
 import { getCreatorStorageTree } from "@/lib/web3/creatorStorage";
-import { buildCreatorDashboard } from "@/lib/web3/creatorDashboard";
+import { buildCreatorDashboard, fetchIdentityIndexEntry, fetchPlatformRoutes } from "@/lib/web3/creatorDashboard";
 import { getWalletToken } from "@/lib/web3/identity";
 
 export function useCreatorDashboard() {
@@ -35,6 +35,19 @@ export function useCreatorDashboard() {
       // Try the unified backend endpoint first.
       const res = await base44Api.creatorDashboard();
       if (res?.creator_id) {
+        // Enrich with identity index + platform routes if the backend didn't include them.
+        if (!res.identity?.indexed) {
+          const [indexEntry, routes] = await Promise.all([
+            fetchIdentityIndexEntry(walletAddress),
+            fetchPlatformRoutes(),
+          ]);
+          res.identity = {
+            ...res.identity,
+            index_entry: indexEntry,
+            indexed: !!(indexEntry?.type || indexEntry?.identity),
+          };
+          res.platform = res.platform || { routes, health: routes?.status || null };
+        }
         setDashboard(res);
         return;
       }
@@ -48,6 +61,11 @@ export function useCreatorDashboard() {
           getTokenIdentity(walletAddress),
         ]);
         const storage = getCreatorStorageTree(creator.creator_id);
+        // Pull identity index entry + platform routes in parallel with the dashboard build.
+        const [identityIndex, platformRoutes] = await Promise.all([
+          fetchIdentityIndexEntry(walletAddress),
+          fetchPlatformRoutes(),
+        ]);
         const local = buildCreatorDashboard({
           creator,
           autosplit,
@@ -55,6 +73,8 @@ export function useCreatorDashboard() {
           storage,
           wallet: walletAddress,
           sessionToken: getWalletToken(),
+          identityIndex,
+          platformRoutes,
         });
         setDashboard(local);
       } catch (localErr) {
