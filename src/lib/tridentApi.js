@@ -33,21 +33,6 @@ async function call(path, body = {}, method = 'POST', includeCredentials = false
   return contentType.includes('application/json') ? res.json() : res.text();
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────────────
-// Isolated session authentication (creator vs admin)
-export const authApi = {
-  creatorLogin: (body) => call('/auth/creator/login', body, 'POST', true),
-  adminLogin: (body) => call('/auth/admin/login', body, 'POST', true),
-  creatorLogout: () => call('/auth/creator/logout', {}, 'POST', true),
-  adminLogout: () => call('/auth/admin/logout', {}, 'POST', true),
-  validateCreator: () => call('/auth/creator/validate', {}, 'GET', true),
-  validateAdmin: () => call('/auth/admin/validate', {}, 'GET', true),
-  // Legacy support
-  login: (body) => call('/auth/login', body),
-  register: (body) => call('/auth/register', body),
-  walletAuth: (body) => call('/auth/wallet', body),
-};
-
 // ─── Public ───────────────────────────────────────────────────────────────
 export const publicApi = {
   home: () => call('/public/home'),

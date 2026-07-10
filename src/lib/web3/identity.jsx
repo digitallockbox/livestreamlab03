@@ -6,7 +6,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { base44 } from "@/api/base44Client";
-import session from "@/lib/session";
 
 const WALLET_TOKEN_KEY = "trident_wallet_token";
 
@@ -73,7 +72,6 @@ export function IdentityProvider({ children }) {
       // Persist the wallet-native JWT so engine/proxy calls can use it.
       if (res?.token) {
         try { localStorage.setItem(WALLET_TOKEN_KEY, res.token); } catch {}
-        session.create(res.profile, res.token);
       }
       return res.profile;
     } catch (e) {
