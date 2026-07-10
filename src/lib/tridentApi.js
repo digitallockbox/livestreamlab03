@@ -187,6 +187,16 @@ export const base44Api = {
   creatorInfo:     ()       => call('/api/creator/info', {}, 'GET'),
   autosplitInfo:   ()       => call('/api/autosplit/info', {}, 'GET'),
   updateAutosplit: (body)   => call('/api/autosplit/update', body),
+  // Module E — $STREAMING Token Identity
+  tokenInfo:       ()       => call('/api/token/info', {}, 'GET'),
+  updateToken:     (body)   => call('/api/token/update', body),
+  // Module F — Creator Storage Engine
+  storageInfo:     ()       => call('/api/creator/storage', {}, 'GET'),
+  storageCheck:    ()       => call('/api/creator/storage/check', {}, 'GET'),
+  uploadFile:      (body)   => call('/api/creator/upload', body),
+  // Module G — Autosplit Engine
+  autosplitPreview: (body)  => call('/api/autosplit/preview', body),
+  autosplitExecute: (body)  => call('/api/autosplit/execute', body),
 };
 
 // ─── Founder OS (privileged) ──────────────────────────────────────────────
