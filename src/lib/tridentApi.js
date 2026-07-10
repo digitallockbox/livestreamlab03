@@ -202,6 +202,9 @@ export const base44Api = {
   tokenLedger:       ()      => call('/api/token/ledger', {}, 'GET'),
   // Module I — Creator Dashboard Routing
   creatorDashboard:  ()      => call('/api/creator/dashboard', {}, 'GET'),
+  // Module J — Platform Routing Engine
+  platformHealth: () => call('/api/platform/health', {}, 'GET'),
+  platformRoutes: () => call('/api/platform/routes', {}, 'GET'),
 };
 
 // ─── Founder OS (privileged) ──────────────────────────────────────────────

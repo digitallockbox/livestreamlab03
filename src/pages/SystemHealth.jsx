@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
+import PlatformRoutingStatus from '@/components/creator/platform/PlatformRoutingStatus';
 import { 
   Activity, Server, Database, Shield, Wifi, WifiOff, 
   CheckCircle2, XCircle, AlertCircle, RefreshCw, Clock,
@@ -214,6 +215,17 @@ export default function SystemHealth() {
                 </motion.div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Platform Routing Engine */}
+        <Card className="border-border bg-card">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Server className="w-5 h-5 text-primary" />
+              <h2 className="font-display font-semibold text-lg">Platform Routing Engine</h2>
+            </div>
+            <PlatformRoutingStatus />
           </CardContent>
         </Card>
 
