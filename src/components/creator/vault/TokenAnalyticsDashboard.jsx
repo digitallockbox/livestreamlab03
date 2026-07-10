@@ -13,6 +13,7 @@ import {
   ArrowDownLeft, RefreshCw,
 } from "lucide-react";
 import { useTokenAnalytics } from "@/hooks/web3/useTokenAnalytics";
+import TokenRevenueTrendChart from "@/components/creator/vault/TokenRevenueTrendChart";
 import { useViewerWallet, Page, Card, Spinner } from "@/components/creator/os";
 
 const fmtAmount = (v) => `${Number(v || 0).toLocaleString()} \u25CE`;
@@ -121,6 +122,15 @@ export default function TokenAnalyticsDashboard() {
           );
         })}
       </div>
+
+      {/* 30-day $STREAMING revenue trend */}
+      <Card>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <h2 className="font-display font-semibold">$STREAMING Revenue — Last 30 Days</h2>
+          <span className="text-xs text-muted-foreground">Earned per day with cumulative total</span>
+        </div>
+        <TokenRevenueTrendChart ledger={ledger} />
+      </Card>
 
       {/* Last payout */}
       <Card>
