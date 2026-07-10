@@ -1,22 +1,21 @@
 /**
  * LiveStreamLab.live API Client
- * All calls proxy to https://api.livestreamlab.live
- * Frontend → tridentApi → api.livestreamlab.live → creator APIs
+ * Frontend → tridentApi → ENGINE_URL (env-resolved) → creator APIs
+ *
+ * ENGINE_URL resolves from VITE_ENGINE_URL, falling back to localhost in dev
+ * and https://api.livestreamlab.live in production. See src/lib/engineConfig.js
  */
+import { ENGINE_URL, getSessionToken, SESSION_HEADER } from './engineConfig';
 
-const BASE_URL = 'https://api.livestreamlab.live';
-const WALLET_TOKEN_KEY = 'trident_wallet_token';
-
-// Retrieve the wallet-native JWT issued on wallet login. Injected as a
-// Bearer token so wallet-only creators authenticate without a Web2 session.
-function getWalletToken() {
-  try { return localStorage.getItem(WALLET_TOKEN_KEY); } catch { return null; }
-}
+const BASE_URL = ENGINE_URL;
 
 async function call(path, body = {}, method = 'POST', includeCredentials = false) {
   const headers = { 'Content-Type': 'application/json' };
-  const walletToken = getWalletToken();
-  if (walletToken) headers['Authorization'] = `Bearer ${walletToken}`;
+  const token = getSessionToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+    headers[SESSION_HEADER] = token;
+  }
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
     headers,
