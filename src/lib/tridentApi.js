@@ -200,6 +200,8 @@ export const base44Api = {
   // Module H — Token Analytics Engine
   tokenAnalytics:    (days)  => call(`/api/token/analytics?days=${days || 30}`, {}, 'GET'),
   tokenLedger:       ()      => call('/api/token/ledger', {}, 'GET'),
+  // Module I — Creator Dashboard Routing
+  creatorDashboard:  ()      => call('/api/creator/dashboard', {}, 'GET'),
 };
 
 // ─── Founder OS (privileged) ──────────────────────────────────────────────
