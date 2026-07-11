@@ -9,6 +9,43 @@
     --font-inter: 'Inter', sans-serif;
     --font-display: 'Space Grotesk', sans-serif;
 
+    /* Light theme (default) */
+    --background: 0 0% 100%;
+    --foreground: 230 25% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 230 25% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 230 25% 9%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 230 14% 96%;
+    --secondary-foreground: 230 25% 15%;
+    --muted: 230 14% 95%;
+    --muted-foreground: 230 10% 40%;
+    --accent: 165 72% 42%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 12% 88%;
+    --input: 230 12% 88%;
+    --ring: 262 83% 58%;
+    --chart-1: 262 83% 58%;
+    --chart-2: 165 72% 42%;
+    --chart-3: 38 92% 55%;
+    --chart-4: 200 75% 50%;
+    --chart-5: 340 70% 52%;
+    --radius: 0.75rem;
+    --sidebar-background: 230 20% 97%;
+    --sidebar-foreground: 230 25% 20%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 230 14% 93%;
+    --sidebar-accent-foreground: 230 25% 15%;
+    --sidebar-border: 230 12% 86%;
+    --sidebar-ring: 262 83% 58%;
+  }
+
+  .dark {
     --background: 230 25% 7%;
     --foreground: 220 20% 95%;
     --card: 230 22% 10%;

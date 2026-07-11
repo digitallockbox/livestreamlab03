@@ -1,8 +1,9 @@
 import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { Home, Radio, Eye, Video, ShoppingBag, Wallet, CreditCard, BarChart3, Newspaper, MessageSquare, Settings as SettingsIcon, Globe, Vault, Store as StoreIcon, Link2, Mic2, Rocket } from "lucide-react";
+import { Home, Radio, Eye, Video, ShoppingBag, Wallet, CreditCard, BarChart3, Newspaper, MessageSquare, Settings as SettingsIcon, Globe, Vault, Store as StoreIcon, Link2, Mic2, Rocket, Shield } from "lucide-react";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { useIdentity } from "@/lib/web3/identity";
+import ThemeSwitcher from "@/components/creator/ThemeSwitcher";
 
 const NAV = [
   { to: "/", label: "Home", icon: Home },
@@ -22,6 +23,7 @@ const NAV = [
   { to: "/feed", label: "Feed", icon: Newspaper },
   { to: "/messages", label: "Messages", icon: MessageSquare },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
+  { to: "/admin", label: "Admin", icon: Shield },
 ];
 
 export default function SharedLayout() {
@@ -60,6 +62,7 @@ export default function SharedLayout() {
               <span className="hidden md:inline text-xs text-muted-foreground font-mono">{wallet.slice(0, 6)}…{wallet.slice(-4)}</span>
             )}
             <span className="text-sm font-display font-bold text-accent whitespace-nowrap">{balance} ◎</span>
+            <ThemeSwitcher />
           </div>
         </div>
       </header>
