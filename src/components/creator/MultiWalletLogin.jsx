@@ -9,8 +9,8 @@ import { loginCreatorOS, getMobileDeepLink, NO_WALLET_MOBILE } from "@/lib/web3/
 // the wallet is connected.
 export default function MultiWalletLogin() {
   const { connect, select, wallets, publicKey } = useWallet();
-  const { evmAddress, setEvmAddress, setChain } = useIdentity();
-  const [busy, setBusy] = useState(null); // "phantom" | "metamask" | null
+  const { evmAddress, setEvmAddress, setChain, setWcProvider } = useIdentity();
+  const [busy, setBusy] = useState(null); // "phantom" | "metamask" | "walletconnect" | null
   const [error, setError] = useState("");
   const solanaConnected = !!publicKey && publicKey.toBase58();
 
@@ -50,10 +50,26 @@ export default function MultiWalletLogin() {
     setError("");
     try {
       const { walletAddress } = await loginCreatorOS("evm");
+      setWcProvider(null);
       setEvmAddress(walletAddress);
       setChain("evm");
     } catch (err) {
       handleError(err, "evm");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleWalletConnect = async () => {
+    setBusy("walletconnect");
+    setError("");
+    try {
+      const { walletAddress, provider } = await loginCreatorOS("walletconnect");
+      setWcProvider(provider);
+      setEvmAddress(walletAddress);
+      setChain("evm");
+    } catch (err) {
+      setError(err?.message || "WalletConnect connection failed");
     } finally {
       setBusy(null);
     }
@@ -82,6 +98,14 @@ export default function MultiWalletLogin() {
             className="w-full px-4 py-3 rounded-xl bg-chart-3 text-accent-foreground font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {busy === "metamask" ? "Connecting…" : evmAddress ? `Connected ${evmAddress.slice(0, 6)}…${evmAddress.slice(-4)}` : "Connect MetaMask (EVM)"}
+          </button>
+
+          <button
+            onClick={handleWalletConnect}
+            disabled={!!busy}
+            className="w-full px-4 py-3 rounded-xl bg-secondary text-secondary-foreground font-medium hover:bg-secondary/80 transition-colors disabled:opacity-50 border border-border"
+          >
+            {busy === "walletconnect" ? "Opening QR…" : "Connect via WalletConnect"}
           </button>
         </div>
 

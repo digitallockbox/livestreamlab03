@@ -19,6 +19,7 @@ export function IdentityProvider({ children }) {
   const [session, setSession] = useState(null);
   const [authenticating, setAuthenticating] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const wcProviderRef = useRef(null);             // WalletConnect provider for EVM signing
 
   // Tracks the wallet we last attempted the handshake for, so the auto-login
   // only fires once per wallet (prevents repeated sign prompts / loops).
@@ -27,8 +28,10 @@ export function IdentityProvider({ children }) {
   const solanaAddress = publicKey ? publicKey.toBase58() : "";
 
   // Unified nonce signer — delegates to the chain-specific signer in base44Handshake.
+  // For WalletConnect EVM sessions, passes the WC provider so signing goes through
+  // the WC session rather than window.ethereum.
   const signNonce = useCallback(
-    async (nonce) => signNonceForChain(nonce, chain, evmAddress),
+    async (nonce) => signNonceForChain(nonce, chain, evmAddress, wcProviderRef.current),
     [chain, evmAddress]
   );
 
@@ -42,7 +45,7 @@ export function IdentityProvider({ children }) {
     setAuthenticating(true);
     setLoginError("");
     try {
-      const { profile } = await base44Handshake(walletAddress, chain);
+      const { profile } = await base44Handshake(walletAddress, chain, wcProviderRef.current);
       setSession(profile);
       return profile;
     } catch (e) {
@@ -140,6 +143,7 @@ export function IdentityProvider({ children }) {
         setChain,
         evmAddress,
         setEvmAddress,
+        setWcProvider: (p) => { wcProviderRef.current = p; },
         session,
         setSession,
         signNonce,

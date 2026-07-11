@@ -21,7 +21,15 @@ async function signWithSolana(nonce) {
   return btoa(String.fromCharCode(...signature));
 }
 
-async function signWithEvm(nonce, walletAddress) {
+async function signWithEvm(nonce, walletAddress, wcProvider) {
+  // WalletConnect session: sign through the WC provider instead of window.ethereum
+  if (wcProvider) {
+    return wcProvider.request({
+      method: "personal_sign",
+      params: [nonce, walletAddress],
+    });
+  }
+  // Injected EVM provider (MetaMask / MetaMask Mobile in-app browser)
   if (!window.ethereum) throw new Error("MetaMask not available");
   return window.ethereum.request({
     method: "personal_sign",
@@ -37,9 +45,9 @@ async function signWithEvm(nonce, walletAddress) {
  * @param {string} walletAddress
  * @returns {Promise<string>} signature (base64 for Solana, hex for EVM)
  */
-export async function signNonceForChain(nonce, chain, walletAddress) {
+export async function signNonceForChain(nonce, chain, walletAddress, wcProvider) {
   if (chain === "solana") return signWithSolana(nonce);
-  if (chain === "evm") return signWithEvm(nonce, walletAddress);
+  if (chain === "evm") return signWithEvm(nonce, walletAddress, wcProvider);
   throw new Error(`Unsupported chain: ${chain}`);
 }
 
@@ -52,7 +60,7 @@ export async function signNonceForChain(nonce, chain, walletAddress) {
  * @param {string} chain — "solana" | "evm"
  * @returns {Promise<{ profile: object, token: string }>}
  */
-export async function base44Handshake(walletAddress, chain) {
+export async function base44Handshake(walletAddress, chain, wcProvider) {
   if (!walletAddress || !chain) {
     throw new Error("walletAddress and chain are required");
   }
@@ -62,8 +70,8 @@ export async function base44Handshake(walletAddress, chain) {
     .invoke("web3Login", { action: "challenge" })
     .then((r) => r.data);
 
-  // 2. Sign the nonce with the connected wallet
-  const signature = await signNonceForChain(challenge.message, chain, walletAddress);
+  // 2. Sign the nonce with the connected wallet (WC provider for WalletConnect)
+  const signature = await signNonceForChain(challenge.message, chain, walletAddress, wcProvider);
   if (!signature) throw new Error("Signature rejected");
 
   // 3. Verify the signature → receive profile + wallet-native JWT

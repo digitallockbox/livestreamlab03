@@ -69,15 +69,25 @@ export async function connectMetaMask() {
 }
 
 /**
+ * Connect via WalletConnect v2 (any EVM wallet through QR code or deep-link).
+ * @returns {Promise<{ walletAddress: string, chain: "evm", provider: object }>}
+ */
+export async function connectWalletConnectEvm() {
+  const { connectWalletConnect } = await import("@/lib/web3/evm/walletConnectClient");
+  return connectWalletConnect();
+}
+
+/**
  * Unified login — connects the specified (or auto-detected) wallet.
  *
- * @param {string|null} preferredChain — "solana" | "evm" | null (auto-detect)
- * @returns {Promise<{ walletAddress: string, chain: "solana"|"evm" }>}
+ * @param {string|null} preferredChain — "solana" | "evm" | "walletconnect" | null (auto-detect)
+ * @returns {Promise<{ walletAddress: string, chain: "solana"|"evm", provider?: object }>}
  */
 export async function loginCreatorOS(preferredChain = null) {
   const chain = preferredChain || detectChain();
   if (chain === "solana") return connectPhantom();
   if (chain === "evm") return connectMetaMask();
+  if (chain === "walletconnect") return connectWalletConnectEvm();
 
   if (isMobile()) throw new Error(NO_WALLET_MOBILE);
   throw new Error("No wallet detected. Install Phantom or MetaMask.");
