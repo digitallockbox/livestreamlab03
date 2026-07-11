@@ -87,9 +87,14 @@ export default function PodcastAnalytics() {
           <h1 className="font-display text-2xl font-bold">Podcast Analytics</h1>
           <p className="text-sm text-muted-foreground mt-1">Total listens and revenue per episode — last {DAYS} days.</p>
         </div>
-        <Link to="/podcasts/manage" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-border text-sm hover:bg-muted">
-          <ArrowLeft className="w-4 h-4" /> Back to Manager
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/podcasts/manage" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-border text-sm hover:bg-muted">
+            <ArrowLeft className="w-4 h-4" /> Manager
+          </Link>
+          <Link to="/podcasts" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-border text-sm hover:bg-muted">
+            <Headphones className="w-4 h-4" /> Library
+          </Link>
+        </div>
       </div>
 
       {loading ? (
