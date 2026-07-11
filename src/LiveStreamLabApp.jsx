@@ -22,6 +22,7 @@ import CreatorIdentityHeader from "@/components/creator/CreatorIdentityHeader";
 import ErrorBoundary from "@/components/creator/ErrorBoundary";
 import { IdentityProvider, useIdentity } from "@/lib/web3/identity";
 import { trackEvent, identify } from "@/lib/tridentOS";
+import IdentityGate from "@/components/identity/IdentityGate";
 import {
   Page, Card, Spinner, Input, useViewerWallet,
   web3LoginAPI, web3ProfileAPI, verificationAPI, badgesAPI, passportAPI,
@@ -685,59 +686,12 @@ function MainApp() {
       <TridentRouteTracker />
       <Routes>
         <Route path="/s/:domain" element={<CreatorStorefront />} />
+        <Route element={<IdentityGate />}>
         <Route element={<SharedLayout />}>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/login" element={<Web3Login />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/verify" element={<Web3Verify />} />
-        <Route path="/badge" element={<BadgeUpgrade />} />
-        <Route path="/passport" element={<CreatorPassport />} />
-        <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/marketplace/add" element={<AddMarketplaceProduct />} />
-        <Route path="/marketplace/products" element={<MarketplaceProducts />} />
-        <Route path="/marketplace/sales" element={<MarketplaceSales />} />
-        <Route path="/store" element={<StoreDashboard />} />
-        <Route path="/store/add" element={<AddProductPage />} />
-        <Route path="/store/orders" element={<OrderHistory />} />
-        <Route path="/store/catalog" element={<StoreProductList />} />
-        <Route path="/store/:productId/checkout" element={<Checkout />} />
-        <Route path="/store/:productId" element={<ProductDetail />} />
-        <Route path="/affiliates" element={<AffiliateDashboard />} />
-        <Route path="/affiliates/add" element={<AddAffiliateLink />} />
-        <Route path="/podcasts" element={<PodcastLibrary />} />
-        <Route path="/podcasts/manage" element={<PodcastManager />} />
-        <Route path="/podcasts/analytics" element={<PodcastAnalytics />} />
-        <Route path="/war-room" element={<WarRoom />} />
-        <Route path="/wallet" element={<Wallet />} />
-        <Route path="/domains" element={<Domains />} />
-        <Route path="/go-live" element={<GoLive />} />
-        <Route path="/watch" element={<Watch />} />
-        <Route path="/streams" element={<Streams />} />
-        <Route path="/streams/:id/analytics" element={<StreamAnalytics />} />
-        <Route path="/videos" element={<VideoLibrary />} />
-        <Route path="/videos/upload" element={<UploadVideo />} />
-        <Route path="/videos/manager" element={<VideoManager />} />
-        <Route path="/videos/analytics" element={<VideoAnalytics />} />
-        <Route path="/analytics" element={<UnifiedAnalytics />} />
-        <Route path="/vault" element={<CreatorVault />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/settings/profile" element={<ProfileSettings />} />
-        <Route path="/settings/branding" element={<BrandingSettings />} />
-        <Route path="/settings/security" element={<SecuritySettings />} />
-        <Route path="/settings/notifications" element={<NotificationSettings />} />
-        <Route path="/settings/connected" element={<ConnectedAccounts />} />
-        <Route path="/settings/billing" element={<BillingSettings />} />
-        <Route path="/supabase" element={<SupabaseExplorer />} />
-        <Route path="/stream" element={<StreamView />} />
-        <Route path="/boost" element={<StreamBoost />} />
-        <Route path="/subscriptions" element={<Subscriptions />} />
-        <Route path="/feed" element={<Feed />} />
-        <Route path="/feed/create" element={<CreatePost />} />
-        <Route path="/feed/view" element={<PostView />} />
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/economy" element={<Economy />} />
-        <Route path="/payouts" element={<Payouts />} />
+...
         <Route path="/sales" element={<SalesDashboard />} />
+        </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

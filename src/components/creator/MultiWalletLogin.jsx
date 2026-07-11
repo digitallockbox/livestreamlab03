@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useIdentity } from "@/lib/web3/identity";
+import { loginCreatorOS, getMobileDeepLink, NO_WALLET_MOBILE } from "@/lib/web3/unified/loginCreatorOS";
 
-// Multi-wallet entry screen. Phantom (Solana) is the fully-supported path;
-// MetaMask (EVM) connects the account for display.
+// Multi-wallet entry screen. Uses the unified loginCreatorOS entry point for
+// chain detection and wallet connection. Phantom (Solana) and MetaMask (EVM)
+// are both supported; the identity context auto-runs the Base44 handshake after
+// the wallet is connected.
 export default function MultiWalletLogin() {
   const { connect, select, wallets, publicKey } = useWallet();
   const { evmAddress, setEvmAddress, setChain } = useIdentity();
@@ -11,16 +14,32 @@ export default function MultiWalletLogin() {
   const [error, setError] = useState("");
   const solanaConnected = !!publicKey && publicKey.toBase58();
 
+  const handleError = (err, chain) => {
+    if (err?.message === NO_WALLET_MOBILE) {
+      window.location.href = getMobileDeepLink(chain);
+      return;
+    }
+    setError(err?.message || `${chain === "solana" ? "Phantom" : "MetaMask"} connect failed`);
+  };
+
   const handlePhantom = async () => {
     setBusy("phantom");
     setError("");
     try {
+      // Use the wallet-adapter for Phantom (richer integration) when available,
+      // falling back to loginCreatorOS's direct provider connection.
       const phantom = wallets.find((w) => w.adapter.name === "Phantom");
       if (phantom) select(phantom.adapter.name);
       await connect();
       setChain("solana");
     } catch (err) {
-      setError(err?.message || "Phantom connect failed");
+      // Fallback: try direct connection via loginCreatorOS
+      try {
+        const { walletAddress, chain } = await loginCreatorOS("solana");
+        if (chain === "solana") setChain("solana");
+      } catch (fallbackErr) {
+        handleError(fallbackErr, "solana");
+      }
     } finally {
       setBusy(null);
     }
@@ -30,17 +49,11 @@ export default function MultiWalletLogin() {
     setBusy("metamask");
     setError("");
     try {
-      if (!window.ethereum) {
-        setError("MetaMask not installed. Install it at metamask.io to continue.");
-        return;
-      }
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      if (accounts && accounts.length > 0) {
-        setEvmAddress(accounts[0]);
-        setChain("evm");
-      }
+      const { walletAddress } = await loginCreatorOS("evm");
+      setEvmAddress(walletAddress);
+      setChain("evm");
     } catch (err) {
-      setError(err?.message || "MetaMask connect failed");
+      handleError(err, "evm");
     } finally {
       setBusy(null);
     }

@@ -25,55 +25,25 @@ export function IdentityProvider({ children }) {
 
   const solanaAddress = publicKey ? publicKey.toBase58() : "";
 
-  // Sign a nonce with Phantom's injected Solana signer → base64 signature.
-  const signSolana = async (nonce) => {
-    if (!window.solana || !window.solana.signMessage) {
-      throw new Error("Phantom signMessage not available");
-    }
-    const encoded = new TextEncoder().encode(nonce);
-    const { signature } = await window.solana.signMessage(encoded, "utf8");
-    return btoa(String.fromCharCode(...signature));
-  };
-
-  // Sign a nonce with MetaMask → hex signature string.
-  const signEvm = async (nonce) => {
-    if (!window.ethereum) throw new Error("MetaMask not available");
-    if (!evmAddress) throw new Error("No EVM account connected");
-    return window.ethereum.request({ method: "personal_sign", params: [nonce, evmAddress] });
-  };
-
-  // Unified nonce signer — dispatches to the active chain's signer.
-  const signNonce = useCallback(async (nonce) => {
-    if (chain === "solana") return await signSolana(nonce);
-    if (chain === "evm") return await signEvm(nonce);
-    throw new Error("No chain selected");
-  }, [chain, evmAddress]);
+  // Unified nonce signer — delegates to the chain-specific signer in base44Handshake.
+  const signNonce = useCallback(
+    async (nonce) => signNonceForChain(nonce, chain, evmAddress),
+    [chain, evmAddress]
+  );
 
   // Unified wallet address derived from the active chain.
   const walletAddress = chain === "solana" ? solanaAddress : evmAddress;
 
-  // Challenge → signNonce → verify handshake. Works for both Solana and EVM.
+  // Full Base44 handshake — delegates challenge/sign/verify to base44Handshake.
+  // Works for both Solana and EVM. Surfaces backend errors to the user.
   const login = useCallback(async () => {
     if (!walletAddress || !chain) return null;
     setAuthenticating(true);
     setLoginError("");
     try {
-      const ch = await base44.functions.invoke("web3Login", { action: "challenge" }).then((r) => r.data);
-      const signature = await signNonce(ch.message);
-      if (!signature) throw new Error("Signature rejected");
-      const res = await base44.functions.invoke("web3Login", {
-        action: "verify",
-        chain,
-        wallet_address: walletAddress,
-        message: ch.message,
-        signature,
-      }).then((r) => r.data);
-      setSession(res.profile);
-      // Persist the wallet-native JWT so engine/proxy calls can use it.
-      if (res?.token) {
-        try { localStorage.setItem(WALLET_TOKEN_KEY, res.token); } catch {}
-      }
-      return res.profile;
+      const { profile } = await base44Handshake(walletAddress, chain);
+      setSession(profile);
+      return profile;
     } catch (e) {
       // base44.functions.invoke throws an Axios error on non-2xx; the real
       // backend reason lives in e.response.data, not e.message (which is just
@@ -90,7 +60,7 @@ export function IdentityProvider({ children }) {
     } finally {
       setAuthenticating(false);
     }
-  }, [chain, walletAddress, signNonce]);
+  }, [chain, walletAddress]);
 
   // Re-fetch the profile from the backend (no re-sign) and sync the session.
   const refreshProfile = useCallback(async () => {
@@ -189,13 +159,8 @@ export function useIdentity() {
   return useContext(IdentityContext);
 }
 
-// Retrieve the persisted wallet-native JWT (for Authorization headers in
-// proxy / engine calls). Wallet-only auth path — no Base44 session needed.
-export const getWalletToken = () => {
-  try { return localStorage.getItem(WALLET_TOKEN_KEY); } catch { return null; }
-};
-export const clearWalletToken = () => {
-  try { localStorage.removeItem(WALLET_TOKEN_KEY); } catch {}
-};
+// Token helpers are re-exported from base44Handshake for backward compatibility.
+// All new code should import directly from @/lib/web3/unified/base44Handshake.
+export { getWalletToken, clearWalletToken } from "@/lib/web3/unified/base44Handshake";
 
 export default IdentityProvider;
