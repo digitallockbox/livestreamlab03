@@ -689,8 +689,55 @@ function MainApp() {
         <Route element={<IdentityGate />}>
         <Route element={<SharedLayout />}>
         <Route path="/" element={<Dashboard />} />
-...
+        <Route path="/golive" element={<GoLive />} />
+        <Route path="/wallet" element={<Wallet />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/verify" element={<Web3Verify />} />
+        <Route path="/badges" element={<BadgeUpgrade />} />
+        <Route path="/passport" element={<CreatorPassport />} />
+        <Route path="/watch" element={<Watch />} />
+        <Route path="/streams" element={<Streams />} />
+        <Route path="/streams/analytics/:id" element={<StreamAnalytics />} />
+        <Route path="/boosts" element={<StreamBoost />} />
+        <Route path="/subscriptions" element={<Subscriptions />} />
+        <Route path="/feed" element={<Feed />} />
+        <Route path="/feed/create" element={<CreatePost />} />
+        <Route path="/feed/view" element={<PostView />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/marketplace/add" element={<AddMarketplaceProduct />} />
+        <Route path="/marketplace/products" element={<MarketplaceProducts />} />
+        <Route path="/marketplace/sales" element={<MarketplaceSales />} />
+        <Route path="/economy" element={<Economy />} />
+        <Route path="/domains" element={<Domains />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/settings/profile" element={<ProfileSettings />} />
+        <Route path="/settings/billing" element={<BillingSettings />} />
+        <Route path="/settings/branding" element={<BrandingSettings />} />
+        <Route path="/settings/notifications" element={<NotificationSettings />} />
+        <Route path="/settings/security" element={<SecuritySettings />} />
+        <Route path="/settings/connected" element={<ConnectedAccounts />} />
+        <Route path="/podcasts" element={<PodcastLibrary />} />
+        <Route path="/podcasts/manage" element={<PodcastManager />} />
+        <Route path="/podcasts/analytics" element={<PodcastAnalytics />} />
+        <Route path="/warroom" element={<WarRoom />} />
+        <Route path="/videos" element={<VideoLibrary />} />
+        <Route path="/videos/upload" element={<UploadVideo />} />
+        <Route path="/videos/manager" element={<VideoManager />} />
+        <Route path="/videos/analytics" element={<VideoAnalytics />} />
+        <Route path="/analytics" element={<UnifiedAnalytics />} />
+        <Route path="/store" element={<StoreDashboard />} />
+        <Route path="/store/add" element={<AddProductPage />} />
+        <Route path="/store/products" element={<StoreProductList />} />
+        <Route path="/store/product/:id" element={<ProductDetail />} />
+        <Route path="/store/checkout" element={<Checkout />} />
+        <Route path="/store/orders" element={<OrderHistory />} />
+        <Route path="/affiliates" element={<AffiliateDashboard />} />
+        <Route path="/affiliates/add" element={<AddAffiliateLink />} />
+        <Route path="/vault" element={<CreatorVault />} />
+        <Route path="/payouts" element={<Payouts />} />
         <Route path="/sales" element={<SalesDashboard />} />
+        <Route path="/supabase" element={<SupabaseExplorer />} />
         </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
