@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   MousePointerClick, TrendingUp, DollarSign, Zap, Plus, Search, ExternalLink,
-  Copy, CheckCircle2, Loader2, Tag, Link2, ShoppingBag, Download,
+  Copy, CheckCircle2, Loader2, Tag, Link2, ShoppingBag, Download, Layers,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useIdentity } from "@/lib/web3/identity";
@@ -114,6 +114,9 @@ export default function AffiliateDashboard() {
           <button onClick={handleExportCSV} disabled={loading || links.length === 0} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-border text-sm hover:bg-muted disabled:opacity-50">
             <Download className="w-4 h-4" /> Export CSV
           </button>
+          <Link to="/affiliates/bulk" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-border text-sm hover:bg-muted">
+            <Layers className="w-4 h-4" /> Bulk Add
+          </Link>
           <Link to="/affiliates/add" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90">
             <Plus className="w-4 h-4" /> Add Link
           </Link>

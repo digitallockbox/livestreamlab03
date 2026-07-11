@@ -57,6 +57,7 @@ import Checkout from "@/pages/store/Checkout";
 import OrderHistory from "@/pages/store/OrderHistory";
 import AffiliateDashboard from "@/pages/affiliates/AffiliateDashboard";
 import AddAffiliateLink from "@/pages/affiliates/AddAffiliateLink";
+import BulkAddLinks from "@/pages/affiliates/BulkAddLinks";
 import PodcastManager from "@/components/creator/podcasts/PodcastManager";
 import PodcastLibrary from "@/components/creator/podcasts/PodcastLibrary";
 import PodcastAnalytics from "@/components/creator/podcasts/PodcastAnalytics";
@@ -736,6 +737,7 @@ function MainApp() {
         <Route path="/store/orders" element={<OrderHistory />} />
         <Route path="/affiliates" element={<AffiliateDashboard />} />
         <Route path="/affiliates/add" element={<AddAffiliateLink />} />
+        <Route path="/affiliates/bulk" element={<BulkAddLinks />} />
         <Route path="/vault" element={<CreatorVault />} />
         <Route path="/payouts" element={<Payouts />} />
         <Route path="/sales" element={<SalesDashboard />} />
