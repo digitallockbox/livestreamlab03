@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { base44 } from "@/api/base44Client";
+import { base44Handshake, signNonceForChain, getWalletToken } from "@/lib/web3/unified/base44Handshake";
 
 const WALLET_TOKEN_KEY = "trident_wallet_token";
 

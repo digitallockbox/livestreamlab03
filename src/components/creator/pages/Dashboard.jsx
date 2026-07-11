@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Radio, ShoppingBag, Store as StoreIcon, BarChart3, Globe, Settings as SettingsIcon, Megaphone } from "lucide-react";
+import { Radio, ShoppingBag, Store as StoreIcon, BarChart3, Globe, Settings as SettingsIcon, Megaphone, Briefcase, HardDrive, Users } from "lucide-react";
 import { useIdentity } from "@/lib/web3/identity";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { useCreatorDashboard } from "@/hooks/web3/useCreatorDashboard";
@@ -12,6 +12,9 @@ import Domains from "@/components/creator/pages/Domains";
 import Settings from "@/components/creator/pages/Settings";
 import Store from "@/components/creator/pages/Store";
 import ShoutoutBoard from "@/components/creator/pages/ShoutoutBoard";
+import ServicesModule from "@/components/creator/os/ServicesModule";
+import StorageModule from "@/components/creator/os/StorageModule";
+import SubscriptionsModule from "@/components/creator/os/SubscriptionsModule";
 import StreakNotifications from "@/components/creator/stream/StreakNotifications";
 import ShoutoutAlerts from "@/components/creator/stream/ShoutoutAlerts";
 import EarningsSummary from "@/components/creator/pages/EarningsSummary";
@@ -24,6 +27,9 @@ const MODULES = [
   { key: "shoutouts", label: "Shoutouts", icon: Megaphone, Component: ShoutoutBoard },
   { key: "domain", label: "Domain", icon: Globe, Component: Domains },
   { key: "settings", label: "Settings", icon: SettingsIcon, Component: Settings },
+  { key: "services", label: "Services", icon: Briefcase, Component: ServicesModule },
+  { key: "storage", label: "Storage", icon: HardDrive, Component: StorageModule },
+  { key: "subscriptions", label: "Subs", icon: Users, Component: SubscriptionsModule },
 ];
 
 function IdentityHeader() {
