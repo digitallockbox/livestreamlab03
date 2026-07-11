@@ -55,7 +55,62 @@ export async function connectPhantom() {
 }
 
 /**
+ * Target EVM chain for Creator OS — Ethereum mainnet.
+ * Matches the WalletConnect configuration in walletConnectClient.js.
+ */
+export const TARGET_CHAIN_ID = 1;
+const TARGET_CHAIN_HEX = "0x1";
+
+const CHAIN_PARAMS = {
+  1: {
+    chainId: TARGET_CHAIN_HEX,
+    chainName: "Ethereum Mainnet",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: ["https://rpc.learnnear.me/"],
+    blockExplorerUrls: ["https://etherscan.io"],
+  },
+};
+
+/**
+ * Ensure MetaMask is connected to the correct EVM chain (Ethereum mainnet).
+ * If on the wrong chain, prompts the user to switch — and if the chain isn't
+ * in their wallet, attempts to add it first.
+ *
+ * No-ops if window.ethereum is unavailable or already on the target chain.
+ *
+ * @param {number} [chainId=TARGET_CHAIN_ID] — target chain ID in decimal
+ * @returns {Promise<void>}
+ */
+export async function ensureCorrectChain(chainId = TARGET_CHAIN_ID) {
+  const eth = window.ethereum;
+  if (!eth) return;
+
+  const hexChainId = "0x" + chainId.toString(16);
+  const currentChain = await eth.request({ method: "eth_chainId" }).catch(() => null);
+
+  if (currentChain === hexChainId) return;
+
+  try {
+    await eth.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: hexChainId }],
+    });
+  } catch (switchError) {
+    // Chain not added to wallet → add it, then switch
+    if (switchError?.code === 4902 && CHAIN_PARAMS[chainId]) {
+      await eth.request({
+        method: "wallet_addEthereumChain",
+        params: [CHAIN_PARAMS[chainId]],
+      });
+    } else {
+      throw switchError;
+    }
+  }
+}
+
+/**
  * Connect to MetaMask (EVM) via window.ethereum.
+ * Ensures the correct chain is selected before returning the address.
  * @returns {Promise<{ walletAddress: string, chain: "evm" }>}
  */
 export async function connectMetaMask() {
@@ -65,6 +120,7 @@ export async function connectMetaMask() {
   }
   const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
   if (!accounts?.length) throw new Error("No MetaMask account returned");
+  await ensureCorrectChain();
   return { walletAddress: accounts[0], chain: "evm" };
 }
 
