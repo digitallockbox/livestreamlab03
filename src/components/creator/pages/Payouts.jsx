@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { Link } from "react-router-dom";
-import { Loader2, ArrowDownToLine, Clock, CheckCircle2, XCircle, Users } from "lucide-react";
+import { Loader2, ArrowDownToLine, Clock, CheckCircle2, XCircle, Users, CalendarPlus } from "lucide-react";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { Page, Card, Spinner, Input } from "@/components/creator/os";
 import { payoutsApi, creatorApi } from "@/lib/tridentApi";
+import { downloadPayoutICS, countUpcomingPayouts } from "@/lib/payoutCalendar";
 
 const STATUS = {
   pending: { cls: "bg-muted text-muted-foreground", icon: Clock, label: "Pending" },
@@ -176,6 +177,18 @@ export default function Payouts() {
           </div>
         )}
       </div>
+
+      {countUpcomingPayouts(payouts) > 0 && (
+        <Card className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h3 className="font-display font-semibold">Sync to Calendar</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">{countUpcomingPayouts(payouts)} upcoming payout{countUpcomingPayouts(payouts) !== 1 ? "s" : ""} ready to sync.</p>
+          </div>
+          <button onClick={() => downloadPayoutICS(payouts)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-secondary text-secondary-foreground text-sm hover:bg-secondary/80 border border-border">
+            <CalendarPlus className="w-4 h-4" /> Download .ics
+          </button>
+        </Card>
+      )}
 
       <Link to="/economy" className="text-primary hover:underline text-sm">← Back to Earnings overview</Link>
     </Page>
