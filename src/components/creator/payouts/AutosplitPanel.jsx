@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { Loader2, Calculator, CheckCircle2, Users, TrendingUp, Wallet } from "lucide-react";
+import { Loader2, Calculator, CheckCircle2, TrendingUp, Wallet, Clock, Link2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { Card } from "@/components/creator/os";
+import {
+  aggregateEarnings, buildParticipants, calculateSplit,
+  calcTransactionEarnings, calcWatchTimeEarnings,
+} from "@/lib/earningsEngine";
 
-// AutosplitPanel — calculates payouts from real Transaction data, splits
-// across TeamMembers, and creates Payout records via the entity SDK.
-// No backend function needed: Transaction, TeamMember, and Payout entities
-// are all accessible through the SDK with requiresAuth: false.
+// AutosplitPanel — calculates payouts from real Transaction + WatchSession
+// data, splits across team members, active affiliates, and a platform fee,
+// then creates Payout records via the entity SDK.
 export default function AutosplitPanel() {
   const { wallet } = useStreamingIdentity();
   const [transactions, setTransactions] = useState([]);
+  const [watchSessions, setWatchSessions] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
+  const [affiliateLinks, setAffiliateLinks] = useState([]);
   const [payouts, setPayouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -26,14 +31,23 @@ export default function AutosplitPanel() {
     const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
     try {
-      const [txs, members, existingPayouts] = await Promise.all([
+      const [txs, sessions, members, affiliates, existingPayouts] = await Promise.all([
         base44.entities.Transaction.filter({ recipient_wallet: wallet, status: "completed" }, "-created_date", 500)
           .then((data) => (data || []).filter((t) => {
             const d = new Date(t.created_date);
             return d >= periodStart && d <= periodEnd;
           }))
           .catch(() => []),
+        base44.entities.WatchSession.filter({ creator_wallet: wallet, status: "ended" }, "-created_date", 500)
+          .then((data) => (data || []).filter((ws) => {
+            const d = new Date(ws.created_date);
+            return d >= periodStart && d <= periodEnd;
+          }))
+          .catch(() => []),
         base44.entities.TeamMember.filter({ creator_wallet: wallet }, null, 50)
+          .then((data) => data || [])
+          .catch(() => []),
+        base44.entities.AffiliateLink.filter({ creator_wallet: wallet }, null, 50)
           .then((data) => data || [])
           .catch(() => []),
         base44.entities.Payout.filter({ creator_wallet: wallet }, "-created_date", 50)
@@ -41,7 +55,9 @@ export default function AutosplitPanel() {
           .catch(() => []),
       ]);
       setTransactions(txs);
+      setWatchSessions(sessions);
       setTeamMembers(members);
+      setAffiliateLinks(affiliates);
       setPayouts(existingPayouts);
     } finally {
       setLoading(false);
@@ -50,16 +66,13 @@ export default function AutosplitPanel() {
 
   useEffect(() => { load(); }, [wallet]);
 
-  const periodTotal = transactions.reduce((sum, t) => sum + Number(t.amount || 0), 0);
-  const totalPct = teamMembers.reduce((s, m) => s + (m.split_percentage || 0), 0);
+  const earnings = aggregateEarnings(transactions, watchSessions);
+  const periodTotal = earnings.total;
+  const txTotal = transactions.reduce((s, t) => s + calcTransactionEarnings(t), 0);
+  const watchTimeTotal = watchSessions.reduce((s, ws) => s + calcWatchTimeEarnings(ws.minutes_watched), 0);
 
-  const splits = teamMembers.length > 0 && totalPct > 0
-    ? teamMembers.map((m) => ({
-        name: m.name,
-        percentage: m.split_percentage,
-        amount: Math.round((periodTotal * m.split_percentage / totalPct) * 100) / 100,
-      }))
-    : [];
+  const participants = buildParticipants(teamMembers, affiliateLinks);
+  const splits = calculateSplit(periodTotal, participants);
 
   const now = new Date();
   const cycle = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -80,7 +93,7 @@ export default function AutosplitPanel() {
         period_end: periodEnd,
         amount: periodTotal,
         status: "pending",
-        team_splits: splits,
+        team_splits: splits.map((s) => ({ name: s.name, percentage: s.percentage, amount: s.amount })),
       });
       load();
     } catch (err) {
@@ -119,16 +132,21 @@ export default function AutosplitPanel() {
           <span className="text-xs text-muted-foreground ml-auto">{cycle}</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div className="rounded-lg bg-muted p-3">
-            <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Period Earnings</p>
-            <p className="font-display font-bold text-lg">${periodTotal.toFixed(2)}</p>
-            <p className="text-xs text-muted-foreground">{transactions.length} transactions</p>
+            <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Transactions</p>
+            <p className="font-display font-bold text-lg">${txTotal.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground">{transactions.length} txs</p>
           </div>
           <div className="rounded-lg bg-muted p-3">
-            <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><Users className="w-3 h-3" /> Team Members</p>
-            <p className="font-display font-bold text-lg">{teamMembers.length}</p>
-            <p className="text-xs text-muted-foreground">{totalPct}% allocated</p>
+            <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><Clock className="w-3 h-3" /> Watch Time</p>
+            <p className="font-display font-bold text-lg">${watchTimeTotal.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground">{watchSessions.length} sessions</p>
+          </div>
+          <div className="rounded-lg bg-muted p-3">
+            <p className="text-xs text-muted-foreground inline-flex items-center gap-1"><Wallet className="w-3 h-3" /> Total</p>
+            <p className="font-display font-bold text-lg text-accent">${periodTotal.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground">period earnings</p>
           </div>
         </div>
 
@@ -138,7 +156,11 @@ export default function AutosplitPanel() {
             <div className="space-y-2">
               {splits.map((s, i) => (
                 <div key={i} className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{s.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{s.name}</span>
+                    {s.type === "affiliate" && <Link2 className="w-3 h-3 text-muted-foreground" />}
+                    {s.type === "platform" && <span className="text-xs text-muted-foreground">(fee)</span>}
+                  </div>
                   <div className="flex items-center gap-3">
                     <span className="text-muted-foreground">{s.percentage}%</span>
                     <span className="font-display font-semibold text-accent w-20 text-right">${s.amount.toFixed(2)}</span>
@@ -149,10 +171,8 @@ export default function AutosplitPanel() {
           </div>
         )}
 
-        {splits.length === 0 && periodTotal > 0 && (
-          <p className="text-sm text-muted-foreground">
-            Add team members with split percentages to distribute earnings.
-          </p>
+        {participants.length === 0 && (
+          <p className="text-sm text-muted-foreground">Add team members with split percentages to distribute earnings.</p>
         )}
 
         {error && <p className="text-sm text-destructive">{error}</p>}

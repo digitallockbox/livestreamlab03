@@ -3,6 +3,7 @@ import { Radio, Store as StoreIcon, TrendingUp, Calendar, Loader2 } from "lucide
 import { base44 } from "@/api/base44Client";
 import { useViewerWallet, Page, Card, Spinner, streamsAPI, boostsAPI } from "@/components/creator/os";
 import RevenueTrendChart from "@/components/creator/vault/RevenueTrendChart";
+import EarningsBreakdown from "@/components/creator/payouts/EarningsBreakdown";
 
 const DAYS = 30;
 
@@ -166,6 +167,9 @@ export default function RevenueDashboard() {
           <p className="text-sm text-chart-4">${(bestDay.store || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} store</p>
         </div>
       </Card>
+
+      {/* Earnings Attribution — per source, stream, viewer, product */}
+      <EarningsBreakdown />
     </Page>
   );
 }
