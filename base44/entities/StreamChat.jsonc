@@ -1,0 +1,23 @@
+{
+  "name": "StreamChat",
+  "type": "object",
+  "properties": {
+    "stream_id": {
+      "type": "string",
+      "description": "ID of the stream this message belongs to"
+    },
+    "viewer_wallet": {
+      "type": "string",
+      "description": "Wallet address of the sender"
+    },
+    "message": {
+      "type": "string",
+      "description": "Chat message text"
+    }
+  },
+  "required": [
+    "stream_id",
+    "viewer_wallet",
+    "message"
+  ]
+}
