@@ -1,0 +1,33 @@
+{
+  "name": "CoinAccount",
+  "type": "object",
+  "properties": {
+    "account_id": {
+      "type": "string",
+      "description": "Wallet address or account identifier"
+    },
+    "balance_coins": {
+      "type": "number",
+      "default": 0,
+      "description": "Current withdrawable balance in Streaming Coins"
+    },
+    "total_earned_coins": {
+      "type": "number",
+      "default": 0,
+      "description": "Lifetime coins earned across all streams"
+    },
+    "total_paid_out_coins": {
+      "type": "number",
+      "default": 0,
+      "description": "Lifetime coins withdrawn / paid out"
+    },
+    "streams_participated": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of streams this account has received allocations from"
+    }
+  },
+  "required": [
+    "account_id"
+  ]
+}

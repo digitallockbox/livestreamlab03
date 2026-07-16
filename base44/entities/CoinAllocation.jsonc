@@ -1,0 +1,72 @@
+{
+  "name": "CoinAllocation",
+  "type": "object",
+  "properties": {
+    "stream_id": {
+      "type": "string",
+      "description": "Stream this allocation belongs to"
+    },
+    "branch_type": {
+      "type": "string",
+      "enum": [
+        "creator",
+        "collab",
+        "community",
+        "platform",
+        "sponsor",
+        "other"
+      ],
+      "description": "Which payout branch this allocation came from"
+    },
+    "branch_id": {
+      "type": "string",
+      "description": "Identifier of the branch within the stream"
+    },
+    "account_id": {
+      "type": "string",
+      "description": "Wallet address or account identifier of the recipient"
+    },
+    "account_name": {
+      "type": "string"
+    },
+    "weight": {
+      "type": "number",
+      "default": 0,
+      "description": "Raw weight of this leaf before normalization"
+    },
+    "normalized_weight": {
+      "type": "number",
+      "default": 0,
+      "description": "Normalized weight: w / \u03a3w for the branch"
+    },
+    "coins_allocated": {
+      "type": "number",
+      "default": 0,
+      "description": "Streaming Coins allocated to this leaf: B_branch \u00d7 \u0175_leaf"
+    },
+    "usd_value": {
+      "type": "number",
+      "default": 0,
+      "description": "USD equivalent of the allocated coins"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processed",
+        "paid"
+      ],
+      "default": "processed"
+    },
+    "tx_id": {
+      "type": "string",
+      "description": "On-chain settlement transaction hash, if applicable"
+    }
+  },
+  "required": [
+    "stream_id",
+    "branch_type",
+    "account_id",
+    "coins_allocated"
+  ]
+}
