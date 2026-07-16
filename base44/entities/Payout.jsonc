@@ -2,8 +2,23 @@
   "name": "Payout",
   "type": "object",
   "properties": {
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet address of the creator this payout belongs to"
+    },
     "cycle": {
-      "type": "string"
+      "type": "string",
+      "description": "Payout cycle label (e.g. 2026-07)"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date",
+      "description": "Start of the earning period covered by this payout"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date",
+      "description": "End of the earning period covered by this payout"
     },
     "amount": {
       "type": "number",

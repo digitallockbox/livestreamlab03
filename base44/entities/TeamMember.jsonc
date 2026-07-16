@@ -2,6 +2,10 @@
   "name": "TeamMember",
   "type": "object",
   "properties": {
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet address of the creator this team member belongs to"
+    },
     "name": {
       "type": "string"
     },

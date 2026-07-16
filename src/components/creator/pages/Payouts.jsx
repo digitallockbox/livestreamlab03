@@ -6,6 +6,7 @@ import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { Page, Card, Spinner, Input } from "@/components/creator/os";
 import { payoutsApi, creatorApi } from "@/lib/tridentApi";
 import { downloadPayoutICS, countUpcomingPayouts } from "@/lib/payoutCalendar";
+import AutosplitPanel from "@/components/creator/payouts/AutosplitPanel";
 
 const STATUS = {
   pending: { cls: "bg-muted text-muted-foreground", icon: Clock, label: "Pending" },
@@ -136,6 +137,8 @@ export default function Payouts() {
         {error && <p className="text-sm text-destructive">{error}</p>}
         <p className="text-xs text-muted-foreground">On-chain $STREAMING wallet balance: {balance} ◎</p>
       </Card>
+
+      <AutosplitPanel />
 
       <div>
         <h2 className="font-display font-semibold mb-3">Payout History</h2>
