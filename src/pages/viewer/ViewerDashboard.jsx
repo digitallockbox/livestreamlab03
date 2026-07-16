@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, Radio, Wallet, LogOut, Zap, Eye, Clock } from "lucide-react";
+import { Loader2, Radio, Wallet, LogOut, Zap, Eye, Clock, UserCheck, CreditCard, User } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 
@@ -8,17 +8,52 @@ import { useAuth } from "@/lib/AuthContext";
 // Shows live streams and a CTA to connect a wallet for watch-to-earn.
 export default function ViewerDashboard() {
   const { user, logout } = useAuth();
+  const [profile, setProfile] = useState(null);
   const [liveStreams, setLiveStreams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [followedProfiles, setFollowedProfiles] = useState([]);
 
   useEffect(() => {
+    if (!user?.email) return;
     let active = true;
+
+    // Load or create ViewerProfile (keyed by user_email — no wallet needed)
+    base44.entities.ViewerProfile.filter({ user_email: user.email }, null, 1)
+      .then(async (data) => {
+        if (!active) return;
+        if (data.length > 0) {
+          setProfile(data[0]);
+        } else {
+          const created = await base44.entities.ViewerProfile.create({
+            user_email: user.email,
+            display_name: user.email.split("@")[0],
+            followed_creators: [],
+            watchlist: [],
+            active_subscriptions: [],
+          });
+          if (active) setProfile(created);
+        }
+      })
+      .catch(() => {});
+
+    // Load live streams
     base44.entities.Stream.filter({ status: "live" }, "-created_date", 20)
       .then((data) => { if (active) setLiveStreams(data || []); })
       .catch(() => { if (active) setLiveStreams([]); })
       .finally(() => { if (active) setLoading(false); });
+
     return () => { active = false; };
-  }, []);
+  }, [user?.email]);
+
+  // Load followed creators' Web3Profile data for display names + storefront links
+  useEffect(() => {
+    if (!profile?.followed_creators?.length) { setFollowedProfiles([]); return; }
+    let active = true;
+    base44.entities.Web3Profile.filter({ wallet_address: { $in: profile.followed_creators } })
+      .then((data) => { if (active) setFollowedProfiles(data || []); })
+      .catch(() => { if (active) setFollowedProfiles([]); });
+    return () => { active = false; };
+  }, [profile]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -67,6 +102,76 @@ export default function ViewerDashboard() {
             <Zap className="w-4 h-4" /> Connect Wallet
           </Link>
         </div>
+
+        {/* Followed Creators */}
+        {(profile?.followed_creators || []).length > 0 && (
+          <div>
+            <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
+              <UserCheck className="w-4 h-4 text-primary" /> Followed Creators
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {followedProfiles.map((creator) => (
+                <Link
+                  key={creator.id}
+                  to={creator.bound_domain ? `/s/${creator.bound_domain}` : "#"}
+                  className="rounded-2xl border border-border bg-card p-4 hover:border-primary/30 transition-colors flex items-center gap-3"
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                    {creator.avatar_url ? (
+                      <img src={creator.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-bold text-primary">
+                        {(creator.display_name || creator.wallet_address || "?").slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">
+                      {creator.display_name || creator.ens_name || `${(creator.wallet_address || "").slice(0, 8)}…`}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate font-mono">{creator.wallet_address}</p>
+                  </div>
+                </Link>
+              ))}
+              {(profile?.followed_creators || []).filter(
+                (w) => !followedProfiles.some((p) => p.wallet_address === w)
+              ).map((wallet) => (
+                <div key={wallet} className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <User className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate font-mono">{wallet}</p>
+                    <p className="text-xs text-muted-foreground">Creator profile not found</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Active Subscriptions */}
+        {(profile?.active_subscriptions || []).filter((s) => s.status === "active").length > 0 && (
+          <div>
+            <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-accent" /> Your Subscriptions
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {(profile?.active_subscriptions || []).filter((s) => s.status === "active").map((sub, i) => (
+                <div key={i} className="rounded-2xl border border-border bg-card p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium text-sm">{sub.creator_name || "Creator"}</p>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-accent/15 text-accent capitalize">{sub.tier}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>${sub.price_monthly || 0}/month</span>
+                    {sub.renews_at && <span>Renews {new Date(sub.renews_at).toLocaleDateString()}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div>
           <h3 className="font-display font-semibold mb-3 flex items-center gap-2">

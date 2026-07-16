@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Package, ShoppingBag, Globe, Loader2 } from "lucide-react";
 import { storeAPI } from "@/components/creator/os";
+import ViewerFollowButton from "@/components/viewer/ViewerFollowButton";
 
 const usd = (n) => (n || n === 0 ? `$${Number(n).toFixed(2)}` : "—");
 
@@ -51,6 +52,7 @@ export default function CreatorStorefront() {
           <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1"><Package className="w-4 h-4" /> {products.length} products</span>
             {profile?.verified && <span className="text-accent">✓ Verified</span>}
+            {profile?.wallet_address && <ViewerFollowButton creatorWallet={profile.wallet_address} />}
           </div>
         </div>
       </header>
