@@ -55,6 +55,7 @@ import ProductDetail from "@/pages/store/ProductDetail";
 import StoreDashboard from "@/pages/store/StoreDashboard";
 import AddProductPage from "@/pages/store/AddProductPage";
 import Checkout from "@/pages/store/Checkout";
+import ThankYou from "@/pages/store/ThankYou";
 import OrderHistory from "@/pages/store/OrderHistory";
 import AffiliateDashboard from "@/pages/affiliates/AffiliateDashboard";
 import AddAffiliateLink from "@/pages/affiliates/AddAffiliateLink";
@@ -761,7 +762,8 @@ function MainApp() {
         <Route path="/store/add" element={<AddProductPage />} />
         <Route path="/store/products" element={<StoreProductList />} />
         <Route path="/store/product/:id" element={<ProductDetail />} />
-        <Route path="/store/checkout" element={<Checkout />} />
+        <Route path="/store/:productId/checkout" element={<Checkout />} />
+        <Route path="/store/thank-you" element={<ThankYou />} />
         <Route path="/store/orders" element={<OrderHistory />} />
         <Route path="/affiliates" element={<AffiliateDashboard />} />
         <Route path="/affiliates/add" element={<AddAffiliateLink />} />

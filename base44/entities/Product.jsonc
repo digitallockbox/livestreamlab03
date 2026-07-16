@@ -16,6 +16,11 @@
       "type": "number",
       "default": 0
     },
+    "currency": {
+      "type": "string",
+      "default": "USD",
+      "description": "Fiat currency for card payments (e.g. USD)"
+    },
     "streaming_price": {
       "type": "number",
       "default": 0

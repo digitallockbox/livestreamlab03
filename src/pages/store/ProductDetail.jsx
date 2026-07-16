@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft, Package, Star, Zap, ShoppingCart, ExternalLink, Download,
-  CheckCircle2, Share2, Loader2, TrendingUp, MousePointerClick, ShoppingBag, Tag,
+  CheckCircle2, Share2, Loader2, TrendingUp, MousePointerClick, ShoppingBag, Tag, CreditCard,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
@@ -19,6 +19,8 @@ export default function ProductDetail() {
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [cardBusy, setCardBusy] = useState(false);
+  const [cardError, setCardError] = useState("");
 
   useEffect(() => {
     if (!productId) return;
@@ -55,6 +57,27 @@ export default function ProductDetail() {
     if (!product?.external_url) return;
     trackClick();
     window.open(product.external_url, "_blank", "noopener,noreferrer");
+  };
+
+  const buyWithCard = async () => {
+    if (!product) return;
+    if ((product.price || 0) < 0.5) { setCardError("Minimum purchase is $0.50"); return; }
+    setCardBusy(true);
+    setCardError("");
+    try {
+      const res = await base44.functions.invoke("create-checkout", {
+        items: [{ name: product.name, price: String(product.price), quantity: 1 }],
+        productId: product.id,
+        creatorWallet: product.creator_wallet,
+      });
+      const url = res?.redirectUrl || res?.url || res?.checkoutSession?.redirectUrl;
+      if (url) window.location.href = url;
+      else setCardError("Checkout session could not be created.");
+    } catch (e) {
+      setCardError(e?.message || "Checkout failed. Please try again.");
+    } finally {
+      setCardBusy(false);
+    }
   };
 
   if (loading) {
@@ -173,6 +196,13 @@ export default function ProductDetail() {
                   {product.file_url ? <><Download className="w-4 h-4" /> Download</> : <><ShoppingCart className="w-4 h-4" /> Buy with $STREAMING</>}
                 </Link>
               )}
+              {isOwn && (product.price || 0) > 0 && (
+                <button onClick={buyWithCard} disabled={cardBusy} className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md border border-border bg-secondary text-secondary-foreground text-sm hover:bg-secondary/80 disabled:opacity-50">
+                  {cardBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                  {cardBusy ? "Redirecting…" : `Buy with Card · ${usd(product.price)}`}
+                </button>
+              )}
+              {cardError && <p className="text-xs text-destructive">{cardError}</p>}
               {!isOwn && hasExternal && (
                 <button onClick={openExternal} className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90">
                   <ExternalLink className="w-4 h-4" /> Buy on {product.source === "amazon" ? "Amazon" : "External Site"}
