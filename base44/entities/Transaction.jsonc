@@ -55,6 +55,10 @@
     "product_id": {
       "type": "string",
       "description": "Product id for store_sale transactions, used to link order history back to the purchased item"
+    },
+    "stream_id": {
+      "type": "string",
+      "description": "Stream this transaction belongs to, for per-stream coin tree distribution"
     }
   },
   "required": [

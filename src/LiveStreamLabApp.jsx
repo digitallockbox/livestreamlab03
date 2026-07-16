@@ -67,6 +67,7 @@ import PodcastAnalytics from "@/components/creator/podcasts/PodcastAnalytics";
 import WarRoom from "@/components/creator/warroom/WarRoom";
 import AdminPanel from "@/components/creator/pages/AdminPanel";
 import RevenueDashboard from "@/components/creator/pages/RevenueDashboard";
+import CoinTreeDashboard from "@/components/creator/cointree/CoinTreeDashboard";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -389,6 +390,7 @@ const StreamAnalytics = () => {
       </div>
       <div className="flex gap-4">
         <Link to="/streams" className="text-primary hover:underline text-sm">← Back to all streams</Link>
+        <Link to={`/cointree/${id}`} className="text-primary hover:underline text-sm">Streaming Coin Tree →</Link>
         <Link to="/analytics" className="text-primary hover:underline text-sm">Unified Analytics →</Link>
       </div>
     </Page>
@@ -730,6 +732,7 @@ function MainApp() {
         <Route path="/watch" element={<Watch />} />
         <Route path="/streams" element={<Streams />} />
         <Route path="/streams/analytics/:id" element={<StreamAnalytics />} />
+        <Route path="/cointree/:streamId" element={<CoinTreeDashboard />} />
         <Route path="/boosts" element={<StreamBoost />} />
         <Route path="/subscriptions" element={<Subscriptions />} />
         <Route path="/feed" element={<Feed />} />

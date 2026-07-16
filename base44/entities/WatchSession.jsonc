@@ -19,6 +19,16 @@
       "type": "number",
       "default": 0
     },
+    "engagement_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Aggregated engagement score (chat messages, likes, boosts) for community coin distribution"
+    },
+    "subscription_tier": {
+      "type": "number",
+      "default": 1,
+      "description": "Subscription tier weight: 1=basic, 2=plus, 3=premium"
+    },
     "status": {
       "type": "string",
       "enum": [
