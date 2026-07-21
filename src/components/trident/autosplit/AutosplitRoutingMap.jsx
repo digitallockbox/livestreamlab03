@@ -1,17 +1,11 @@
 import React from "react";
-import { Loader2, GitBranch, ArrowRight } from "lucide-react";
-import { useRoutingMap } from "@/lib/tridentControlPlane";
+import { ArrowRight } from "lucide-react";
 
-export default function AutosplitRoutingPanel() {
-  const { data: routes, loading } = useRoutingMap();
-  if (loading && !routes) return <div className="flex justify-center py-20"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
-  const rows = routes || [];
+export default function AutosplitRoutingMap({ routes }) {
+  if (!routes || routes.length === 0) return <p className="text-sm text-muted-foreground">No active routing maps.</p>;
   return (
-    <div className="space-y-4">
-      <h2 className="font-display text-xl font-bold flex items-center gap-2"><GitBranch className="w-5 h-5 text-primary" /> Autosplit Routing Map</h2>
-      {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No active routing maps.</p>
-      ) : rows.map((r) => (
+    <div className="space-y-3">
+      {routes.map((r) => (
         <div key={r.streamId} className="rounded-xl border border-border bg-card p-4">
           <p className="font-mono text-xs text-muted-foreground mb-2">{r.input}</p>
           <div className="flex items-center gap-2 flex-wrap">

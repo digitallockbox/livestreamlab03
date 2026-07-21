@@ -1,0 +1,16 @@
+import React from "react";
+import { Loader2, Radio } from "lucide-react";
+import RTMPSessionTable from "@/components/trident/rtmp/RTMPSessionTable";
+import { useLiveSessions } from "@/state/trident/useTridentStores";
+
+export default function RTMPPage() {
+  const { data: sessions, loading } = useLiveSessions();
+  if (loading && !sessions) return <div className="flex justify-center py-20"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
+  const rows = sessions || [];
+  return (
+    <div className="space-y-4">
+      <h2 className="font-display text-xl font-bold flex items-center gap-2"><Radio className="w-5 h-5 text-primary" /> RTMP Live Sessions</h2>
+      {rows.length === 0 ? <p className="text-sm text-muted-foreground">No active RTMP sessions.</p> : <RTMPSessionTable sessions={rows} />}
+    </div>
+  );
+}

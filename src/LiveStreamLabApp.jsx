@@ -68,7 +68,14 @@ import WarRoom from "@/components/creator/warroom/WarRoom";
 import AdminPanel from "@/components/creator/pages/AdminPanel";
 import RevenueDashboard from "@/components/creator/pages/RevenueDashboard";
 import CoinTreeDashboard from "@/components/creator/cointree/CoinTreeDashboard";
-import TridentControlPlane from "@/pages/trident/TridentControlPlane";
+import DashboardLayout from "@/components/trident/layout/DashboardLayout";
+import OverviewPage from "@/pages/trident/OverviewPage";
+import RTMPPage from "@/pages/trident/RTMPPage";
+import AutosplitPage from "@/pages/trident/AutosplitPage";
+import StoragePage from "@/pages/trident/StoragePage";
+import IdentityPage from "@/pages/trident/IdentityPage";
+import TenantsPage from "@/pages/trident/TenantsPage";
+import AdminPage from "@/pages/trident/AdminPage";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -778,7 +785,15 @@ function MainApp() {
         <Route path="/supabase" element={<SupabaseExplorer />} />
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/revenue" element={<RevenueDashboard />} />
-        <Route path="/trident" element={<TridentControlPlane />} />
+        </Route>
+        <Route element={<DashboardLayout />}>
+          <Route path="/trident" element={<OverviewPage />} />
+          <Route path="/trident/rtmp" element={<RTMPPage />} />
+          <Route path="/trident/autosplit" element={<AutosplitPage />} />
+          <Route path="/trident/storage" element={<StoragePage />} />
+          <Route path="/trident/identity" element={<IdentityPage />} />
+          <Route path="/trident/tenants" element={<TenantsPage />} />
+          <Route path="/trident/admin" element={<AdminPage />} />
         </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
