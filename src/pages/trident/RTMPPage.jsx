@@ -15,6 +15,9 @@ export default function RTMPPage() {
       <Link to="/trident/rtmp/bitrate" className="text-primary hover:underline text-sm inline-flex items-center gap-1">
         <ExternalLink className="w-3.5 h-3.5" /> Open Bitrate Graph →
       </Link>
+      <Link to="/trident/rtmp/inspector" className="text-primary hover:underline text-sm inline-flex items-center gap-1">
+        <ExternalLink className="w-3.5 h-3.5" /> Open Session Inspector →
+      </Link>
     </div>
   );
 }
