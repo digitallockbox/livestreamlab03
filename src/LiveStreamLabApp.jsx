@@ -73,6 +73,7 @@ import OverviewPage from "@/pages/trident/OverviewPage";
 import RTMPPage from "@/pages/trident/RTMPPage";
 import AutosplitPage from "@/pages/trident/AutosplitPage";
 import StoragePage from "@/pages/trident/StoragePage";
+import StorageSnapshotViewer from "@/components/trident/storage/StorageSnapshotViewer";
 import IdentityPage from "@/pages/trident/IdentityPage";
 import PhantomLogin from "@/components/trident/identity/PhantomLogin";
 import TenantsPage from "@/pages/trident/TenantsPage";
@@ -792,6 +793,7 @@ function MainApp() {
           <Route path="/trident/rtmp" element={<RTMPPage />} />
           <Route path="/trident/autosplit" element={<AutosplitPage />} />
           <Route path="/trident/storage" element={<StoragePage />} />
+          <Route path="/trident/storage-viewer" element={<StorageSnapshotViewer />} />
           <Route path="/trident/identity" element={<IdentityPage />} />
           <Route path="/trident/phantom-login" element={<PhantomLogin />} />
           <Route path="/trident/tenants" element={<TenantsPage />} />

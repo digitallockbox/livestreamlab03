@@ -1,5 +1,6 @@
 import React from "react";
-import { Loader2, Database } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Loader2, Database, ExternalLink } from "lucide-react";
 import SnapshotGallery from "@/components/trident/storage/SnapshotGallery";
 import SegmentList from "@/components/trident/storage/SegmentList";
 import { useStorageData } from "@/state/trident/useTridentStores";
@@ -17,6 +18,9 @@ export default function StoragePage() {
       </div>
       <SnapshotGallery snapshots={data.snapshots} />
       <SegmentList segments={data.segments} />
+      <Link to="/trident/storage-viewer" className="text-primary hover:underline text-sm inline-flex items-center gap-1">
+        <ExternalLink className="w-3.5 h-3.5" /> Open Snapshot Viewer →
+      </Link>
     </div>
   );
 }
