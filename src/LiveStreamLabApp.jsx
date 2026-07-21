@@ -77,6 +77,7 @@ import AutosplitPage from "@/pages/trident/AutosplitPage";
 import AutosplitWorkerLoad from "@/components/trident/autosplit/AutosplitWorkerLoad";
 import StoragePage from "@/pages/trident/StoragePage";
 import StorageSnapshotViewer from "@/components/trident/storage/StorageSnapshotViewer";
+import StorageSegmentTimeline from "@/components/trident/storage/StorageSegmentTimeline";
 import IdentityPage from "@/pages/trident/IdentityPage";
 import PhantomLogin from "@/components/trident/identity/PhantomLogin";
 import TenantsPage from "@/pages/trident/TenantsPage";
@@ -801,6 +802,7 @@ function MainApp() {
           <Route path="/trident/autosplit/workers" element={<AutosplitWorkerLoad />} />
           <Route path="/trident/storage" element={<StoragePage />} />
           <Route path="/trident/storage-viewer" element={<StorageSnapshotViewer />} />
+          <Route path="/trident/storage-timeline" element={<StorageSegmentTimeline />} />
           <Route path="/trident/identity" element={<IdentityPage />} />
           <Route path="/trident/phantom-login" element={<PhantomLogin />} />
           <Route path="/trident/tenants" element={<TenantsPage />} />

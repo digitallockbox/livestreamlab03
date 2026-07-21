@@ -21,6 +21,9 @@ export default function StoragePage() {
       <Link to="/trident/storage-viewer" className="text-primary hover:underline text-sm inline-flex items-center gap-1">
         <ExternalLink className="w-3.5 h-3.5" /> Open Snapshot Viewer →
       </Link>
+      <Link to="/trident/storage-timeline" className="text-primary hover:underline text-sm inline-flex items-center gap-1">
+        <ExternalLink className="w-3.5 h-3.5" /> Open Segment Timeline →
+      </Link>
     </div>
   );
 }
