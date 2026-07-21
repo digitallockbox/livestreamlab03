@@ -1,9 +1,12 @@
 import { base44 } from "@/api/base44Client";
 import { formatUptime, SESSION_START } from "./engineRegistry";
+import { fetchJSON } from "./http";
 
 export const autosplitService = {
   // GET /autosplit/routes → { routes: [{ input, outputs }] }
   async getRoutes() {
+    const http = await fetchJSON("/autosplit/routes", { method: "GET" });
+    if (!http.error && http.routes) return http;
     const streams = await base44.entities.Stream.filter({ status: "live" }, "-created_date", 20).catch(() => []);
     return {
       routes: streams.map((s) => ({
@@ -20,16 +23,10 @@ export const autosplitService = {
 
   // GET /autosplit/status → { engine, port, status, workers, activeStreams, heartbeat }
   async getStatus() {
+    const http = await fetchJSON("/autosplit/status", { method: "GET" });
+    if (!http.error && http.engine) return http;
     const { routes } = await this.getRoutes();
-    return {
-      engine: "autosplit",
-      port: 8790,
-      status: "online",
-      workers: 4,
-      activeStreams: routes.length,
-      heartbeat: "OK",
-      uptime: formatUptime(Date.now() - SESSION_START),
-    };
+    return { engine: "autosplit", port: 8790, status: "online", workers: 4, activeStreams: routes.length, heartbeat: "OK", uptime: formatUptime(Date.now() - SESSION_START) };
   },
 
   async getWorkers() {

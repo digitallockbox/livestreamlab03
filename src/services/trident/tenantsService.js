@@ -1,8 +1,11 @@
 import { base44 } from "@/api/base44Client";
+import { fetchJSON } from "./http";
 
 export const tenantsService = {
   // GET /tenants → { tenants: [{ name, domain, streams }] }
   async getTenants() {
+    const http = await fetchJSON("/tenants", { method: "GET" });
+    if (!http.error && http.tenants) return http;
     const [domains, streams] = await Promise.all([
       base44.entities.Domain.filter({}, "-created_date", 100).catch(() => []),
       base44.entities.Stream.filter({}, "-created_date", 100).catch(() => []),
@@ -21,12 +24,9 @@ export const tenantsService = {
 
   // POST /tenants/create → { created, tenantId }
   async create(name, domain) {
-    const record = await base44.entities.Domain.create({
-      domain,
-      wallet: "",
-      chain: "solana",
-      status: "pending",
-    });
+    const http = await fetchJSON("/tenants/create", { method: "POST", body: JSON.stringify({ name, domain }) });
+    if (!http.error && http.created) return http;
+    const record = await base44.entities.Domain.create({ domain, wallet: "", chain: "solana", status: "pending" });
     return { created: true, tenantId: record.id };
   },
 };
