@@ -1,11 +1,10 @@
 export const ENGINES = [
   { name: "rtmp", port: 1935 },
-  { name: "autosplit", port: 8081 },
-  { name: "storage", port: 9000 },
-  { name: "identity", port: 8082 },
-  { name: "token", port: 8083 },
-  { name: "tree", port: 8084 },
-  { name: "governance", port: 8085 },
+  { name: "identity", port: 8791 },
+  { name: "storage", port: 8793 },
+  { name: "autosplit", port: 8790 },
+  { name: "token", port: 8792 },
+  { name: "tenants", port: 8794 },
 ];
 
 export const SESSION_START = Date.now();

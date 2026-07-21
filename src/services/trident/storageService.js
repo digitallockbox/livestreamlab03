@@ -1,6 +1,43 @@
 import { base44 } from "@/api/base44Client";
+import { formatUptime, SESSION_START } from "./engineRegistry";
 
 export const storageService = {
+  // GET /storage/snapshots/:streamId → { streamId, snapshots: [...] }
+  async getSnapshots(streamId) {
+    if (streamId) {
+      const stream = await base44.entities.Stream.get(streamId).catch(() => null);
+      const snapshots = stream?.thumbnail_url ? [{ time: stream.created_date, url: stream.thumbnail_url }] : [];
+      return { streamId, snapshots };
+    }
+    const { snapshots } = await this.getData();
+    return { streamId: null, snapshots };
+  },
+
+  // GET /storage/segments/:streamId → { streamId, segments: [...] }
+  async getSegments(streamId) {
+    if (streamId) {
+      const videos = await base44.entities.Video.filter({ creator_wallet: streamId }).catch(() => []);
+      const segments = videos.filter((v) => v.video_url).map((v) => ({ duration: v.duration_minutes || 0, url: v.video_url }));
+      return { streamId, segments };
+    }
+    const { segments } = await this.getData();
+    return { streamId: null, segments };
+  },
+
+  // GET /storage/status → { engine, port, status, heartbeat, storageUsedMB, storageAvailableMB }
+  async getStatus() {
+    return {
+      engine: "storage",
+      port: 8793,
+      status: "online",
+      heartbeat: "OK",
+      uptime: formatUptime(Date.now() - SESSION_START),
+      storageUsedMB: 512,
+      storageAvailableMB: 2048,
+    };
+  },
+
+  // Aggregated data for the Storage page
   async getData() {
     const [streams, videos] = await Promise.all([
       base44.entities.Stream.filter({}, "-created_date", 20).catch(() => []),
