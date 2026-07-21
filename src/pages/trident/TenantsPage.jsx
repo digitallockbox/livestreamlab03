@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Loader2, Building2, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Loader2, Building2, Plus, ExternalLink } from "lucide-react";
 import TenantList from "@/components/trident/tenants/TenantList";
 import { useTenants } from "@/state/trident/useTridentStores";
 import { tenantsService } from "@/services/trident/tenantsService";
@@ -36,6 +37,9 @@ export default function TenantsPage() {
         </div>
       )}
       {loading && !tenants ? <div className="flex justify-center py-20"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div> : <TenantList tenants={tenants || []} />}
+      <Link to="/trident/tenants/admin" className="text-primary hover:underline text-sm inline-flex items-center gap-1">
+        <ExternalLink className="w-3.5 h-3.5" /> Open Tenant Admin Panel →
+      </Link>
     </div>
   );
 }

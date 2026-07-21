@@ -80,6 +80,7 @@ import StorageSnapshotViewer from "@/components/trident/storage/StorageSnapshotV
 import IdentityPage from "@/pages/trident/IdentityPage";
 import PhantomLogin from "@/components/trident/identity/PhantomLogin";
 import TenantsPage from "@/pages/trident/TenantsPage";
+import TenantAdminPanel from "@/components/trident/tenants/TenantAdminPanel";
 import AdminPage from "@/pages/trident/AdminPage";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
@@ -803,6 +804,7 @@ function MainApp() {
           <Route path="/trident/identity" element={<IdentityPage />} />
           <Route path="/trident/phantom-login" element={<PhantomLogin />} />
           <Route path="/trident/tenants" element={<TenantsPage />} />
+          <Route path="/trident/tenants/admin" element={<TenantAdminPanel />} />
           <Route path="/trident/admin" element={<AdminPage />} />
         </Route>
         </Route>
