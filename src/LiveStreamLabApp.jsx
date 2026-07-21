@@ -73,6 +73,7 @@ import OverviewPage from "@/pages/trident/OverviewPage";
 import RTMPPage from "@/pages/trident/RTMPPage";
 import RTMPBitrateGraph from "@/components/trident/rtmp/RTMPBitrateGraph";
 import AutosplitPage from "@/pages/trident/AutosplitPage";
+import AutosplitWorkerLoad from "@/components/trident/autosplit/AutosplitWorkerLoad";
 import StoragePage from "@/pages/trident/StoragePage";
 import StorageSnapshotViewer from "@/components/trident/storage/StorageSnapshotViewer";
 import IdentityPage from "@/pages/trident/IdentityPage";
@@ -794,6 +795,7 @@ function MainApp() {
           <Route path="/trident/rtmp" element={<RTMPPage />} />
           <Route path="/trident/rtmp/bitrate" element={<RTMPBitrateGraph />} />
           <Route path="/trident/autosplit" element={<AutosplitPage />} />
+          <Route path="/trident/autosplit/workers" element={<AutosplitWorkerLoad />} />
           <Route path="/trident/storage" element={<StoragePage />} />
           <Route path="/trident/storage-viewer" element={<StorageSnapshotViewer />} />
           <Route path="/trident/identity" element={<IdentityPage />} />
