@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Wallet, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Wallet, ShieldCheck, ShieldAlert, KeyRound } from "lucide-react";
 import { useIdentity } from "@/lib/web3/identity";
 import WalletInfo from "@/components/trident/identity/WalletInfo";
 import TokenUsage from "@/components/trident/identity/TokenUsage";
@@ -30,6 +31,9 @@ export default function IdentityPage() {
         </div>
       )}
       <TokenUsage rate={rate} usage={usage} />
+      <Link to="/trident/phantom-login" className="text-primary hover:underline text-sm inline-flex items-center gap-1">
+        <KeyRound className="w-3.5 h-3.5" /> Open Phantom Login →
+      </Link>
     </div>
   );
 }
