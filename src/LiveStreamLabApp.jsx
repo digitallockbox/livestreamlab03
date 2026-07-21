@@ -70,6 +70,7 @@ import RevenueDashboard from "@/components/creator/pages/RevenueDashboard";
 import CoinTreeDashboard from "@/components/creator/cointree/CoinTreeDashboard";
 import DashboardLayout from "@/components/trident/layout/DashboardLayout";
 import OverviewPage from "@/pages/trident/OverviewPage";
+import EngineOverviewDashboard from "@/components/trident/overview/EngineOverviewDashboard";
 import RTMPPage from "@/pages/trident/RTMPPage";
 import RTMPBitrateGraph from "@/components/trident/rtmp/RTMPBitrateGraph";
 import AutosplitPage from "@/pages/trident/AutosplitPage";
@@ -792,6 +793,7 @@ function MainApp() {
         </Route>
         <Route element={<DashboardLayout />}>
           <Route path="/trident" element={<OverviewPage />} />
+          <Route path="/trident/engines" element={<EngineOverviewDashboard />} />
           <Route path="/trident/rtmp" element={<RTMPPage />} />
           <Route path="/trident/rtmp/bitrate" element={<RTMPBitrateGraph />} />
           <Route path="/trident/autosplit" element={<AutosplitPage />} />
