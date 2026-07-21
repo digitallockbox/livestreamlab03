@@ -68,6 +68,7 @@ import WarRoom from "@/components/creator/warroom/WarRoom";
 import AdminPanel from "@/components/creator/pages/AdminPanel";
 import RevenueDashboard from "@/components/creator/pages/RevenueDashboard";
 import CoinTreeDashboard from "@/components/creator/cointree/CoinTreeDashboard";
+import TridentControlPlane from "@/pages/trident/TridentControlPlane";
 
 // API config, connectors, identity helpers, and shared UI live in @/components/creator/os
 
@@ -777,6 +778,7 @@ function MainApp() {
         <Route path="/supabase" element={<SupabaseExplorer />} />
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/revenue" element={<RevenueDashboard />} />
+        <Route path="/trident" element={<TridentControlPlane />} />
         </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
