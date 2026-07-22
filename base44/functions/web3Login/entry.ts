@@ -80,7 +80,21 @@ Deno.serve(async (req) => {
         expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
         consumed: false,
       });
-      return Response.json({ nonce, message: nonce });
+      // Build a human-readable sign-in message so Phantom/MetaMask display who
+      // the user is authenticating to — not a bare hash. The nonce is embedded on
+      // its own line so the verify step can extract it for replay protection.
+      const origin = req.headers.get('origin') || 'https://livestreamlab.live';
+      let domain = 'livestreamlab.live';
+      try { domain = new URL(origin).host; } catch { /* keep default */ }
+      const timestamp = new Date().toISOString();
+      const message = [
+        'LiveStreamLab Sign-In',
+        `Domain: ${domain}`,
+        'Purpose: Authenticate wallet ownership',
+        `Nonce: ${nonce}`,
+        `Timestamp: ${timestamp}`,
+      ].join('\n');
+      return Response.json({ nonce, message });
     }
 
     // Step 2 — verify the signature, consume the nonce, issue a wallet-native JWT,
@@ -102,8 +116,13 @@ Deno.serve(async (req) => {
       if (!ok) return errorResponse('Invalid signature', 401);
 
       // 2b — replay protection via single-use nonce lookup + consume.
+      // The signed message is a structured sign-in string; extract the raw nonce
+      // from its "Nonce:" line, falling back to the whole message for legacy
+      // bare-nonce signatures.
+      const nonceMatch = String(message).match(/Nonce:\s*([0-9a-f]{16,})/i);
+      const nonceValue = nonceMatch ? nonceMatch[1] : String(message);
       const nonceRecords = await base44.asServiceRole.entities.Nonce.filter(
-        { nonce: String(message), consumed: false },
+        { nonce: nonceValue, consumed: false },
         '-created_date',
         5
       );
