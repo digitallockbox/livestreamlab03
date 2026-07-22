@@ -32,6 +32,7 @@ import {
   FollowButton, BoostButton, SubscribeButton,
 } from "@/components/creator/os";
 import Dashboard from "@/components/creator/pages/Dashboard";
+import CreatorDashboard from "@/components/creator/pages/CreatorDashboard";
 import GoLive from "@/components/creator/pages/GoLive";
 import Wallet from "@/components/creator/pages/Wallet";
 import Domains from "@/components/creator/pages/Domains";
@@ -684,6 +685,7 @@ function MainApp() {
         <Route element={<IdentityGate />}>
         <Route element={<SharedLayout />}>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/creator/dashboard" element={<CreatorDashboard />} />
         <Route path="/golive" element={<GoLive />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/profile" element={<Profile />} />
