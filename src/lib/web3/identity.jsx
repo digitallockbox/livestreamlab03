@@ -54,12 +54,18 @@ export function IdentityProvider({ children }) {
       // "Request failed with status code N"). Surface it so the user sees the
       // actual cause (e.g. "Nonce invalid or already used", "Signature rejected").
       const data = e?.response?.data;
-      const msg =
+      let msg =
         (data && (data.error || data.message)) ||
         e?.message ||
         "Sign-in failed";
+      // The platform error envelope may nest an object in `error`/`message`
+      // (e.g. { code, message }). React cannot render objects, so coerce to a
+      // string before storing in state — prevents Minified React error #31.
+      if (msg && typeof msg === "object") {
+        msg = msg.message || msg.code || JSON.stringify(msg);
+      }
       console.warn("Identity login failed:", msg, e?.response?.status || "");
-      setLoginError(msg);
+      setLoginError(String(msg));
       return null;
     } finally {
       setAuthenticating(false);
