@@ -9,7 +9,7 @@ import { Card } from "@/components/creator/os";
 // syndicated. Connection flags persist on the creator Web3Profile; the
 // "Broadcast Everywhere" toggle sets broadcast_all. Payout distinction:
 // STREAMING tokens pay instantly, external platforms pay Net-30/60/90.
-const PLATFORMS = [
+export const PLATFORMS = [
   { key: "youtube", label: "YouTube Live", color: "#FF0000", letter: "Y" },
   { key: "twitch", label: "Twitch", color: "#9146FF", letter: "T" },
   { key: "x", label: "X Live", color: "#111827", letter: "X" },

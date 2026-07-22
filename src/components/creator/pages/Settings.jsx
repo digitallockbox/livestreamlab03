@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { User, Palette, Shield, Bell, Link2, CreditCard } from "lucide-react";
+import { User, Palette, Shield, Bell, Link2, CreditCard, Radio } from "lucide-react";
 import { Page } from "@/components/creator/os";
 import { useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import { useIdentity } from "@/lib/web3/identity";
@@ -12,6 +12,7 @@ const ITEMS = [
   { to: "/settings/notifications", label: "Notifications", desc: "What updates you receive", icon: Bell },
   { to: "/settings/security", label: "Security", desc: "Password, 2FA, sessions", icon: Shield },
   { to: "/settings/connected", label: "Connected Accounts", desc: "OAuth integrations", icon: Link2 },
+  { to: "/settings/platforms", label: "Connected Platforms", desc: "Multi-platform broadcast", icon: Radio },
 ];
 
 export default function Settings() {

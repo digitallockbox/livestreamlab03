@@ -13,6 +13,7 @@ import BrandingSettings from "@/pages/settings/BrandingSettings";
 import SecuritySettings from "@/pages/settings/SecuritySettings";
 import NotificationSettings from "@/pages/settings/NotificationSettings";
 import ConnectedAccounts from "@/pages/settings/ConnectedAccounts";
+import ConnectedPlatforms from "@/pages/settings/ConnectedPlatforms";
 import BillingSettings from "@/pages/settings/BillingSettings";
 import SupabaseExplorer from "@/pages/SupabaseExplorer";
 import SharedLayout from "@/components/creator/SharedLayout";
@@ -715,6 +716,7 @@ function MainApp() {
         <Route path="/settings/notifications" element={<NotificationSettings />} />
         <Route path="/settings/security" element={<SecuritySettings />} />
         <Route path="/settings/connected" element={<ConnectedAccounts />} />
+        <Route path="/settings/platforms" element={<ConnectedPlatforms />} />
         <Route path="/podcasts" element={<PodcastLibrary />} />
         <Route path="/podcasts/manage" element={<PodcastManager />} />
         <Route path="/podcasts/analytics" element={<PodcastAnalytics />} />
