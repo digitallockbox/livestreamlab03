@@ -7,7 +7,6 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useParams, useNavigate, Navigate, useLocation } from "react-router-dom";
 import { Loader2, Send, CheckCircle2, Radio, Video, Zap } from "lucide-react";
 import { useCreator } from "@/hooks/web3/useCreator";
-import { useAuth } from "@/lib/AuthContext";
 import { PhantomIdentityProvider, useStreamingIdentity } from "@/lib/web3/streamingIdentity";
 import ProfileSettings from "@/pages/settings/ProfileSettings";
 import BrandingSettings from "@/pages/settings/BrandingSettings";
@@ -60,7 +59,6 @@ import OrderHistory from "@/pages/store/OrderHistory";
 import AffiliateDashboard from "@/pages/affiliates/AffiliateDashboard";
 import AddAffiliateLink from "@/pages/affiliates/AddAffiliateLink";
 import BulkAddLinks from "@/pages/affiliates/BulkAddLinks";
-import ViewerDashboard from "@/pages/viewer/ViewerDashboard";
 import PodcastManager from "@/components/creator/podcasts/PodcastManager";
 import PodcastLibrary from "@/components/creator/podcasts/PodcastLibrary";
 import PodcastAnalytics from "@/components/creator/podcasts/PodcastAnalytics";
@@ -674,38 +672,12 @@ function TridentRouteTracker() {
 
 function MainApp() {
   const { walletAddress, session } = useIdentity();
-  const { user, isLoadingAuth, isAuthenticated } = useAuth();
   const walletReady = !!(walletAddress && session && session.onboarding_completed);
-  const isEmailViewer = !walletAddress && isAuthenticated && (user?.role === "viewer" || user?.role === "user");
 
   // Trident OS SDK — identify wallet when connected
   useEffect(() => {
     if (walletAddress) identify(walletAddress, { chain: session?.chain || "solana" });
   }, [walletAddress, session?.chain]);
-
-  // While platform auth is loading and no wallet is connected, wait to avoid
-  // flashing the public Landing page for email-authenticated viewers.
-  if (!walletAddress && isLoadingAuth) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  // Email-authenticated viewers (no wallet) get the viewer dashboard.
-  if (isEmailViewer && !walletReady) {
-    return (
-      <BrowserRouter>
-        <TridentRouteTracker />
-        <Routes>
-          <Route path="/s/:domain" element={<CreatorStorefront />} />
-          <Route path="/" element={<ViewerDashboard />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    );
-  }
 
   // Public + pre-onboarding states: rendered in the router so the Landing CTAs work.
   if (!walletReady) {
