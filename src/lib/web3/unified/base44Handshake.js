@@ -74,7 +74,8 @@ export async function base44Handshake(walletAddress, chain, wcProvider) {
   const signature = await signNonceForChain(challenge.message, chain, walletAddress, wcProvider);
   if (!signature) throw new Error("Signature rejected");
 
-  // 3. Verify the signature → receive profile + wallet-native JWT
+  // 3. Verify the signature → receive { identity, session } (the wallet-native JWT).
+  //    Errors come back as { error: { message } } (string-safe envelope).
   const res = await base44.functions
     .invoke("web3Login", {
       action: "verify",
@@ -85,29 +86,34 @@ export async function base44Handshake(walletAddress, chain, wcProvider) {
     })
     .then((r) => r.data);
 
-  // Guard: a successful verify must return a profile object. Some error paths
-  // come back with a 2xx status and a body like { error } or { code, message }
-  // (the SDK does not throw on 2xx), which would leave res.profile undefined
-  // and silently trap the user on the VerifyWallet screen. Treat any missing
-  // profile as a hard failure so the caller's catch surfaces a real error.
-  if (!res || !res.profile) {
-    let reason = res?.error || res?.message || "Login failed — no profile returned";
+  // Guard: a successful verify must return an identity (the Web3Profile) + session
+  // (the JWT). Some error paths come back with a 2xx status and a body like
+  // { error: { message } } or { code, message } (the SDK does not throw on 2xx),
+  // which would leave res.identity undefined and silently trap the user on the
+  // VerifyWallet screen. Treat any missing identity as a hard failure.
+  if (!res || !res.identity) {
+    let reason =
+      (res?.error && (res.error.message || res.error)) ||
+      res?.message ||
+      "Login failed — no identity returned";
     if (reason && typeof reason === "object") {
       reason = reason.message || reason.code || JSON.stringify(reason);
     }
     throw new Error(typeof reason === "string" ? reason : String(reason));
   }
 
-  // 4. Persist the JWT so engine/proxy calls can use it
-  if (res?.token) {
+  // 4. Persist the session JWT so engine/proxy calls can use it
+  if (res.session) {
     try {
-      localStorage.setItem(WALLET_TOKEN_KEY, res.token);
+      localStorage.setItem(WALLET_TOKEN_KEY, res.session);
     } catch {
       /* storage may be blocked (private mode) — non-fatal */
     }
   }
 
-  return { profile: res.profile, token: res.token };
+  // Return { profile, token } so the identity context (which stores the
+  // Web3Profile as the active session state) stays unchanged.
+  return { profile: res.identity, token: res.session };
 }
 
 // ─── Token persistence helpers (re-exported by identity.jsx) ───────────────

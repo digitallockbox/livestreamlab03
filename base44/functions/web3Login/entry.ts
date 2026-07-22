@@ -1,18 +1,29 @@
-// web3Login — Phantom/MetaMask wallet handshake (challenge → sign → verify → profile).
-// Actions: challenge | verify | (legacy) login-by-address.
+// web3Login — Phantom/MetaMask wallet handshake (challenge → sign → verify → identity).
+//
+// Response contract (sane, string-safe — never returns a raw object the frontend
+// could render into JSX):
+//   • challenge → { nonce, message }
+//   • verify   → { identity: <Web3Profile>, session: <JWT> }   on success
+//   • any error → { error: { message: "..." } }               with the right status
+//
+// `identity` is the creator's Web3Profile (the app stores it as the active session
+// state — onboarding_completed, bound_domain, display_name, etc.). `session` is
+// the wallet-native JWT the engine/proxy layer uses for authenticated calls.
 //
 // NOTE: Signature verification, nonce validation, and JWT issuance are inlined
 // here rather than delegated to verifyWalletSignature via base44.functions.invoke,
-// because backend functions cannot invoke other backend functions over HTTP in this
-// environment (the platform rejects nested calls with 403 "Backend functions cannot
-// be accessed from the platform domain"). verifyWalletSignature is kept as the
-// standalone reference implementation.
+// because backend functions cannot invoke other backend functions over HTTP in
+// this environment. verifyWalletSignature is kept as the standalone reference.
 import nacl from 'npm:tweetnacl@1.0.3';
 import bs58 from 'npm:bs58@6.0.0';
 import { ethers } from 'npm:ethers@6.13.4';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const TOKEN_TTL_SEC = 24 * 60 * 60; // 24 hours
+
+// String-safe error envelope. Always { error: { message: <string> } }.
+const errorResponse = (message, status) =>
+  Response.json({ error: { message: String(message || 'Unknown error') } }, { status });
 
 // Base64url (no padding) encoder for JWT segments.
 const b64url = (str) =>
@@ -60,8 +71,6 @@ Deno.serve(async (req) => {
     const action = body.action || 'login';
 
     // Step 1 — issue a single-use nonce challenge stored in the Nonce entity.
-    // The raw nonce string IS the message the wallet signs; it is looked up and
-    // consumed during verify, giving true replay protection.
     if (action === 'challenge') {
       const nonce = Array.from(crypto.getRandomValues(new Uint8Array(32)))
         .map((b) => b.toString(16).padStart(2, '0'))
@@ -75,11 +84,11 @@ Deno.serve(async (req) => {
     }
 
     // Step 2 — verify the signature, consume the nonce, issue a wallet-native JWT,
-    // and upsert the Web3Profile. All inlined (no nested function calls).
+    // and upsert the Web3Profile. Returns { identity, session }.
     if (action === 'verify') {
       const { wallet_address, message, signature, chain } = body;
       if (!wallet_address || !message || !signature) {
-        return Response.json({ error: 'wallet_address, message, signature required' }, { status: 400 });
+        return errorResponse('wallet_address, message, signature required', 400);
       }
       const normalized = chain === 'evm' ? String(wallet_address).toLowerCase() : wallet_address;
 
@@ -88,12 +97,9 @@ Deno.serve(async (req) => {
       try {
         ok = verifySig(normalized, message, signature, chain);
       } catch (e) {
-        return Response.json(
-          { error: 'decode/verify failed: ' + e.message },
-          { status: 400 }
-        );
+        return errorResponse('decode/verify failed: ' + e.message, 400);
       }
-      if (!ok) return Response.json({ error: 'Invalid signature' }, { status: 401 });
+      if (!ok) return errorResponse('Invalid signature', 401);
 
       // 2b — replay protection via single-use nonce lookup + consume.
       const nonceRecords = await base44.asServiceRole.entities.Nonce.filter(
@@ -103,10 +109,10 @@ Deno.serve(async (req) => {
       );
       const record = nonceRecords && nonceRecords[0];
       if (!record) {
-        return Response.json({ error: 'Nonce invalid or already used' }, { status: 401 });
+        return errorResponse('Nonce invalid or already used', 401);
       }
       if (new Date(record.expires_at).getTime() < Date.now()) {
-        return Response.json({ error: 'Nonce expired' }, { status: 401 });
+        return errorResponse('Nonce expired', 401);
       }
       await base44.asServiceRole.entities.Nonce.update(record.id, { consumed: true });
 
@@ -132,19 +138,19 @@ Deno.serve(async (req) => {
       const secret = Deno.env.get('CREATOR_JWT_SECRET');
       if (!secret) {
         console.error('web3Login: CREATOR_JWT_SECRET not set');
-        return Response.json({ error: 'Server auth not configured' }, { status: 500 });
+        return errorResponse('Server auth not configured', 500);
       }
-      const token = await signJwt(
+      const session = await signJwt(
         { wallet: normalized, chain: chain || 'solana', sub: normalized },
         secret
       );
 
-      // 2e — upsert the wallet's Web3Profile, marking it wallet-verified.
+      // 2e — upsert the wallet's Web3Profile (this IS the `identity`).
       const existing = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: normalized });
-      let profile = existing[0];
-      if (!profile) {
+      let identity = existing[0];
+      if (!identity) {
         const short = normalized.slice(0, 6) + '...' + normalized.slice(-4);
-        profile = await base44.asServiceRole.entities.Web3Profile.create({
+        identity = await base44.asServiceRole.entities.Web3Profile.create({
           wallet_address: normalized,
           display_name: short,
           avatar_url: '',
@@ -156,23 +162,25 @@ Deno.serve(async (req) => {
           following: 0,
           social_graph: [],
         });
-      } else if (!profile.verified) {
-        profile = await base44.asServiceRole.entities.Web3Profile.update(profile.id, {
+      } else if (!identity.verified) {
+        identity = await base44.asServiceRole.entities.Web3Profile.update(identity.id, {
           verified: true,
-          verification_level: profile.verification_level === 'none' ? 'basic' : profile.verification_level,
+          verification_level: identity.verification_level === 'none' ? 'basic' : identity.verification_level,
         });
       }
-      return Response.json({ authenticated: true, profile, token });
+
+      // Always return { identity, session }. No `error` key on success.
+      return Response.json({ identity, session });
     }
 
     // Legacy: create/return a profile by address only (no signature) — backward compat.
     const wallet_address = (body.wallet_address || '').trim();
-    if (!wallet_address) return Response.json({ error: 'wallet_address required' }, { status: 400 });
+    if (!wallet_address) return errorResponse('wallet_address required', 400);
     const existing = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address });
-    let profile = existing[0];
-    if (!profile) {
+    let identity = existing[0];
+    if (!identity) {
       const short = wallet_address.slice(0, 6) + '...' + wallet_address.slice(-4);
-      profile = await base44.asServiceRole.entities.Web3Profile.create({
+      identity = await base44.asServiceRole.entities.Web3Profile.create({
         wallet_address,
         display_name: short,
         avatar_url: '',
@@ -185,9 +193,9 @@ Deno.serve(async (req) => {
         social_graph: [],
       });
     }
-    return Response.json({ profile });
+    return Response.json({ identity });
   } catch (error) {
     console.error('web3Login error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return errorResponse(error.message, 500);
   }
 });

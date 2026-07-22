@@ -97,8 +97,10 @@ function IdentityInner({ children }) {
         message: ch.message,
         signature: sigB64,
       }).then((r) => r.data);
-      setProfile(res.profile);
-      return res.profile;
+      // New contract: { identity, session } on success, { error: { message } } on failure.
+      const identity = res?.identity || null;
+      setProfile(identity);
+      return identity;
     } catch (e) {
       console.warn("Phantom login failed:", e?.message || e);
       return null;
