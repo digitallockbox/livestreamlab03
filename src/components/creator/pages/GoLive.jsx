@@ -7,6 +7,7 @@ import { Page, Card, Input, useViewerWallet } from "@/components/creator/os";
 import BroadcastControls from "@/components/creator/pages/BroadcastControls";
 import LiveManager from "@/components/creator/pages/LiveManager";
 import NftMintPanel from "@/components/creator/pages/NftMintPanel";
+import MultiPlatformBroadcast from "@/components/creator/pages/MultiPlatformBroadcast";
 
 // GoLive — broadcast control room. Camera/mic preview + resolution/bitrate
 // controls, optional cover photo (minted as an off-chain NFT on go-live), and
@@ -103,6 +104,8 @@ export default function GoLive() {
               disabled={!!stream}
             />
           </Card>
+
+          <MultiPlatformBroadcast disabled={!!stream} />
 
           <Card className="space-y-3">
             <h2 className="font-display font-semibold text-sm">Stream Setup</h2>

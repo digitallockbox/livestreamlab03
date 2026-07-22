@@ -5,7 +5,7 @@ import jwt from 'npm:jsonwebtoken@9.0.2';
 // Wallet-only creators have no Base44 session, so auth is via wallet signature,
 // and profiles are looked up by wallet_address (not created_by_id).
 
-const EDITABLE = ['display_name', 'avatar_url', 'banner_url', 'bio', 'ens_name', 'twitch_username', 'twitter_handle'];
+const EDITABLE = ['display_name', 'avatar_url', 'banner_url', 'bio', 'ens_name', 'twitch_username', 'twitter_handle', 'connections', 'broadcast_all'];
 
 Deno.serve(async (req) => {
   try {

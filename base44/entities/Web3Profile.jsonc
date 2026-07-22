@@ -77,6 +77,42 @@
     "twitter_handle": {
       "type": "string",
       "description": "X (Twitter) handle"
+    },
+    "connections": {
+      "type": "object",
+      "description": "Per-platform broadcast connection flags for multi-platform syndication",
+      "properties": {
+        "youtube": {
+          "type": "boolean",
+          "default": false
+        },
+        "twitch": {
+          "type": "boolean",
+          "default": false
+        },
+        "x": {
+          "type": "boolean",
+          "default": false
+        },
+        "tiktok": {
+          "type": "boolean",
+          "default": false
+        },
+        "facebook": {
+          "type": "boolean",
+          "default": false
+        },
+        "kick": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "default": {}
+    },
+    "broadcast_all": {
+      "type": "boolean",
+      "default": false,
+      "description": "Syndicate the master stream to all connected external platforms"
     }
   },
   "required": [
