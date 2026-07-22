@@ -1,21 +1,25 @@
 import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, ImagePlus, CheckCircle2 } from "lucide-react";
+import { Loader2, ImagePlus, CheckCircle2, Copy, Check } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useIdentity } from "@/lib/web3/identity";
 import { Page, Card, Input, useViewerWallet } from "@/components/creator/os";
+import BroadcastControls from "@/components/creator/pages/BroadcastControls";
+import LiveManager from "@/components/creator/pages/LiveManager";
 
-// GoLive — broadcast control room. Now supports an optional cover photo that
-// is uploaded via the UploadFile integration and attached to the stream as its
-// thumbnail. The "Photo NFT" status badge reflects the queued/minted lifecycle;
-// on-chain minting requires a backend mint function (not yet wired).
+// GoLive — broadcast control room. Camera/mic preview + resolution/bitrate
+// controls, optional cover photo (minted as an off-chain NFT on go-live), and
+// a live manager (viewer count, peak, copy key, end stream) once started.
 export default function GoLive() {
   const viewerWallet = useViewerWallet();
   const { signedInvoke } = useIdentity();
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("gaming");
+  const [resolution, setResolution] = useState("720p");
+  const [bitrate, setBitrate] = useState(4500);
   const [stream, setStream] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [keyCopied, setKeyCopied] = useState(false);
 
   const [coverImage, setCoverImage] = useState(null); // { url }
   const [uploading, setUploading] = useState(false);
@@ -49,7 +53,6 @@ export default function GoLive() {
         thumbnail_url: coverImage?.url || undefined,
       });
       setStream(res);
-      // Mint the cover as an off-chain NFT ledger entry attached to the stream.
       if (coverImage) {
         try {
           await signedInvoke("web3Nft", {
@@ -69,66 +72,124 @@ export default function GoLive() {
     }
   };
 
-  return (
-    <Page title="Go Live" subtitle="Start a new stream session">
-      <Card className="space-y-3 max-w-lg">
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Stream title" />
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-md border border-input bg-muted px-3 py-2">
-          <option value="gaming">Gaming</option>
-          <option value="music">Music</option>
-          <option value="talk_show">Talk Show</option>
-          <option value="education">Education</option>
-          <option value="creative">Creative</option>
-          <option value="tech">Tech</option>
-          <option value="other">Other</option>
-        </select>
+  const endStream = async (streamId) => {
+    await signedInvoke("web3Streams", { action: "end", streamId });
+  };
 
-        {/* Photo NFT (optional cover) */}
-        <div className="border-t border-border pt-3 space-y-2">
-          <h3 className="text-xs font-semibold">Photo NFT (Optional)</h3>
-          <div className="flex items-center gap-3">
-            {coverImage ? (
-              <img src={coverImage.url} alt="Cover" className="h-10 w-10 rounded-md object-cover" />
-            ) : (
-              <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground">No Image</div>
-            )}
-            <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs hover:bg-muted disabled:opacity-50"
-            >
-              {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
-              {coverImage ? "Change Photo" : "Upload Photo"}
-            </button>
-          </div>
-          <p className="text-[11px] text-muted-foreground">This photo is attached as the stream cover and queued for NFT mint when you go live.</p>
-          {nftStatus !== "none" && (
-            <div className="text-[11px]">
-              {nftStatus === "pending" && <span className="text-amber-500">NFT will be created when you go live.</span>}
-              {nftStatus === "minted" && <span className="text-accent inline-flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Cover attached to this stream.</span>}
-              {nftStatus === "error" && <span className="text-destructive">Upload failed. You can retry.</span>}
+  const copyKey = async () => {
+    if (!stream?.streamKey) return;
+    try {
+      await navigator.clipboard.writeText(stream.streamKey);
+      setKeyCopied(true);
+      setTimeout(() => setKeyCopied(false), 1500);
+    } catch { /* ignore */ }
+  };
+
+  return (
+    <Page title="Go Live" subtitle="Broadcast control room">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Left: preview + broadcast controls + setup */}
+        <div className="lg:col-span-2 space-y-4">
+          <Card className="space-y-3">
+            <BroadcastControls
+              resolution={resolution}
+              setResolution={setResolution}
+              bitrate={bitrate}
+              setBitrate={setBitrate}
+              disabled={!!stream}
+            />
+          </Card>
+
+          <Card className="space-y-3">
+            <h2 className="font-display font-semibold text-sm">Stream Setup</h2>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Stream title" />
+            <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-md border border-input bg-muted px-3 py-2">
+              <option value="gaming">Gaming</option>
+              <option value="music">Music</option>
+              <option value="talk_show">Talk Show</option>
+              <option value="education">Education</option>
+              <option value="creative">Creative</option>
+              <option value="tech">Tech</option>
+              <option value="other">Other</option>
+            </select>
+
+            {/* Photo NFT (optional cover) */}
+            <div className="border-t border-border pt-3 space-y-2">
+              <h3 className="text-xs font-semibold">Photo NFT (Optional)</h3>
+              <div className="flex items-center gap-3">
+                {coverImage ? (
+                  <img src={coverImage.url} alt="Cover" className="h-10 w-10 rounded-md object-cover" />
+                ) : (
+                  <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground">No Image</div>
+                )}
+                <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading || !!stream}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs hover:bg-muted disabled:opacity-50"
+                >
+                  {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
+                  {coverImage ? "Change Photo" : "Upload Photo"}
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">This photo is attached as the stream cover and minted as an NFT when you go live.</p>
+              {nftStatus !== "none" && (
+                <div className="text-[11px]">
+                  {nftStatus === "pending" && <span className="text-amber-500">NFT will be created when you go live.</span>}
+                  {nftStatus === "minted" && <span className="text-accent inline-flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> NFT minted and attached to this stream.</span>}
+                  {nftStatus === "error" && <span className="text-destructive">Upload failed. You can retry.</span>}
+                </div>
+              )}
             </div>
-          )}
+
+            {!stream ? (
+              <button onClick={start} disabled={busy || !title.trim()} className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">
+                {busy ? "Starting…" : "Start Stream"}
+              </button>
+            ) : (
+              <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                Stream is live. Use the live manager to copy your key or end the stream.
+              </div>
+            )}
+          </Card>
         </div>
 
-        <button onClick={start} disabled={busy || !title.trim()} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">
-          {busy ? "Starting…" : "Start Stream"}
-        </button>
-        {stream && (
-          <div className="pt-2 text-sm space-y-1 break-all">
-            <p><span className="text-muted-foreground">Stream ID:</span> {stream.id}</p>
-            <p><span className="text-muted-foreground">RTMP URL:</span> {stream.rtmpUrl}</p>
-            <p><span className="text-muted-foreground">Stream Key:</span> <span className="font-mono">{stream.streamKey}</span>
-            {coverImage && <span className="ml-2 text-[11px] text-accent">· cover attached</span>}</p>
-            <div className="flex gap-4 pt-1">
-              <Link to={`/streams/${stream.id}/analytics`} className="text-primary hover:underline">Stream Analytics →</Link>
-              <Link to="/streams" className="text-primary hover:underline">All Streams →</Link>
-            </div>
-          </div>
-        )}
-      </Card>
+        {/* Right: live manager / quick info */}
+        <div className="space-y-4">
+          {stream ? (
+            <LiveManager
+              stream={stream}
+              bitrate={bitrate}
+              onEnd={endStream}
+              onEnded={() => setStream(null)}
+            />
+          ) : (
+            <Card className="space-y-2">
+              <h2 className="font-display font-semibold text-sm">Ready to broadcast</h2>
+              <p className="text-xs text-muted-foreground">Set your title, pick your camera and bitrate, then hit Start Stream. Your RTMP URL and key appear here once live.</p>
+              <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+                <div className="rounded-lg bg-muted p-2"><p className="text-muted-foreground">Resolution</p><p className="font-medium">{resolution}</p></div>
+                <div className="rounded-lg bg-muted p-2"><p className="text-muted-foreground">Bitrate</p><p className="font-medium">{bitrate} kbps</p></div>
+              </div>
+            </Card>
+          )}
+
+          {stream && (
+            <Card className="space-y-2 text-xs">
+              <h2 className="font-display font-semibold text-sm">Quick info</h2>
+              <p><span className="text-muted-foreground">Stream ID:</span> <span className="break-all">{stream.id}</span></p>
+              <div className="flex gap-2">
+                <button onClick={copyKey} className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-border hover:bg-muted">
+                  {keyCopied ? <Check className="w-3 h-3 text-accent" /> : <Copy className="w-3 h-3" />} Copy key
+                </button>
+                <Link to={`/streams/${stream.id}/analytics`} className="text-primary hover:underline">Analytics →</Link>
+                <Link to="/streams" className="text-primary hover:underline">All Streams →</Link>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
     </Page>
   );
 }
