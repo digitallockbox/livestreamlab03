@@ -93,33 +93,6 @@ import AdminPage from "@/pages/trident/AdminPage";
 //  PAGES (all real)
 // ======================================================
 
-// Web3 Login
-const Web3Login = () => {
-  const [wallet, setWallet] = useState("");
-  const [profile, setProfile] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const login = async () => {
-    if (!wallet.trim()) return;
-    setBusy(true);
-    try { const res = await web3LoginAPI.login(wallet.trim()); setProfile(res.profile); } finally { setBusy(false); }
-  };
-  return (
-    <Page title="Web3 Login" subtitle="Connect your wallet to enter the Creator OS">
-      <Card className="space-y-3 max-w-md">
-        <Input value={wallet} onChange={(e) => setWallet(e.target.value)} placeholder="0x... wallet address" className="font-mono" />
-        <button onClick={login} disabled={busy} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">{busy ? "Connecting..." : "Connect Wallet"}</button>
-        {profile && (
-          <div className="pt-2 text-sm space-y-1">
-            <p className="font-mono">{profile.wallet_address}</p>
-            <div className="flex gap-2"><Web3NameBadge creator={profile} /><VerificationBadge creator={profile} /><CreatorBadge creator={profile} /></div>
-            <Link to="/profile" className="text-primary hover:underline">Continue to profile →</Link>
-          </div>
-        )}
-      </Card>
-    </Page>
-  );
-};
-
 // Profile page lives in @/components/creator/pages/Profile
 
 // Verification

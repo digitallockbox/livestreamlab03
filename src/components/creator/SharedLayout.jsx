@@ -7,11 +7,11 @@ import ThemeSwitcher from "@/components/creator/ThemeSwitcher";
 
 const NAV = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/go-live", label: "Go Live", icon: Radio },
+  { to: "/golive", label: "Go Live", icon: Radio },
   { to: "/watch", label: "Watch", icon: Eye },
   { to: "/videos", label: "Videos", icon: Video },
   { to: "/podcasts", label: "Podcasts", icon: Mic2 },
-  { to: "/war-room", label: "War Room", icon: Rocket },
+  { to: "/warroom", label: "War Room", icon: Rocket },
   { to: "/store", label: "Store", icon: StoreIcon },
   { to: "/affiliates", label: "Affiliates", icon: Link2 },
   { to: "/marketplace", label: "Market", icon: ShoppingBag },
