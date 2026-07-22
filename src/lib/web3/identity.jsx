@@ -46,6 +46,14 @@ export function IdentityProvider({ children }) {
     setLoginError("");
     try {
       const { profile } = await base44Handshake(walletAddress, chain, wcProviderRef.current);
+      // Guard: a missing profile means the handshake did not actually succeed
+      // (base44Handshake throws on real failures, but defend against any path
+      // that resolves with null). Do NOT set the session — keep the user on
+      // VerifyWallet with a clear error instead of silently trapping them.
+      if (!profile) {
+        setLoginError("Login failed — no identity returned. Please try again.");
+        return null;
+      }
       setSession(profile);
       return profile;
     } catch (e) {

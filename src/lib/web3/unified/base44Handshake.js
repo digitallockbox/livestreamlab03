@@ -85,6 +85,19 @@ export async function base44Handshake(walletAddress, chain, wcProvider) {
     })
     .then((r) => r.data);
 
+  // Guard: a successful verify must return a profile object. Some error paths
+  // come back with a 2xx status and a body like { error } or { code, message }
+  // (the SDK does not throw on 2xx), which would leave res.profile undefined
+  // and silently trap the user on the VerifyWallet screen. Treat any missing
+  // profile as a hard failure so the caller's catch surfaces a real error.
+  if (!res || !res.profile) {
+    let reason = res?.error || res?.message || "Login failed — no profile returned";
+    if (reason && typeof reason === "object") {
+      reason = reason.message || reason.code || JSON.stringify(reason);
+    }
+    throw new Error(typeof reason === "string" ? reason : String(reason));
+  }
+
   // 4. Persist the JWT so engine/proxy calls can use it
   if (res?.token) {
     try {
