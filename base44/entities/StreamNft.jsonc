@@ -1,0 +1,40 @@
+{
+  "name": "StreamNft",
+  "type": "object",
+  "properties": {
+    "stream_id": {
+      "type": "string",
+      "description": "Stream this NFT cover belongs to"
+    },
+    "creator_wallet": {
+      "type": "string",
+      "description": "Wallet of the creator who minted the NFT"
+    },
+    "title": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Cover image URL backing the NFT"
+    },
+    "mint_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "minted",
+        "failed"
+      ],
+      "default": "minted",
+      "description": "Off-chain mint status (on-chain settlement is a future step)"
+    },
+    "mint_address": {
+      "type": "string",
+      "description": "Placeholder mint identifier; on-chain address once settlement is wired"
+    }
+  },
+  "required": [
+    "stream_id",
+    "creator_wallet",
+    "image_url"
+  ]
+}

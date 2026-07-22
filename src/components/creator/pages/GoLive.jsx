@@ -49,8 +49,21 @@ export default function GoLive() {
         thumbnail_url: coverImage?.url || undefined,
       });
       setStream(res);
-      // Cover attached to the stream; on-chain NFT mint is a future backend step.
-      if (coverImage) setNftStatus("minted");
+      // Mint the cover as an off-chain NFT ledger entry attached to the stream.
+      if (coverImage) {
+        try {
+          await signedInvoke("web3Nft", {
+            action: "mint",
+            creatorWallet: viewerWallet,
+            streamId: res.id,
+            imageUrl: coverImage.url,
+            title: title.trim(),
+          });
+          setNftStatus("minted");
+        } catch {
+          setNftStatus("error");
+        }
+      }
     } finally {
       setBusy(false);
     }
