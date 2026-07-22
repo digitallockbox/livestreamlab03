@@ -6,6 +6,7 @@ import { useIdentity } from "@/lib/web3/identity";
 import { Page, Card, Input, useViewerWallet } from "@/components/creator/os";
 import BroadcastControls from "@/components/creator/pages/BroadcastControls";
 import LiveManager from "@/components/creator/pages/LiveManager";
+import NftMintPanel from "@/components/creator/pages/NftMintPanel";
 
 // GoLive — broadcast control room. Camera/mic preview + resolution/bitrate
 // controls, optional cover photo (minted as an off-chain NFT on go-live), and
@@ -23,7 +24,8 @@ export default function GoLive() {
 
   const [coverImage, setCoverImage] = useState(null); // { url }
   const [uploading, setUploading] = useState(false);
-  const [nftStatus, setNftStatus] = useState("none"); // none | pending | minted | error
+  const [nftStatus, setNftStatus] = useState("none"); // none | pending | minting | minted | error
+  const [mintedNft, setMintedNft] = useState(null);
   const fileRef = useRef(null);
 
   const handleFile = async (e) => {
@@ -54,14 +56,16 @@ export default function GoLive() {
       });
       setStream(res);
       if (coverImage) {
+        setNftStatus("minting");
         try {
-          await signedInvoke("web3Nft", {
+          const mintRes = await signedInvoke("web3Nft", {
             action: "mint",
             creatorWallet: viewerWallet,
             streamId: res.id,
             imageUrl: coverImage.url,
             title: title.trim(),
           });
+          setMintedNft(mintRes?.nft || null);
           setNftStatus("minted");
         } catch {
           setNftStatus("error");
@@ -137,8 +141,9 @@ export default function GoLive() {
               {nftStatus !== "none" && (
                 <div className="text-[11px]">
                   {nftStatus === "pending" && <span className="text-amber-500">NFT will be created when you go live.</span>}
+                  {nftStatus === "minting" && <span className="text-blue-500 inline-flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Minting NFT…</span>}
                   {nftStatus === "minted" && <span className="text-accent inline-flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> NFT minted and attached to this stream.</span>}
-                  {nftStatus === "error" && <span className="text-destructive">Upload failed. You can retry.</span>}
+                  {nftStatus === "error" && <span className="text-destructive">Mint failed. You can retry.</span>}
                 </div>
               )}
             </div>
@@ -173,6 +178,15 @@ export default function GoLive() {
                 <div className="rounded-lg bg-muted p-2"><p className="text-muted-foreground">Bitrate</p><p className="font-medium">{bitrate} kbps</p></div>
               </div>
             </Card>
+          )}
+
+          {stream && (
+            <NftMintPanel
+              stream={stream}
+              coverImage={coverImage}
+              mintedNft={mintedNft}
+              nftStatus={nftStatus}
+            />
           )}
 
           {stream && (
