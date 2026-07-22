@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     const action = body.action;
 
     if (action === 'start') {
-      const { creatorWallet, title, category, description } = body;
+      const { creatorWallet, title, category, description, thumbnail_url } = body;
       if (!creatorWallet || !title) {
         return Response.json({ error: 'creatorWallet and title required' }, { status: 400 });
       }
@@ -50,6 +50,7 @@ Deno.serve(async (req) => {
         creator_wallet: creatorWallet,
         category: category || 'other',
         description: description || '',
+        thumbnail_url: thumbnail_url || '',
         status: 'live',
         stream_key: streamKey,
         viewer_count: 0,
