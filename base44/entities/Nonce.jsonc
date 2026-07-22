@@ -6,6 +6,10 @@
       "type": "string",
       "description": "Unique challenge string signed by the wallet"
     },
+    "session_id": {
+      "type": "string",
+      "description": "Tenant-scoped session id issued with the nonce; validated on verify to prevent cross-session spoofing"
+    },
     "wallet_address": {
       "type": "string",
       "description": "Optional: wallet this nonce was issued to"

@@ -75,24 +75,34 @@ Deno.serve(async (req) => {
       const nonce = Array.from(crypto.getRandomValues(new Uint8Array(32)))
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
+      // Tenant + session scoping. The session_id is persisted on the nonce
+      // record so the verify step can confirm the signed session matches the one
+      // the Identity Engine issued (anti-spoofing across tenants/sessions).
+      const origin = req.headers.get('origin') || 'https://livestreamlab.live';
+      let tenant = 'livestreamlab.live';
+      try { tenant = new URL(origin).host; } catch { /* keep default */ }
+      const sessionId = 'sess_' + Array.from(crypto.getRandomValues(new Uint8Array(12)))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+      const timestamp = new Date().toISOString();
       await base44.asServiceRole.entities.Nonce.create({
         nonce,
+        session_id: sessionId,
         expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
         consumed: false,
       });
-      // Build a human-readable sign-in message so Phantom/MetaMask display who
-      // the user is authenticating to — not a bare hash. The nonce is embedded on
-      // its own line so the verify step can extract it for replay protection.
-      const origin = req.headers.get('origin') || 'https://livestreamlab.live';
-      let domain = 'livestreamlab.live';
-      try { domain = new URL(origin).host; } catch { /* keep default */ }
-      const timestamp = new Date().toISOString();
+      // Structured, tenant-aware sign-in message so Phantom/MetaMask display
+      // exactly what the user is authenticating into — not a bare hash. The nonce
+      // and session are embedded on their own lines so the verify step can extract
+      // them for replay protection and session integrity.
       const message = [
-        'LiveStreamLab Sign-In',
-        `Domain: ${domain}`,
+        'TridentOS Login Request',
+        `Tenant: ${tenant}`,
+        `Domain: ${tenant}`,
         'Purpose: Authenticate wallet ownership',
-        `Nonce: ${nonce}`,
         `Timestamp: ${timestamp}`,
+        `Nonce: ${nonce}`,
+        `Session: ${sessionId}`,
       ].join('\n');
       return Response.json({ nonce, message });
     }
@@ -117,10 +127,12 @@ Deno.serve(async (req) => {
 
       // 2b — replay protection via single-use nonce lookup + consume.
       // The signed message is a structured sign-in string; extract the raw nonce
-      // from its "Nonce:" line, falling back to the whole message for legacy
-      // bare-nonce signatures.
+      // and session id, falling back to the whole message for legacy bare-nonce
+      // signatures.
       const nonceMatch = String(message).match(/Nonce:\s*([0-9a-f]{16,})/i);
       const nonceValue = nonceMatch ? nonceMatch[1] : String(message);
+      const sessionMatch = String(message).match(/Session:\s*(\S+)/i);
+      const sessionValue = sessionMatch ? sessionMatch[1] : null;
       const nonceRecords = await base44.asServiceRole.entities.Nonce.filter(
         { nonce: nonceValue, consumed: false },
         '-created_date',
@@ -129,6 +141,11 @@ Deno.serve(async (req) => {
       const record = nonceRecords && nonceRecords[0];
       if (!record) {
         return errorResponse('Nonce invalid or already used', 401);
+      }
+      // Session integrity: if the nonce record carries a session_id, the signed
+      // message must include the same one — prevents cross-session spoofing.
+      if (record.session_id && sessionValue !== record.session_id) {
+        return errorResponse('Session mismatch', 401);
       }
       if (new Date(record.expires_at).getTime() < Date.now()) {
         return errorResponse('Nonce expired', 401);
