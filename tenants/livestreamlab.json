@@ -1,0 +1,43 @@
+{
+  "id": "livestreamlab",
+  "name": "LiveStreamLab",
+  "version": "1.0.0",
+  "created": "2026-08-03T00:00:00.000Z",
+
+  "engines": {
+    "api": {
+      "id": "alpha",
+      "port": 8090,
+      "role": "api"
+    },
+    "compute": {
+      "id": "delta",
+      "port": 8082,
+      "role": "compute"
+    },
+    "storage": {
+      "id": "epsilon",
+      "port": 8081,
+      "role": "storage"
+    },
+    "autosplit": {
+      "id": "autosplit",
+      "port": 9007,
+      "role": "balancer"
+    }
+  },
+
+  "routing": {
+    "clusterManager": "http://localhost:9005",
+    "telemetryMesh": "http://localhost:9006",
+    "autosplitRouter": "http://localhost:9004"
+  },
+
+  "features": [
+    "cluster-aware",
+    "autosplit-enabled",
+    "telemetry-enabled",
+    "distributed-storage",
+    "tenant-control-plane"
+  ]
+}

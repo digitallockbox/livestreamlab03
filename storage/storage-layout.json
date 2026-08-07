@@ -1,0 +1,13 @@
+{
+    "root":  "C:\\Docker\\TridentNode\\storage",
+    "tenant":  {
+                   "livestreamlab":  "C:\\Docker\\TridentNode\\storage\\livestreamlab"
+               },
+    "engines":  [
+                    "C:\\Docker\\TridentNode\\storage\\alpha-api",
+                    "C:\\Docker\\TridentNode\\storage\\delta-compute",
+                    "C:\\Docker\\TridentNode\\storage\\epsilon-storage",
+                    "C:\\Docker\\TridentNode\\storage\\autosplit-balancer"
+                ],
+    "updated":  "2026-08-03T10:16:22.6220995-07:00"
+}

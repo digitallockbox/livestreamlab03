@@ -1,0 +1,114 @@
+# ======================================================
+# TRIDENTOS GITIGNORE — SAFE FOR WEB3 + ENGINES
+# ======================================================
+
+# -------------------------
+# SECRETS / PRIVATE KEYS
+# -------------------------
+*.env
+*.key
+*.pem
+*.cert
+*.token
+*.secret
+*.keystore
+*.p12
+*.pfx
+
+# Secrets folder (recommended)
+secrets/
+
+# -------------------------
+# CONFIG FILES (DO NOT UPLOAD)
+# -------------------------
+config/*.json
+config/*.yaml
+config/*.yml
+
+# Web3 identity config
+web3-identity.json
+
+# Engine-specific configs
+**/routing-map.json
+**/engine-config.json
+**/login-flow-config.json
+**/identity-config.json
+**/autosplit-config.json
+**/gateway-config.json
+
+# -------------------------
+# NODE MODULES
+# -------------------------
+node_modules/
+
+# -------------------------
+# LOGS
+# -------------------------
+*.log
+logs/
+debug.log
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# -------------------------
+# OS / EDITOR JUNK
+# -------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -------------------------
+# BUILD / TEMP FILES
+# -------------------------
+dist/
+build/
+tmp/
+temp/
+.cache/
+coverage/
+
+# -------------------------
+# DOCKER / CONTAINERS
+# -------------------------
+docker-data/
+docker-volume/
+*.pid
+
+# -------------------------
+# AUDIO BUFFER / STREAM DATA
+# -------------------------
+audio-buffers/
+*.pcm
+*.opus
+*.wav
+*.raw
+
+# -------------------------
+# ENGINE RUNTIME FILES
+# -------------------------
+runtime/
+engine-state/
+engine-cache/
+engine-temp/
+
+# -------------------------
+# ENVIRONMENT-SPECIFIC
+# -------------------------
+.env.local
+.env.development
+.env.production
+.env.test
+
+# -------------------------
+# WINDOWS POWERSHELL SCRIPTS (OPTIONAL)
+# -------------------------
+*.ps1
+*.bat
+
+# -------------------------
+# BACKUPS
+# -------------------------
+*.bak
+*.backup
+*.old

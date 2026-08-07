@@ -1,0 +1,4 @@
+import { ENGINE_DEFS_BATCH_3 } from "./engine-defs-batch3.mjs";
+
+console.log("Loaded engines:", ENGINE_DEFS_BATCH_3.length);
+console.log(ENGINE_DEFS_BATCH_3);

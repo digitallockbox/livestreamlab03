@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TridentOS Dashboard</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b1020;
+      color: #e5e9f0;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      padding: 16px 24px;
+      background: #111827;
+      border-bottom: 1px solid #1f2937;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+    main {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    section {
+      background: #111827;
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid #1f2937;
+    }
+    h2 {
+      margin-top: 0;
+      font-size: 16px;
+      border-bottom: 1px solid #1f2937;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+    .node-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .node-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #1f2937;
+    }
+    .node-id {
+      font-weight: 600;
+    }
+    .node-status {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    .alive {
+      background: #065f46;
+      color: #d1fae5;
+    }
+    .dead {
+      background: #7f1d1d;
+      color: #fee2e2;
+    }
+    .leader-badge {
+      margin-left: 8px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: #1d4ed8;
+      color: #dbeafe;
+    }
+    .timestamp {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+    .status-bar {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TridentOS Cluster Dashboard</h1>
+    <div class="status-bar">
+      Cluster Map WebUI · Live from routing-cluster-autosplit.mjs
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Cluster Map</h2>
+      <ul id="nodeList" class="node-list"></ul>
+    </section>
+
+    <section>
+      <h2>Cluster Leader</h2>
+      <div id="leaderInfo">
+        <p>Loading leader...</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const CLUSTER_MAP_URL    = 'http://localhost:9005/cluster/map';
+    const CLUSTER_LEADER_URL = 'http://localhost:9005/cluster/leader';
+
+    async function fetchJson(url) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        console.error('Fetch error', url, e);
+        return null;
+      }
+    }
+
+    async function updateClusterMap() {
+      const data = await fetchJson(CLUSTER_MAP_URL);
+      const list = document.getElementById('nodeList');
+      list.innerHTML = '';
+
+      if (!data || !Array.isArray(data)) {
+        list.innerHTML = '<li>Cluster map not available</li>';
+        return;
+      }
+
+      data.forEach(node => {
+        const li = document.createElement('li');
+        li.className = 'node-item';
+
+        const left = document.createElement('div');
+        const right = document.createElement('div');
+
+        const idSpan = document.createElement('span');
+        idSpan.className = 'node-id';
+        idSpan.textContent = node.nodeId;
+
+        const tsDiv = document.createElement('div');
+        tsDiv.className = 'timestamp';
+        tsDiv.textContent = node.lastHeartbeat
+          ? `Last heartbeat: ${node.lastHeartbeat}`
+          : 'No heartbeat recorded';
+
+        left.appendChild(idSpan);
+        left.appendChild(tsDiv);
+
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'node-status ' + (node.alive ? 'alive' : 'dead');
+        statusSpan.textContent = node.alive ? 'ALIVE' : 'DEAD';
+
+        right.appendChild(statusSpan);
+
+        li.appendChild(left);
+        li.appendChild(right);
+        list.appendChild(li);
+      });
+    }
+
+    async function updateLeader() {
+      const data = await fetchJson(CLUSTER_LEADER_URL);
+      const leaderDiv = document.getElementById('leaderInfo');
+      leaderDiv.innerHTML = '';
+
+      if (!data || !data.leader) {
+        leaderDiv.innerHTML = '<p>No leader elected</p>';
+        return;
+      }
+
+      const p = document.createElement('p');
+      p.innerHTML = `Current leader: <strong>${data.leader}</strong>`;
+
+      const badge = document.createElement('span');
+      badge.className = 'leader-badge';
+      badge.textContent = 'LEADER';
+
+      p.appendChild(badge);
+      leaderDiv.appendChild(p);
+    }
+
+    function refresh() {
+      updateClusterMap();
+      updateLeader();
+    }
+
+    // Initial load + periodic refresh
+    refresh();
+    setInterval(refresh, 5000);
+  </script>
+</body>
+</html>
