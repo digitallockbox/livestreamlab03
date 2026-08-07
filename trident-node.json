@@ -1,38 +1,74 @@
 {
-  "nodeId": "trident-node-01",
-  "hostname": "localhost",
-  "cluster": "trident-cluster-main",
-  "role": "primary",
-  "created": "2026-08-03T00:00:00.000Z",
-
-  "engines": [
-    { "id": "alpha",      "file": "alpha-engine.mjs",        "role": "api",        "port": 9001 },
-    { "id": "delta",      "file": "delta-engine.mjs",        "role": "compute",    "port": 9002 },
-    { "id": "epsilon",    "file": "epsilon-engine.mjs",      "role": "storage",    "port": 9003 },
-    { "id": "omega",      "file": "omega-engine.mjs",        "role": "routing",    "port": 9004 },
-    { "id": "sigma",      "file": "sigma-engine.mjs",        "role": "cluster",    "port": 9005 },
-    { "id": "zeta",       "file": "zeta-engine.mjs",         "role": "telemetry",  "port": 9006 },
-    { "id": "autosplit",  "file": "autosplit-engine.mjs",    "role": "balancer",   "port": 9007 },
-    { "id": "tenant-api", "file": "tenant-api-surface.mjs",  "role": "tenant-api", "port": 8090 }
-  ],
-
-  "routing": {
-    "autosplit": "routing-autosplit.mjs",
-    "cluster":   "routing-cluster-autosplit.mjs",
-    "omega":     "routing-omega.mjs",
-    "sigma":     "routing-sigma.mjs",
-    "zeta":      "routing-zeta.mjs"
-  },
-
-  "telemetry": {
-    "gpu":      "gpu-collector.mjs",
-    "hardware": "hardware-collectors.mjs",
-    "streamer": "telemetry-streamer.mjs",
-    "epsilon":  "telemetry-epsilon.mjs"
-  },
-
-  "webui": {
-    "dashboard": "dashboard.html",
-    "server":    "web-server.mjs"
-  }
+    "nodeId":  "trident-node-01",
+    "hostname":  "localhost",
+    "cluster":  "trident-cluster-main",
+    "role":  "primary",
+    "created":  "2026-08-03T00:00:00.000Z",
+    "engines":  [
+                    {
+                        "id":  "alpha",
+                        "file":  "alpha-engine.mjs",
+                        "role":  "api",
+                        "port":  9001
+                    },
+                    {
+                        "id":  "delta",
+                        "file":  "delta-engine.mjs",
+                        "role":  "compute",
+                        "port":  9002
+                    },
+                    {
+                        "id":  "epsilon",
+                        "file":  "epsilon-engine.mjs",
+                        "role":  "storage",
+                        "port":  9003
+                    },
+                    {
+                        "id":  "omega",
+                        "file":  "omega-engine.mjs",
+                        "role":  "routing",
+                        "port":  9004
+                    },
+                    {
+                        "id":  "sigma",
+                        "file":  "sigma-engine.mjs",
+                        "role":  "cluster",
+                        "port":  9005
+                    },
+                    {
+                        "id":  "zeta",
+                        "file":  "zeta-engine.mjs",
+                        "role":  "telemetry",
+                        "port":  9006
+                    },
+                    {
+                        "id":  "autosplit",
+                        "file":  "autosplit-engine.mjs",
+                        "role":  "balancer",
+                        "port":  9007
+                    },
+                    {
+                        "id":  "tenant-api",
+                        "file":  "tenant-api-surface.mjs",
+                        "role":  "tenant-api",
+                        "port":  8090
+                    }
+                ],
+    "routing":  {
+                    "autosplit":  "routing-autosplit.mjs",
+                    "cluster":  "routing-cluster-autosplit.mjs",
+                    "omega":  "routing-omega.mjs",
+                    "sigma":  "routing-sigma.mjs",
+                    "zeta":  "routing-zeta.mjs"
+                },
+    "telemetry":  {
+                      "gpu":  "gpu-collector.mjs",
+                      "hardware":  "hardware-collectors.mjs",
+                      "streamer":  "telemetry-streamer.mjs",
+                      "epsilon":  "telemetry-epsilon.mjs"
+                  },
+    "webui":  {
+                  "dashboard":  "dashboard.html",
+                  "server":  "web-server.mjs"
+              }
 }
