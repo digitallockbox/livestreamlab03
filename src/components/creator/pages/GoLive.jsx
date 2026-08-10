@@ -8,6 +8,7 @@ import BroadcastControls from "@/components/creator/pages/BroadcastControls";
 import LiveManager from "@/components/creator/pages/LiveManager";
 import NftMintPanel from "@/components/creator/pages/NftMintPanel";
 import MultiPlatformBroadcast from "@/components/creator/pages/MultiPlatformBroadcast";
+import { useTridentRouting } from "@/hooks/web3/useTridentRouting";
 
 // GoLive — broadcast control room. Camera/mic preview + resolution/bitrate
 // controls, optional cover photo (minted as an off-chain NFT on go-live), and
@@ -22,6 +23,9 @@ export default function GoLive() {
   const [stream, setStream] = useState(null);
   const [busy, setBusy] = useState(false);
   const [keyCopied, setKeyCopied] = useState(false);
+  const [route, setRoute] = useState(null);
+  const [routeError, setRouteError] = useState("");
+  const { routeStream } = useTridentRouting();
 
   const [coverImage, setCoverImage] = useState(null); // { url }
   const [uploading, setUploading] = useState(false);
@@ -56,6 +60,14 @@ export default function GoLive() {
         thumbnail_url: coverImage?.url || undefined,
       });
       setStream(res);
+      // Request a real ingest route from the Trident gateway (wallet-authenticated
+      // via tridentProxy). Failure here doesn't kill the already-started stream.
+      try {
+        const routeRes = await routeStream(res.id, "compute");
+        setRoute(routeRes || null);
+      } catch (e) {
+        setRouteError(e?.message || "Routing unavailable");
+      }
       if (coverImage) {
         setNftStatus("minting");
         try {
@@ -170,7 +182,7 @@ export default function GoLive() {
               stream={stream}
               bitrate={bitrate}
               onEnd={endStream}
-              onEnded={() => setStream(null)}
+              onEnded={() => { setStream(null); setRoute(null); setRouteError(""); }}
             />
           ) : (
             <Card className="space-y-2">
@@ -196,6 +208,18 @@ export default function GoLive() {
             <Card className="space-y-2 text-xs">
               <h2 className="font-display font-semibold text-sm">Quick info</h2>
               <p><span className="text-muted-foreground">Stream ID:</span> <span className="break-all">{stream.id}</span></p>
+              {route ? (
+                <div className="space-y-1 rounded-md bg-muted/60 p-2">
+                  {route.rtmpUrl && <p><span className="text-muted-foreground">RTMP URL:</span> <span className="break-all font-mono">{route.rtmpUrl}</span></p>}
+                  {route.node && <p><span className="text-muted-foreground">Node:</span> {route.node}{route.gpuIndex != null ? ` · GPU ${route.gpuIndex}` : ""}</p>}
+                  {route.engineId && <p><span className="text-muted-foreground">Engine:</span> {route.engineId}</p>}
+                  {route.ingestUrl && <p><span className="text-muted-foreground">Ingest:</span> <span className="break-all font-mono">{route.ingestUrl}</span></p>}
+                </div>
+              ) : routeError ? (
+                <p className="text-destructive">Route: {routeError}</p>
+              ) : (
+                <p className="text-muted-foreground inline-flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Requesting ingest route…</p>
+              )}
               <div className="flex gap-2">
                 <button onClick={copyKey} className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-border hover:bg-muted">
                   {keyCopied ? <Check className="w-3 h-3 text-accent" /> : <Copy className="w-3 h-3" />} Copy key
