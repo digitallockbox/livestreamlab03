@@ -18,7 +18,6 @@ export default function LandingNav() {
     { label: "How It Works", href: "#how-it-works" },
     { label: "$STREAMING", href: "#ecosystem" },
     { label: "Pricing", href: "#pricing" },
-    { label: "API Docs", href: "/api-docs", isRoute: true },
   ];
 
   return (

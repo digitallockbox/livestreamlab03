@@ -60,11 +60,11 @@ export default function CTABanner() {
                 Start Creating Free <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <Link to="/api-docs">
+            <a href="#features">
               <Button size="lg" variant="outline" className="border-border hover:bg-secondary font-semibold text-base px-9 gap-2 h-13">
-                View API Docs
+                Explore Features
               </Button>
-            </Link>
+            </a>
           </div>
         </motion.div>
       </div>
