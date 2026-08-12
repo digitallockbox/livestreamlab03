@@ -16,7 +16,7 @@ const links = {
     { label: "CreatorVault", href: "#ecosystem" },
     { label: "Tip Economy", href: "#ecosystem" },
     { label: "Team Splits", href: "#ecosystem" },
-    { label: "API Docs", href: "/api-docs" },
+    { label: "API Docs", href: "#features" },
   ],
   Contact: [
     { label: "General", href: `mailto:${EMAILS.contact}` },

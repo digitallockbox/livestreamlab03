@@ -12,7 +12,7 @@ const plans = [
     description: "Everything you need to start building your sovereign creator business.",
     features: ["Live streaming (up to 2hr)", "Video uploads (5GB)", "Podcast publishing", "Creator Store (10 products)", "Affiliate links", "CreatorVault basic"],
     cta: "Start Free",
-    ctaPath: "/onboarding",
+    ctaPath: "/enter",
     highlight: false,
   },
   {
@@ -22,7 +22,7 @@ const plans = [
     description: "Unlock the full power of LiveStreamLab with advanced monetization tools.",
     features: ["Unlimited live streaming", "Unlimited video & audio", "Advanced analytics", "Creator Store (unlimited)", "Team splits (up to 5)", "Priority payouts", "$STREAMING bonus earnings", "Custom channel branding"],
     cta: "Go Pro",
-    ctaPath: "/onboarding",
+    ctaPath: "/enter",
     highlight: true,
   },
   {
@@ -32,7 +32,7 @@ const plans = [
     description: "For professional studios and high-volume creator operations.",
     features: ["Everything in Pro", "Team splits (unlimited)", "White-label options", "API access", "Dedicated support", "Custom payout schedules", "War Room operator tools"],
     cta: "Contact Us",
-    ctaPath: "/onboarding",
+    ctaPath: "/enter",
     highlight: false,
   },
 ];

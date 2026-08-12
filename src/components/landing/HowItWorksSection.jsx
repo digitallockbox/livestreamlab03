@@ -92,7 +92,7 @@ export default function HowItWorksSection() {
         </div>
 
         <div className="text-center">
-          <Link to="/onboarding">
+          <Link to="/enter">
             <Button size="lg" className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 px-8 font-semibold gap-2">
               Get Started Free <Zap className="w-4 h-4" />
             </Button>
