@@ -19,6 +19,9 @@ export function IdentityProvider({ children }) {
   const [session, setSession] = useState(null);
   const [authenticating, setAuthenticating] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [role, setRole] = useState("viewer");
+  const [tokenBalance, setTokenBalance] = useState(0);
+  const [tokenGated, setTokenGated] = useState(false);
   const wcProviderRef = useRef(null);             // WalletConnect provider for EVM signing
 
   // Tracks the wallet we last attempted the handshake for, so the auto-login
@@ -45,7 +48,7 @@ export function IdentityProvider({ children }) {
     setAuthenticating(true);
     setLoginError("");
     try {
-      const { profile } = await base44Handshake(walletAddress, chain, wcProviderRef.current);
+      const { profile, role: loginRole, tokenBalance: loginBalance, tokenGated: loginGated } = await base44Handshake(walletAddress, chain, wcProviderRef.current);
       // Guard: a missing profile means the handshake did not actually succeed
       // (base44Handshake throws on real failures, but defend against any path
       // that resolves with null). Do NOT set the session — keep the user on
@@ -55,6 +58,9 @@ export function IdentityProvider({ children }) {
         return null;
       }
       setSession(profile);
+      setRole(loginRole || "viewer");
+      setTokenBalance(loginBalance || 0);
+      setTokenGated(!!loginGated);
       return profile;
     } catch (e) {
       // base44.functions.invoke throws an Axios error on non-2xx; the real
@@ -167,6 +173,9 @@ export function IdentityProvider({ children }) {
         authenticating,
         loginError,
         profile: session,
+        role,
+        tokenBalance,
+        tokenGated,
       }}
     >
       {children}

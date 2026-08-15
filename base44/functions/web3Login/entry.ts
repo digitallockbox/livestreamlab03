@@ -17,6 +17,7 @@
 import nacl from 'npm:tweetnacl@1.0.3';
 import bs58 from 'npm:bs58@6.0.0';
 import { ethers } from 'npm:ethers@6.13.4';
+import { Connection, PublicKey } from 'npm:@solana/web3.js@1.98.4';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const TOKEN_TTL_SEC = 24 * 60 * 60; // 24 hours
@@ -170,18 +171,7 @@ Deno.serve(async (req) => {
         console.warn('web3Login: WalletIdentity upsert skipped:', e?.message);
       }
 
-      // 2d — issue a wallet-native JWT (CREATOR_JWT_SECRET).
-      const secret = Deno.env.get('CREATOR_JWT_SECRET');
-      if (!secret) {
-        console.error('web3Login: CREATOR_JWT_SECRET not set');
-        return errorResponse('Server auth not configured', 500);
-      }
-      const session = await signJwt(
-        { wallet: normalized, chain: chain || 'solana', sub: normalized },
-        secret
-      );
-
-      // 2e — upsert the wallet's Web3Profile (this IS the `identity`).
+      // 2d — upsert the wallet's Web3Profile (this IS the `identity`).
       const existing = await base44.asServiceRole.entities.Web3Profile.filter({ wallet_address: normalized });
       let identity = existing[0];
       if (!identity) {
@@ -205,8 +195,44 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Always return { identity, session }. No `error` key on success.
-      return Response.json({ identity, session });
+      // 2e — determine role: creators who completed onboarding get creator role.
+      const role = identity.onboarding_completed ? 'creator' : 'viewer';
+
+      // 2f — check STREAMING token balance on-chain (fail-open; don't block
+      // login on RPC/mint errors — only gate when the balance is genuinely 0).
+      let tokenBalance = 0;
+      let tokenGated = false;
+      try {
+        const mint = Deno.env.get('STREAMING_MINT') || '';
+        if (mint) {
+          const rpc = Deno.env.get('SOLANA_RPC') || 'https://api.mainnet-beta.solana.com';
+          const connection = new Connection(rpc, 'confirmed');
+          const accounts = await connection.getParsedTokenAccountsByOwner(
+            new PublicKey(normalized),
+            { mint: new PublicKey(mint) }
+          );
+          if (accounts.value.length > 0) {
+            tokenBalance = accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
+          }
+          tokenGated = tokenBalance >= 1;
+        }
+      } catch (e) {
+        console.warn('web3Login: token balance check skipped:', e?.message);
+      }
+
+      // 2g — issue wallet-native JWT with role + token_balance embedded.
+      const secret = Deno.env.get('CREATOR_JWT_SECRET');
+      if (!secret) {
+        console.error('web3Login: CREATOR_JWT_SECRET not set');
+        return errorResponse('Server auth not configured', 500);
+      }
+      const session = await signJwt(
+        { wallet: normalized, chain: chain || 'solana', sub: normalized, role, token_balance: tokenBalance },
+        secret
+      );
+
+      // Always return { identity, session, role, token_balance, token_gated }.
+      return Response.json({ identity, session, role, token_balance: tokenBalance, token_gated: tokenGated });
     }
 
     // Legacy: create/return a profile by address only (no signature) — backward compat.

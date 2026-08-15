@@ -111,9 +111,9 @@ export async function base44Handshake(walletAddress, chain, wcProvider) {
     }
   }
 
-  // Return { profile, token } so the identity context (which stores the
-  // Web3Profile as the active session state) stays unchanged.
-  return { profile: res.identity, token: res.session };
+  // Return { profile, token, role, tokenBalance, tokenGated } so the identity
+  // context can expose role + token gating alongside the session.
+  return { profile: res.identity, token: res.session, role: res.role, tokenBalance: res.token_balance, tokenGated: res.token_gated };
 }
 
 // ─── Token persistence helpers (re-exported by identity.jsx) ───────────────
