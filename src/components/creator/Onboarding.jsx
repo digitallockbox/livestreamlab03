@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Globe, CheckCircle2, Loader2 } from "lucide-react";
+import { Globe, CheckCircle2, Loader2, Zap, Shield, ShieldAlert } from "lucide-react";
 import { useIdentity } from "@/lib/web3/identity";
 import { Page, Card, Input } from "@/components/creator/os";
+import { PLATFORM_TLD, TOKEN_GATE_MIN_BALANCE } from "@/lib/constants/identity";
 
 export default function Onboarding() {
-  const { walletAddress, chain, session, setSession, signedInvoke } = useIdentity();
+  const { walletAddress, chain, session, setSession, signedInvoke, role, tokenBalance, tokenGated } = useIdentity();
   const [domain, setDomain] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -43,6 +44,31 @@ export default function Onboarding() {
       <Card className="max-w-md space-y-4">
         <div className="flex items-center gap-2 text-sm text-accent"><CheckCircle2 className="w-4 h-4" /> Wallet connected · {chain}</div>
         <div className="flex items-center gap-2 text-sm text-accent"><CheckCircle2 className="w-4 h-4" /> Identity verified · {walletAddress?.slice(0, 8)}…{walletAddress?.slice(-4)}</div>
+
+        {/* Login status: role, STREAMING balance, token gate result */}
+        <div className="rounded-lg bg-muted/60 p-3 space-y-2 text-xs">
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Role</span>
+            <span className="font-medium capitalize">{role || "viewer"}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground flex items-center gap-1"><Zap className="w-3 h-3 text-accent" /> $STREAMING Balance</span>
+            <span className="font-medium">{(tokenBalance || 0).toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground flex items-center gap-1">
+              {tokenGated ? <Shield className="w-3 h-3 text-accent" /> : <ShieldAlert className="w-3 h-3 text-amber-500" />} Token Gate
+            </span>
+            <span className={tokenGated ? "text-accent font-medium" : "text-amber-500 font-medium"}>
+              {tokenGated ? `✓ Gated (≥${TOKEN_GATE_MIN_BALANCE} $STREAMING)` : `Hold ≥${TOKEN_GATE_MIN_BALANCE} $STREAMING`}
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Identity TLD</span>
+            <span className="font-mono">{PLATFORM_TLD}</span>
+          </div>
+        </div>
+
         <div className="border-t border-border pt-4 space-y-2">
           <label className="text-sm font-medium flex items-center gap-1.5"><Globe className="w-4 h-4" /> Freename domain</label>
           <Input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="yourname.livestreamlab" disabled={bound} />
