@@ -19,6 +19,7 @@ import SupabaseExplorer from "@/pages/SupabaseExplorer";
 import SharedLayout from "@/components/creator/SharedLayout";
 import MultiWalletLogin from "@/components/creator/MultiWalletLogin";
 import Onboarding from "@/components/creator/Onboarding";
+import VerifyWallet from "@/components/creator/auth/VerifyWallet";
 import CreatorIdentityHeader from "@/components/creator/CreatorIdentityHeader";
 import ErrorBoundary from "@/components/creator/ErrorBoundary";
 import { IdentityProvider, useIdentity } from "@/lib/web3/identity";
@@ -616,22 +617,6 @@ const UnifiedAnalytics = () => {
 };
 
 // Settings hub lives in @/components/creator/pages/Settings
-
-// Intermediate screen: wallet connected but not yet cryptographically verified.
-const VerifyWallet = () => {
-  const { walletAddress, login, authenticating, loginError } = useIdentity();
-  return (
-    <div className="max-w-md mx-auto p-8 mt-20 text-center space-y-4">
-      <h1 className="text-2xl font-display font-bold">Verify Wallet</h1>
-      <p className="text-sm text-muted-foreground break-all font-mono">{walletAddress}</p>
-      <p className="text-sm text-muted-foreground">Sign a nonce to prove wallet ownership and unlock the Creator OS.</p>
-      {loginError && <p className="text-sm text-destructive">{loginError}</p>}
-      <button onClick={login} disabled={authenticating} className="px-6 py-2 rounded-md bg-primary text-primary-foreground text-sm">
-        {authenticating ? "Verifying…" : "Sign to Continue"}
-      </button>
-    </div>
-  );
-};
 
 // ======================================================
 //  ROUTER (all pages merged) + wallet gate
