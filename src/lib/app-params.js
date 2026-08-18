@@ -1,6 +1,9 @@
+import { safeStorage } from "@/lib/safeStorage";
+
 const isNode = typeof window === 'undefined';
-const windowObj = isNode ? { localStorage: new Map() } : window;
-const storage = windowObj.localStorage;
+// Use safeStorage in the browser — direct window.localStorage access throws
+// SecurityError in sandboxed/blocked-storage contexts (Safari ITP, iframes).
+const storage = isNode ? new Map() : safeStorage;
 
 const toSnakeCase = (str) => {
 	return str.replace(/([A-Z])/g, '_$1').toLowerCase();

@@ -3,6 +3,7 @@ import { Wallet, ShieldCheck, AlertCircle, Loader2, Building2, LogOut, ExternalL
 import { Link } from "react-router-dom";
 import { identityService } from "@/services/trident/identityService";
 import { WALLET_TOKEN_KEY } from "@/lib/engineConfig";
+import { safeStorage } from "@/lib/safeStorage";
 
 const TENANTS = ["livestreamlab", "default", "demo"];
 
@@ -24,10 +25,10 @@ export default function PhantomLogin() {
     }
 
     // Restore existing session from localStorage and validate it
-    const token = localStorage.getItem(WALLET_TOKEN_KEY);
-    const savedWallet = localStorage.getItem("phantom_wallet");
-    const savedTenant = localStorage.getItem("phantom_tenant");
-    const savedExpires = localStorage.getItem("phantom_session_expires");
+    const token = safeStorage.getItem(WALLET_TOKEN_KEY);
+    const savedWallet = safeStorage.getItem("phantom_wallet");
+    const savedTenant = safeStorage.getItem("phantom_tenant");
+    const savedExpires = safeStorage.getItem("phantom_session_expires");
 
     if (token && savedWallet) {
       const validation = identityService.validateSession({ expires_at: savedExpires });
@@ -37,10 +38,10 @@ export default function PhantomLogin() {
         setSession({ sessionToken: token, expires: savedExpires, tenant: savedTenant || "livestreamlab" });
       } else {
         // Session expired — clear stale data
-        localStorage.removeItem(WALLET_TOKEN_KEY);
-        localStorage.removeItem("phantom_wallet");
-        localStorage.removeItem("phantom_tenant");
-        localStorage.removeItem("phantom_session_expires");
+        safeStorage.removeItem(WALLET_TOKEN_KEY);
+        safeStorage.removeItem("phantom_wallet");
+        safeStorage.removeItem("phantom_tenant");
+        safeStorage.removeItem("phantom_session_expires");
       }
     }
   }, []);
@@ -64,10 +65,10 @@ export default function PhantomLogin() {
       if (res.sessionToken) {
         setWallet(pubKey);
         setSession(res);
-        localStorage.setItem(WALLET_TOKEN_KEY, res.sessionToken);
-        localStorage.setItem("phantom_wallet", pubKey);
-        localStorage.setItem("phantom_tenant", tenant);
-        localStorage.setItem("phantom_session_expires", res.expires || "");
+        safeStorage.setItem(WALLET_TOKEN_KEY, res.sessionToken);
+        safeStorage.setItem("phantom_wallet", pubKey);
+        safeStorage.setItem("phantom_tenant", tenant);
+        safeStorage.setItem("phantom_session_expires", res.expires || "");
       } else {
         setError("Login failed: no session token returned.");
       }
@@ -85,16 +86,16 @@ export default function PhantomLogin() {
   const changeTenant = (t) => {
     setTenant(t);
     if (session) {
-      localStorage.setItem("phantom_tenant", t);
+      safeStorage.setItem("phantom_tenant", t);
       setSession({ ...session, tenant: t });
     }
   };
 
   const logout = () => {
-    localStorage.removeItem(WALLET_TOKEN_KEY);
-    localStorage.removeItem("phantom_wallet");
-    localStorage.removeItem("phantom_tenant");
-    localStorage.removeItem("phantom_session_expires");
+    safeStorage.removeItem(WALLET_TOKEN_KEY);
+    safeStorage.removeItem("phantom_wallet");
+    safeStorage.removeItem("phantom_tenant");
+    safeStorage.removeItem("phantom_session_expires");
     setWallet("");
     setSession(null);
     provider?.disconnect?.().catch(() => {});

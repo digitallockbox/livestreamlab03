@@ -6,13 +6,14 @@
  * dark (matching the app's original design).
  */
 import { useState, useEffect, useCallback } from "react";
+import { safeStorage } from "@/lib/safeStorage";
 
 const STORAGE_KEY = "lsl-theme";
 const DEFAULT = "dark";
 
 function getInitialTheme() {
   if (typeof window === "undefined") return DEFAULT;
-  const stored = localStorage.getItem(STORAGE_KEY);
+  const stored = safeStorage.getItem(STORAGE_KEY);
   return stored === "light" || stored === "dark" ? stored : DEFAULT;
 }
 
@@ -30,14 +31,14 @@ export function useTheme() {
   }, [theme]);
 
   const setTheme = useCallback((t) => {
-    localStorage.setItem(STORAGE_KEY, t);
+    safeStorage.setItem(STORAGE_KEY, t);
     setThemeState(t);
   }, []);
 
   const toggleTheme = useCallback(() => {
     setThemeState((prev) => {
       const next = prev === "dark" ? "light" : "dark";
-      localStorage.setItem(STORAGE_KEY, next);
+      safeStorage.setItem(STORAGE_KEY, next);
       return next;
     });
   }, []);
