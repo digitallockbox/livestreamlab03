@@ -1,0 +1,202 @@
+export const ENGINE_DEFS_BATCH_2 = [
+  {
+    id: 21,
+    name: "compression-engine",
+    domain: "media",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 50, max: 5000, weight: 0.4 },
+      { name: "cpu", higherIsBetter: false, min: 20, max: 95, weight: 0.3 },
+      { name: "latency", higherIsBetter: false, min: 5, max: 150, weight: 0.3 }
+    ]
+  },
+  {
+    id: 22,
+    name: "encryption-engine",
+    domain: "security",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 100, max: 4000, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 1, max: 80, weight: 0.3 },
+      { name: "cpu", higherIsBetter: false, min: 20, max: 95, weight: 0.3 }
+    ]
+  },
+  {
+    id: 23,
+    name: "decryption-engine",
+    domain: "security",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 100, max: 4000, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 1, max: 80, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 }
+    ]
+  },
+  {
+    id: 24,
+    name: "ai-vision",
+    domain: "ai",
+    metrics: [
+      { name: "fps", higherIsBetter: true, min: 10, max: 120, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 5, max: 200, weight: 0.3 },
+      { name: "utilization", higherIsBetter: false, min: 30, max: 98, weight: 0.3 }
+    ]
+  },
+  {
+    id: 25,
+    name: "ai-detection",
+    domain: "ai",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 20, max: 2000, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 5, max: 150, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.03, weight: 0.3 }
+    ]
+  },
+  {
+    id: 26,
+    name: "ai-classification",
+    domain: "ai",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 20, max: 1500, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 5, max: 150, weight: 0.3 },
+      { name: "cpu", higherIsBetter: false, min: 20, max: 95, weight: 0.3 }
+    ]
+  },
+  {
+    id: 27,
+    name: "ai-embedding",
+    domain: "ai",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 10, max: 1000, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 5, max: 120, weight: 0.3 },
+      { name: "memory", higherIsBetter: false, min: 20, max: 95, weight: 0.3 }
+    ]
+  },
+  {
+    id: 28,
+    name: "ai-training",
+    domain: "ai",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 5, max: 500, weight: 0.4 },
+      { name: "gpu", higherIsBetter: false, min: 30, max: 98, weight: 0.3 },
+      { name: "memory", higherIsBetter: false, min: 40, max: 98, weight: 0.3 }
+    ]
+  },
+  {
+    id: 29,
+    name: "gpu-render",
+    domain: "graphics",
+    metrics: [
+      { name: "fps", higherIsBetter: true, min: 30, max: 240, weight: 0.4 },
+      { name: "gpu", higherIsBetter: false, min: 20, max: 98, weight: 0.3 },
+      { name: "latency", higherIsBetter: false, min: 1, max: 50, weight: 0.3 }
+    ]
+  },
+  {
+    id: 30,
+    name: "gpu-encoder",
+    domain: "graphics",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 50, max: 3000, weight: 0.4 },
+      { name: "gpu", higherIsBetter: false, min: 20, max: 98, weight: 0.3 },
+      { name: "droppedFrames", higherIsBetter: false, min: 0, max: 10, weight: 0.3 }
+    ]
+  },
+  {
+    id: 31,
+    name: "gpu-decoder",
+    domain: "graphics",
+    metrics: [
+      { name: "fps", higherIsBetter: true, min: 20, max: 180, weight: 0.4 },
+      { name: "gpu", higherIsBetter: false, min: 20, max: 98, weight: 0.3 },
+      { name: "latency", higherIsBetter: false, min: 1, max: 80, weight: 0.3 }
+    ]
+  },
+  {
+    id: 32,
+    name: "network-core",
+    domain: "network",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 200, weight: 0.4 },
+      { name: "packetLoss", higherIsBetter: false, min: 0, max: 0.05, weight: 0.3 },
+      { name: "jitter", higherIsBetter: false, min: 0, max: 50, weight: 0.3 }
+    ]
+  },
+  {
+    id: 33,
+    name: "network-edge",
+    domain: "network",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 150, weight: 0.4 },
+      { name: "packetLoss", higherIsBetter: false, min: 0, max: 0.03, weight: 0.3 },
+      { name: "throughput", higherIsBetter: true, min: 50, max: 5000, weight: 0.3 }
+    ]
+  },
+  {
+    id: 34,
+    name: "network-gateway",
+    domain: "network",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 100, weight: 0.4 },
+      { name: "queueDepth", higherIsBetter: false, min: 0, max: 2000, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 }
+    ]
+  },
+  {
+    id: 35,
+    name: "storage-tier1",
+    domain: "storage",
+    metrics: [
+      { name: "diskUsage", higherIsBetter: false, min: 40, max: 98, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 2, max: 60, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.01, weight: 0.3 }
+    ]
+  },
+  {
+    id: 36,
+    name: "storage-tier2",
+    domain: "storage",
+    metrics: [
+      { name: "diskUsage", higherIsBetter: false, min: 40, max: 98, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 5, max: 120, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 }
+    ]
+  },
+  {
+    id: 37,
+    name: "storage-tier3",
+    domain: "storage",
+    metrics: [
+      { name: "diskUsage", higherIsBetter: false, min: 40, max: 98, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 10, max: 200, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.03, weight: 0.3 }
+    ]
+  },
+  {
+    id: 38,
+    name: "fire-loop-core",
+    domain: "fire-life-safety",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 80, weight: 0.4 },
+      { name: "incidents", higherIsBetter: false, min: 0, max: 3, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.01, weight: 0.3 }
+    ]
+  },
+  {
+    id: 39,
+    name: "fire-loop-aux",
+    domain: "fire-life-safety",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 120, weight: 0.4 },
+      { name: "incidents", higherIsBetter: false, min: 0, max: 4, weight: 0.3 },
+      { name: "cpu", higherIsBetter: false, min: 20, max: 95, weight: 0.3 }
+    ]
+  },
+  {
+    id: 40,
+    name: "fire-loop-analytics",
+    domain: "fire-life-safety",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 5, max: 200, weight: 0.4 },
+      { name: "incidents", higherIsBetter: false, min: 0, max: 5, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 }
+    ]
+  }
+];

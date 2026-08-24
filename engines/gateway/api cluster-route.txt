@@ -1,0 +1,54 @@
+export class ClusterAutosplitAI {
+    constructor(registry, telemetry) {
+        this.registry = registry;
+        this.telemetry = telemetry;
+    }
+
+    scoreEngine(engine) {
+        let score = 0;
+
+        if (engine.metrics && Array.isArray(engine.metrics)) {
+            for (const m of engine.metrics) {
+                const range = m.max - m.min;
+                if (range <= 0) continue;
+
+                const normalized = (m.max - m.min) / range;
+                score += normalized * (m.weight || 1);
+            }
+        }
+
+        return score;
+    }
+
+    async route(domain) {
+        const engines = this.registry.engines.filter(e => {
+            return e.domain === domain || e.domain === "generic";
+        });
+
+        if (engines.length === 0) {
+            return {
+                ok: false,
+                error: "No engines available",
+                engines: [],
+                selected: null,
+                score: 0
+            };
+        }
+
+        const scored = engines.map(e => ({
+            engine: e,
+            score: this.scoreEngine(e)
+        }));
+
+        scored.sort((a, b) => b.score - a.score);
+
+        const selected = scored[0];
+
+        return {
+            ok: true,
+            engines,
+            selected: selected.engine,
+            score: selected.score
+        };
+    }
+}

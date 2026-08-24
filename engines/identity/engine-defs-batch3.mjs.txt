@@ -1,0 +1,221 @@
+export const ENGINE_DEFS_BATCH_3 = [
+  {
+    id: 41,
+    name: "alert-core",
+    domain: "notifications",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 80, weight: 0.4 },
+      { name: "queueDepth", higherIsBetter: false, min: 0, max: 5000, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 42,
+    name: "alert-dispatch",
+    domain: "notifications",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 120, weight: 0.4 },
+      { name: "throughput", higherIsBetter: true, min: 10, max: 5000, weight: 0.3 },
+      { name: "cpu", higherIsBetter: false, min: 20, max: 95, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 43,
+    name: "email-engine",
+    domain: "communications",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 200, weight: 0.4 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.03, weight: 0.3 },
+      { name: "queueDepth", higherIsBetter: false, min: 0, max: 3000, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 44,
+    name: "sms-engine",
+    domain: "communications",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 150, weight: 0.4 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 },
+      { name: "throughput", higherIsBetter: true, min: 10, max: 2000, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 45,
+    name: "push-engine",
+    domain: "communications",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 100, weight: 0.4 },
+      { name: "queueDepth", higherIsBetter: false, min: 0, max: 5000, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 46,
+    name: "audit-core",
+    domain: "security",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 100, max: 5000, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 1, max: 80, weight: 0.3 },
+      { name: "diskUsage", higherIsBetter: false, min: 40, max: 98, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 47,
+    name: "audit-archive",
+    domain: "security",
+    metrics: [
+      { name: "diskUsage", higherIsBetter: false, min: 40, max: 98, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 5, max: 200, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 48,
+    name: "policy-engine",
+    domain: "security",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 150, weight: 0.4 },
+      { name: "cpu", higherIsBetter: false, min: 20, max: 95, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.03, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 49,
+    name: "rules-engine",
+    domain: "security",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 120, weight: 0.4 },
+      { name: "memory", higherIsBetter: false, min: 30, max: 95, weight: 0.3 },
+      { name: "cpu", higherIsBetter: false, min: 20, max: 95, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 50,
+    name: "session-engine",
+    domain: "auth",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 80, weight: 0.4 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 },
+      { name: "memory", higherIsBetter: false, min: 20, max: 95, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 51,
+    name: "token-engine",
+    domain: "auth",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 60, weight: 0.4 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.01, weight: 0.3 },
+      { name: "cpu", higherIsBetter: false, min: 20, max: 95, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 52,
+    name: "api-gateway",
+    domain: "network",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 200, weight: 0.4 },
+      { name: "queueDepth", higherIsBetter: false, min: 0, max: 5000, weight: 0.3 },
+      { name: "throughput", higherIsBetter: true, min: 50, max: 5000, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 53,
+    name: "api-router",
+    domain: "network",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 150, weight: 0.4 },
+      { name: "packetLoss", higherIsBetter: false, min: 0, max: 0.03, weight: 0.3 },
+      { name: "jitter", higherIsBetter: false, min: 0, max: 50, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 54,
+    name: "api-throttle",
+    domain: "network",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 120, weight: 0.4 },
+      { name: "queueDepth", higherIsBetter: false, min: 0, max: 3000, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 55,
+    name: "billing-core",
+    domain: "finance",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 200, weight: 0.4 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.03, weight: 0.3 },
+      { name: "cpu", higherIsBetter: false, min: 20, max: 95, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 56,
+    name: "billing-usage",
+    domain: "finance",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 10, max: 5000, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 1, max: 150, weight: 0.3 },
+      { name: "diskUsage", higherIsBetter: false, min: 40, max: 98, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 57,
+    name: "billing-invoice",
+    domain: "finance",
+    metrics: [
+      { name: "latency", higherIsBetter: false, min: 1, max: 200, weight: 0.4 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 },
+      { name: "queueDepth", higherIsBetter: false, min: 0, max: 3000, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 58,
+    name: "report-engine",
+    domain: "analytics",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 10, max: 3000, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 5, max: 200, weight: 0.3 },
+      { name: "cpu", higherIsBetter: false, min: 20, max: 95, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 59,
+    name: "dashboard-engine",
+    domain: "analytics",
+    metrics: [
+      { name: "fps", higherIsBetter: true, min: 10, max: 120, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 1, max: 80, weight: 0.3 },
+      { name: "memory", higherIsBetter: false, min: 20, max: 95, weight: 0.3 }
+    ]
+  },
+
+  {
+    id: 60,
+    name: "insights-engine",
+    domain: "analytics",
+    metrics: [
+      { name: "throughput", higherIsBetter: true, min: 10, max: 2000, weight: 0.4 },
+      { name: "latency", higherIsBetter: false, min: 5, max: 150, weight: 0.3 },
+      { name: "errorRate", higherIsBetter: false, min: 0, max: 0.02, weight: 0.3 }
+    ]
+  }
+];
