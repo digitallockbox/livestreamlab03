@@ -1,1 +1,0 @@
-const express=require('express');const app=express();const PORT=8000;app.get('/',(req,res)=>res.send('autosplit engine online'));app.listen(PORT,()=>console.log('autosplit engine running on port '+PORT));
