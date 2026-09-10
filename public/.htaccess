@@ -1,0 +1,17 @@
+# SPA fallback — serve real files when they exist, otherwise route everything
+# to index.html so React Router handles /enter, /verify, /creator/dashboard, etc.
+# Vite copies this from public/ to dist/ on build. Required on Apache hosts
+# (Hostinger, etc.) to prevent 404 NOT_FOUND on client-side routes.
+RewriteEngine On
+RewriteBase /
+
+# Don't rewrite the index.html itself
+RewriteRule ^index\.html$ - [L]
+
+# Don't rewrite real files (JS, CSS, images, fonts, favicon, etc.)
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Everything else → index.html (React Router takes over)
+RewriteRule . /index.html [L]
