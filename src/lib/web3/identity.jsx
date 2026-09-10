@@ -114,15 +114,24 @@ export function IdentityProvider({ children }) {
     }
   }, [evmAddress, chain]);
 
-  // Auto-run the handshake once a wallet is connected and not yet verified.
-  // Guarded by attemptedFor so it fires exactly once per wallet; manual retry
-  // is available on the VerifyWallet screen via login().
+  // Auto-restore or run the handshake once a wallet is connected.
+  // If a wallet token is already stored from a prior login, rehydrate the
+  // session silently from the backend (no signature prompt) so a reload
+  // doesn't trap the user on the VerifyWallet screen. Only when there's no
+  // stored token — or the silent restore fails — do we run the signing
+  // handshake (login), which asks the wallet to sign a nonce.
+  // Guarded by attemptedFor so it fires exactly once per wallet.
   useEffect(() => {
-    if (walletAddress && !session && attemptedFor.current !== walletAddress) {
-      attemptedFor.current = walletAddress;
+    if (!walletAddress || session || attemptedFor.current === walletAddress) return;
+    attemptedFor.current = walletAddress;
+    (async () => {
+      if (getWalletToken()) {
+        const restored = await refreshProfile();
+        if (restored) return;
+      }
       login();
-    }
-  }, [walletAddress, session, login]);
+    })();
+  }, [walletAddress, session, login, refreshProfile]);
 
   // Silent token refresh — renews the wallet-native JWT every 12 hours so
   // wallet-only creators stay authenticated without re-signing. The backend
