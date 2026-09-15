@@ -18,6 +18,7 @@ import SubscriptionsModule from "@/components/creator/os/SubscriptionsModule";
 import StreakNotifications from "@/components/creator/stream/StreakNotifications";
 import ShoutoutAlerts from "@/components/creator/stream/ShoutoutAlerts";
 import EarningsSummary from "@/components/creator/pages/EarningsSummary";
+import PlatformDataTree from "@/components/creator/cointree/PlatformDataTree";
 
 const MODULES = [
   { key: "streams", label: "Streams", icon: Radio, Component: Streams },
@@ -145,6 +146,7 @@ export default function Dashboard() {
         <div className="space-y-4 min-w-0">
           <IdentityHeader />
           <EarningsSummary />
+          <PlatformDataTree />
           <ActiveComponent />
         </div>
       </div>
